@@ -7,14 +7,7 @@
 #include <iostream>
 #include <cmath>
 
-template<typename R>
-svg_cpp_plot::_2d::Group plot_regions(const std::vector<R>& regions) {
-    auto sol = svg_cpp_plot::_2d::group();
-    for (const auto& r : regions) 
-        sol.add(svg_cpp_plot::_2d::function([r] (float x) { return r.approximation_at(std::array<float,1>{x}); }, r.range().min(0),r.range().max(0)));
-    return sol;
-}
-
+/*
 template<typename F, typename R>
 svg_cpp_plot::_2d::Group plot_residual(const F& f, const std::vector<R>& regions) {
     auto sol = svg_cpp_plot::_2d::group();
@@ -33,6 +26,7 @@ svg_cpp_plot::_2d::Group plot_boundaries(const std::vector<R>& regions) {
     }
     return sol;
 }
+*/
 
 
 int main(int argc, char **argv) {	
@@ -75,48 +69,35 @@ int main(int argc, char **argv) {
 
 	svg_cpp_plot::SVG svg;
 
-    auto& graph_previous = svg.add(svg_cpp_plot::_2d::group(svg_cpp_plot::_2d::translate(0,0))).add(svg_cpp_plot::Graph2D({width,width},svg_cpp_plot::BoundingBox(0,0,1,1)));
-    graph_previous.area().add(svg_cpp_plot::_2d::function(plottable_pdf,0,1)).stroke_width(graph_width).stroke(color_pdf); 
-    graph_previous.area().add(svg_cpp_plot::_2d::function(integrand,0,1)).stroke_width(graph_width).stroke(color_integrand); 
-    graph_previous.area().add(svg_cpp_plot::_2d::line({0,0},{0,1})).stroke_width(graph_width).stroke(color_graph); 
-    graph_previous.area().add(svg_cpp_plot::_2d::line({0,0},{1,0})).stroke_width(graph_width).stroke(color_graph);
-
-	auto& graph_primary = svg.add(svg_cpp_plot::_2d::group(svg_cpp_plot::_2d::translate(hp+=(width+spacing),0))).add(svg_cpp_plot::Graph2D({width,width},svg_cpp_plot::BoundingBox(0,0,1,1)));
-    graph_primary.area().add(svg_cpp_plot::_2d::function(integrand_primary,0,1)).stroke_width(graph_width).stroke(color_integrand); 
-    graph_primary.area().add(svg_cpp_plot::_2d::line({0,0},{0,1})).stroke_width(graph_width).stroke(color_graph); 
-    graph_primary.area().add(svg_cpp_plot::_2d::line({0,0},{1,0})).stroke_width(graph_width).stroke(color_graph);
+    svg_cpp_plot::SVGPlot plt;
+    plt.subplot(1,6,0).plot(svg_cpp_plot::linspace(0,1,100),plottable_pdf).linewidth(graph_width).color(color_pdf);
+    plt.subplot(1,6,0).plot(svg_cpp_plot::linspace(0,1,100),integrand).linewidth(graph_width).color(color_integrand);
+    plt.subplot(1,6,1).plot(svg_cpp_plot::linspace(0,1,100),integrand_primary).linewidth(graph_width).color(color_integrand);
 
     auto stepper = stepper_adaptive(nested(simpson,trapezoidal));
     auto regions = stepper.init(adaptable_integrand,range(0.0f,1.0f));
     for (int i = 0; i < iterations; ++i) stepper.step(adaptable_integrand, range(0.0f,1.0f), regions);
 
-    for (int i = 0; i<2; ++i) {
-        auto& graph_cv  = svg.add(svg_cpp_plot::_2d::group(svg_cpp_plot::_2d::translate(hp+=(width+spacing),0))).add(svg_cpp_plot::Graph2D({width,width},svg_cpp_plot::BoundingBox(0,0,1,1)));
-        graph_cv.area().add(plot_regions(regions)).stroke_width(graph_width).stroke(color_cv);
-        graph_cv.area().add(svg_cpp_plot::_2d::function(integrand_primary,0,1)).stroke_width(graph_width).stroke(color_integrand); 
-        graph_cv.area().add(plot_boundaries(regions)).stroke_width(0.5*graph_width).stroke(color_cv);
-        graph_cv.area().add(svg_cpp_plot::_2d::line({0,0},{0,1})).stroke_width(graph_width).stroke(color_graph); 
-        graph_cv.area().add(svg_cpp_plot::_2d::line({0,0},{1,0})).stroke_width(graph_width).stroke(color_graph);
+    for (int i = 0; i<=2; ++i) {
+        for (const auto& r : regions) {
+            plt.subplot(1,6,2+i).plot(svg_cpp_plot::arange(r.range().min(0),r.range().max(0),0.01),[r] (float x) { return r.approximation_at(std::array<float,1>{x}); })
+                    .linewidth(graph_width).color(color_cv);
+            plt.subplot(1,6,2+i).plot({r.range().min(0),r.range().max(0)},{0,1})
+                    .linewidth(0.5*graph_width).color(color_cv);
+        }
+
+        plt.subplot(1,6,2+i).plot(svg_cpp_plot::linspace(0,1,100),integrand_primary).linewidth(graph_width).color(color_integrand);
         stepper.step(adaptable_integrand, range(0.0f,1.0f), regions);
+        if (i==2) for(;i<iterations_end-iterations;++i) stepper.step(adaptable_integrand, range(0.0f,1.0f), regions);
     }
 
-    for (int i = 0; i < (iterations_end - iterations - 1); ++i) stepper.step(adaptable_integrand, range(0.0f,1.0f), regions);
-
-    auto& graph_cv  = svg.add(svg_cpp_plot::_2d::group(svg_cpp_plot::_2d::translate(hp+=(width+spacing),0))).add(svg_cpp_plot::Graph2D({width,width},svg_cpp_plot::BoundingBox(0,0,1,1)));
-    graph_cv.area().add(plot_regions(regions)).stroke_width(graph_width).stroke(color_cv);
-    graph_cv.area().add(svg_cpp_plot::_2d::function(integrand_primary,0,1)).stroke_width(graph_width).stroke(color_integrand); 
-    graph_cv.area().add(svg_cpp_plot::_2d::line({0,0},{0,1})).stroke_width(graph_width).stroke(color_graph); 
-    graph_cv.area().add(svg_cpp_plot::_2d::line({0,0},{1,0})).stroke_width(graph_width).stroke(color_graph);
-
-
-   auto& graph_residual  = svg.add(svg_cpp_plot::_2d::group(svg_cpp_plot::_2d::translate(hp+=(width+spacing),0))).add(svg_cpp_plot::Graph2D({width,width},svg_cpp_plot::BoundingBox(0,-0.5,1,0.5)));
+/*
+    auto& graph_residual  = svg.add(svg_cpp_plot::_2d::group(svg_cpp_plot::_2d::translate(hp+=(width+spacing),0))).add(svg_cpp_plot::Graph2D({width,width},svg_cpp_plot::BoundingBox(0,-0.5,1,0.5)));
     graph_residual.area().add(svg_cpp_plot::_2d::line({0,0},{1,0})).stroke_width(graph_width).stroke(color_cv);
     graph_residual.area().add(plot_residual(integrand_primary,regions)).stroke_width(graph_width).stroke(color_integrand); 
     graph_residual.area().add(svg_cpp_plot::_2d::line({0,-0.5},{0,0.5})).stroke_width(graph_width).stroke(color_graph);
-    
-    svg.viewBox(svg_cpp_plot::BoundingBox(-spacing,-spacing, hp+(width+spacing), width+spacing));
-	std::ofstream f(output);
-	f << svg;
+ */
+    plt.savefig(output);   
 	
 	return 0;
 }

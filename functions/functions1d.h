@@ -3,7 +3,7 @@
 #include <functional>
 #include "../quadrature/monte-carlo.h"
 #include <PerlinNoise/PerlinNoise.hpp>
-#include <Noise/BrownianNoise.hpp>
+#include "BrownianNoise.hpp"
 
 using Function1D = std::tuple<std::function<double(double)>,std::function<double(double,double)>>;
 
@@ -53,7 +53,6 @@ Function1D function1d(int& i, int argc, char** argv) {
         f = [] (double x) { return x; };
     }
     else if (function == "perlin") {
-        printf("Using Perlin Noise\n");
         double freq(1); if ((i<(argc-2)) && std::string(argv[i+1]) == "-frequency"){ freq=atof(argv[i+2]); i+=2;}
         double offset(0); if ((i<(argc-2)) && std::string(argv[i+1]) == "-offset"){ offset=atof(argv[i+2]); i+=2;}
         std::size_t seed = std::random_device()(); 
@@ -62,7 +61,6 @@ Function1D function1d(int& i, int argc, char** argv) {
         f = [freq,seed, offset] (double x) { return siv::PerlinNoise(std::uint32_t(seed)).noise1D(x*freq) + offset; };
     }
     else if (function == "fbm") {
-        printf("Using Fractional Brownian Motion\n");
         double freq(1); if ((i<(argc-2)) && std::string(argv[i+1]) == "-frequency"){ freq=atof(argv[i+2]); i+=2;}
         double offset(0); if ((i<(argc-2)) && std::string(argv[i+1]) == "-offset"){ offset=atof(argv[i+2]); i+=2;}
         std::size_t seed = std::random_device()(); 
