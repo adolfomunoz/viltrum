@@ -83,6 +83,7 @@ int main(int argc, char **argv) {
     for (int i = 0; i < iterations; ++i) stepper.step(adaptable_integrand, range(0.0f,1.0f), regions);
 
     for (int i = 0; i<=2; ++i) {
+        plt.subplot(1,6,2+i).plot(svg_cpp_plot::linspace(0,1,100),integrand_primary).linewidth(graph_width).color(color_integrand);
         for (const auto& r : regions) {
             plt.subplot(1,6,2+i).plot(
                 svg_cpp_plot::linspace(r.range().min(0),r.range().max(0),float(plot_samples)/(r.range().max(0)-r.range().min(0))),
@@ -94,7 +95,6 @@ int main(int argc, char **argv) {
                     .linewidth(0.5*graph_width).color(color_cv);
         }
 
-        plt.subplot(1,6,2+i).plot(svg_cpp_plot::linspace(0,1,100),integrand_primary).linewidth(graph_width).color(color_integrand);
         if (i<2) stepper.step(adaptable_integrand, range(0.0f,1.0f), regions);
         if (i==1) for(int j=i;j<(iterations_end-iterations)-1;++j) stepper.step(adaptable_integrand, range(0.0f,1.0f), regions);
     }
