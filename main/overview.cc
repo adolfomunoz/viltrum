@@ -37,8 +37,9 @@ int main(int argc, char **argv) {
     std::size_t seed = std::random_device()();
 	int iterations = 1;
     int iterations_end = 5;
-    int width = 400;
-    int spacing = 40;
+    float width = 200;
+    int plot_samples = 100;
+//    int spacing = 40;
 
 	for (int i = 0; i<argc-1; ++i) {
 		if (std::string(argv[i])=="-output") { output = argv[++i]; }
@@ -46,8 +47,9 @@ int main(int argc, char **argv) {
 		else if (std::string(argv[i])=="-iterations") { iterations = atoi(argv[++i]); } 
 		else if (std::string(argv[i])=="-iterations-end") { iterations_end = atoi(argv[++i]); } 
 		else if (std::string(argv[i])=="-seed") { seed = atol(argv[++i]); } 
-		else if (std::string(argv[i])=="-width") { width = atoi(argv[++i]); } 
-		else if (std::string(argv[i])=="-spacing") { spacing = atoi(argv[++i]); } 
+		else if (std::string(argv[i])=="-width") { width = atof(argv[++i]); }
+        else if (std::string(argv[i])=="-plot-samples") { plot_samples = atoi(argv[++i]); }
+//		else if (std::string(argv[i])=="-spacing") { spacing = atoi(argv[++i]); } 
 	}
 
     auto color_integrand = svg_cpp_plot::rgb(1,0,0);
@@ -60,19 +62,21 @@ int main(int argc, char **argv) {
     auto cdf = [] (float x) { return 0.5*std::sin(M_PI*(x - 0.5)) + 0.5; };
     auto integrand_primary = [&] (float x) { 
         return scale*(siv::PerlinNoise(std::uint32_t(seed)).noise1D(x*frequency) +
-                  0.5*siv::PerlinNoise(std::uint32_t(seed+1)).noise1D(10.0f*x*frequency))  + offset; };
+                  0.35*siv::PerlinNoise(std::uint32_t(seed+1)).noise1D(5.4f*x*frequency))  + offset; };
     auto integrand = [&] (float x) { return pdf(x)*integrand_primary(cdf(x)); };
     auto plottable_pdf = [&] (float x) { return pdf(x)/(0.7*M_PI); };
     auto adaptable_integrand = [&] (const std::array<float,1>& x) { return integrand_primary(x[0]); };
 
-    auto hp = 0;
-
 	svg_cpp_plot::SVG svg;
 
     svg_cpp_plot::SVGPlot plt;
-    plt.subplot(1,6,0).plot(svg_cpp_plot::linspace(0,1,100),plottable_pdf).linewidth(graph_width).color(color_pdf);
-    plt.subplot(1,6,0).plot(svg_cpp_plot::linspace(0,1,100),integrand).linewidth(graph_width).color(color_integrand);
-    plt.subplot(1,6,1).plot(svg_cpp_plot::linspace(0,1,100),integrand_primary).linewidth(graph_width).color(color_integrand);
+    for (int i = 0; i<6; ++i) plt.subplot(1,6,i).figsize({width,width}).xticks({0,1}).yticks({0}).axis({0,1,0,1});
+    for (int i = 1; i<5; ++i) plt.subplot(1,6,i).axis({0,1,0,1});
+    plt.subplots_adjust().wspace(0.02);
+    plt.subplot(1,6,0).plot(svg_cpp_plot::linspace(0,1,plot_samples),plottable_pdf).linewidth(graph_width).color(color_pdf);
+    plt.subplot(1,6,0).plot(svg_cpp_plot::linspace(0,1,plot_samples),integrand).linewidth(graph_width).color(color_integrand);
+    plt.subplot(1,6,0).xticklabels({"a","b"});
+    plt.subplot(1,6,1).plot(svg_cpp_plot::linspace(0,1,plot_samples),integrand_primary).linewidth(graph_width).color(color_integrand);
 
     auto stepper = stepper_adaptive(nested(simpson,trapezoidal));
     auto regions = stepper.init(adaptable_integrand,range(0.0f,1.0f));
@@ -80,23 +84,29 @@ int main(int argc, char **argv) {
 
     for (int i = 0; i<=2; ++i) {
         for (const auto& r : regions) {
-            plt.subplot(1,6,2+i).plot(svg_cpp_plot::arange(r.range().min(0),r.range().max(0),0.01),[r] (float x) { return r.approximation_at(std::array<float,1>{x}); })
+            plt.subplot(1,6,2+i).plot(
+                svg_cpp_plot::linspace(r.range().min(0),r.range().max(0),float(plot_samples)/(r.range().max(0)-r.range().min(0))),
+                [r] (float x) { return r.approximation_at(std::array<float,1>{x}); })
                     .linewidth(graph_width).color(color_cv);
-            plt.subplot(1,6,2+i).plot({r.range().min(0),r.range().max(0)},{0,1})
+            plt.subplot(1,6,2+i).plot({r.range().min(0),r.range().min(0)},{0,1})
+                    .linewidth(0.5*graph_width).color(color_cv);
+            plt.subplot(1,6,2+i).plot({r.range().max(0),r.range().max(0)},{0,1})
                     .linewidth(0.5*graph_width).color(color_cv);
         }
 
         plt.subplot(1,6,2+i).plot(svg_cpp_plot::linspace(0,1,100),integrand_primary).linewidth(graph_width).color(color_integrand);
-        stepper.step(adaptable_integrand, range(0.0f,1.0f), regions);
-        if (i==2) for(;i<iterations_end-iterations;++i) stepper.step(adaptable_integrand, range(0.0f,1.0f), regions);
+        if (i<2) stepper.step(adaptable_integrand, range(0.0f,1.0f), regions);
+        if (i==1) for(int j=i;j<(iterations_end-iterations)-1;++j) stepper.step(adaptable_integrand, range(0.0f,1.0f), regions);
     }
+    
+    for (const auto& r : regions) {
+        plt.subplot(1,6,5).plot(
+            svg_cpp_plot::linspace(r.range().min(0),r.range().max(0),float(plot_samples)/(r.range().max(0)-r.range().min(0))),
+            [r,integrand_primary] (float x) { return integrand_primary(x) - r.approximation_at(std::array<float,1>{x}); })
+                    .linewidth(graph_width).color(color_integrand);
+    }
+    plt.subplot(1,6,5).axis({0,1,-0.5,0.5}).plot({0,1},{0,0}).linewidth(0.5*graph_width).color(color_graph);
 
-/*
-    auto& graph_residual  = svg.add(svg_cpp_plot::_2d::group(svg_cpp_plot::_2d::translate(hp+=(width+spacing),0))).add(svg_cpp_plot::Graph2D({width,width},svg_cpp_plot::BoundingBox(0,-0.5,1,0.5)));
-    graph_residual.area().add(svg_cpp_plot::_2d::line({0,0},{1,0})).stroke_width(graph_width).stroke(color_cv);
-    graph_residual.area().add(plot_residual(integrand_primary,regions)).stroke_width(graph_width).stroke(color_integrand); 
-    graph_residual.area().add(svg_cpp_plot::_2d::line({0,-0.5},{0,0.5})).stroke_width(graph_width).stroke(color_graph);
- */
     plt.savefig(output);   
 	
 	return 0;
