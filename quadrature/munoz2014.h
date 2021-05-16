@@ -5,6 +5,8 @@
 #include "integrate-bins-adaptive.h"
 #include "monte-carlo.h"
 
+namespace viltrum {
+
 class IntegratorBinsMunoz2014 {
     unsigned long spp; 
     unsigned long spp_pixel;
@@ -32,6 +34,8 @@ public:
 
 auto integrator_bins_munoz_2014(unsigned long spp, unsigned long spp_pixel, double error_rate, std::size_t seed = std::random_device()()) {
     return IntegratorBinsMunoz2014(spp,spp_pixel,error_rate,seed);
+}
+
 }
 
 

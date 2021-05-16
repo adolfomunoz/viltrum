@@ -1,6 +1,7 @@
 #pragma once
 #include "multiarray-crtp.h"
 
+namespace viltrum {
 
 //Class that fixes dim 0.
 template<typename Base>
@@ -28,3 +29,5 @@ public:
 		return base[view_indices]; 
 	}
 };
+
+}

@@ -2,6 +2,8 @@
 
 #include <random>
 
+namespace viltrum {
+
 template<typename RNG>
 class VectorSamplerUniform {
 	mutable RNG rng;
@@ -37,6 +39,8 @@ auto vector_sampler_uniform(RNG&& rng) {
 
 auto vector_sampler_uniform(std::size_t seed = std::random_device()()) {
     return vector_sampler_uniform(std::mt19937_64(seed));
+}
+
 }
 
 

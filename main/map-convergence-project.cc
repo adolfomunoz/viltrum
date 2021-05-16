@@ -1,19 +1,14 @@
 #include <memory>
 #include "../plot/map-error-time.h"
 #include "convergence-datafile.h"
-#include "../quadrature/integrate-bins.h"
-#include "../quadrature/integrate-bins-stepper.h"
-#include "../quadrature/monte-carlo.h"
-#include "../quadrature/control-variates.h"
-#include "../plot/convergence.h"
+#include "../viltrum.h"
 #include "../functions/functions.h"
-#include "../quadrature/vector-dimensions.h"
-#include "../quadrature/integrate-adaptive-control-variates.h"
-#include "../quadrature/integrate-optimized-adaptive-stratified-control-variates.h"
 
 #include <iostream>
 #include <cmath>
 #include <chrono>
+
+using namespace viltrum;
 
 std::vector<double> generate_ground_truth(const Function1D& func, const std::array<std::size_t,4>& bins) {
     auto gt = std::get<1>(func);

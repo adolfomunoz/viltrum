@@ -1,6 +1,8 @@
 #pragma once
 #include <array>
 
+namespace viltrum {
+
 template<std::size_t DIM>
 class MultidimensionalRange {
     std::array<std::size_t,DIM> min;
@@ -56,6 +58,8 @@ template<std::size_t DIM>
 MultidimensionalRange<DIM> multidimensional_range(const std::array<std::size_t,DIM>& b) {
     std::array<std::size_t,DIM> a; for (std::size_t d = 0; d<DIM; ++d) a[d]=0;
     return multidimensional_range(a,b);
+}
+
 }
 
 

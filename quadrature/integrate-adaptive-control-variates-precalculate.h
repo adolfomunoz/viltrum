@@ -4,6 +4,8 @@
 #include "monte-carlo.h"
 #include "sample-vector.h"
 
+namespace viltrum {
+
 template<typename Nested, typename Error, typename ResidualStepper, typename VectorSampler>
 class StepperBinsAdaptiveStratifiedControlVariatesPrecalculate {
 	StepperBinsAdaptive<Nested,Error> cv_stepper;
@@ -95,6 +97,8 @@ template<typename Nested>
 auto stepper_bins_adaptive_stratified_control_variates_precalculate(Nested&& nested, unsigned long adaptive_iterations, std::size_t seed_mc = std::random_device()(), std::size_t seed_vs = std::random_device()()) {
 	return stepper_bins_adaptive_stratified_control_variates_precalculate(std::forward<Nested>(nested),
 	error_single_dimension_standard(),stepper_monte_carlo_uniform(seed_mc),vector_sampler_uniform(seed_vs),adaptive_iterations);
+}
+
 }
 
 

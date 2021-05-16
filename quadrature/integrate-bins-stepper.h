@@ -7,6 +7,7 @@
 #include "integrate-bins.h"
 #include "vector-dimensions.h"
 
+namespace viltrum {
 
 template<typename Stepper>
 class IntegratorBinsStepper {
@@ -99,6 +100,8 @@ void integrate_bins_stepper_progression(const std::string& name, const Stepper& 
     auto end = std::chrono::steady_clock::now();
 	auto elapsed = std::chrono::duration_cast<std::chrono::duration<double> >(end - start); 
     std::cout<<name<<" - \t[DONE] \t("<<std::setprecision(3)<<std::setw(6)<<elapsed.count()<<" seconds)"<<std::endl;
+}
+
 }
 
 

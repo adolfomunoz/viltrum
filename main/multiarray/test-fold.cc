@@ -4,6 +4,7 @@
 #include "../quadrature/rules.h"
 #include <iostream>
 
+using namespace viltrum;
 float sum(const std::array<float,3>& p) {
 	return p[0]+p[1]+p[2];
 }

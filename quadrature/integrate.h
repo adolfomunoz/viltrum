@@ -15,6 +15,8 @@
 #include <cmath>
 #include <algorithm>
 
+namespace viltrum {
+
 template<typename Q>
 class IntegratorQuadrature {
     Q quadrature;
@@ -169,5 +171,7 @@ auto integrator_adaptive_iterations(N&& nested, unsigned long iterations) {
 template<typename Integrator, typename F, typename Float, std::size_t DIM>
 auto integrate(const Integrator& integrator, const F& function, const Range<Float,DIM>& range) {
     return integrator.integrate(function,range);
+}
+
 }
 

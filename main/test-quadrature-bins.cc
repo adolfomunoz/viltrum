@@ -1,10 +1,6 @@
 #include <iostream>
 #include <iomanip>
-#include "../quadrature/integrate.h"
-#include "../quadrature/integrate-bins.h"
-#include "../quadrature/integrate-bins-adaptive.h"
-#include "../quadrature/integrate-optimized-adaptive-stratified-control-variates.h"
-#include "../quadrature/monte-carlo.h"
+#include "../viltrum.h"
 #include <cmath>
 #include "../functions/functions1d.h"
 //#include <numeric>
@@ -26,6 +22,8 @@ public:
 	
 	unsigned long evaluations() const { return evals; }
 };
+
+using namespace viltrum;
 
 template<typename F, typename I>
 void test(const char* name, const I& integrator, unsigned int bins, const F& f, double rmin = 0, double rmax=1) {

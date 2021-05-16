@@ -6,6 +6,8 @@
 #include <sstream>
 #include <algorithm>
 
+namespace viltrum {
+
 class array_to_string {
 	std::string separator;
 public:
@@ -28,4 +30,5 @@ std::ostream& operator<<(std::ostream& os, const multiarray_const<MA>& ma) {
 	else 
 		os<<ma.fold(array_to_string(" "),1).fold(array_to_string("\n")).fold_all(array_to_string("-----------------------------\n"));
 	return os;
+}
 }

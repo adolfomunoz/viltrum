@@ -7,6 +7,8 @@
 #include <sstream>
 #include <algorithm>
 
+using namespace viltrum;
+
 int main(int argc, char **argv) {
 	auto f1 = [] (const std::array<double,1>& x) { return std::cos(M_PI*x[0]/2.0); };
 	auto f2 = [] (const std::array<double,2>& x) { return x[0]*x[1]; };

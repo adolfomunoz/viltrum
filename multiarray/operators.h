@@ -3,6 +3,7 @@
 #include "multiarray.h"
 #include "../quadrature/multidimensional-range.h"
 
+namespace viltrum {
 template<typename M1, typename M2>
 auto operator+(const multiarray_const<M1>& m1, const multiarray_const<M2>& m2) { 
 	static_assert(M1::dimensions == M2::dimensions, "Addition of multiarrays with different number of dimensions"); 
@@ -21,6 +22,7 @@ auto operator*(const multiarray_const<M>& m, const Factor& f) {
     for (auto i : multidimensional_range(resolution))
         sol[i] = m[i]*f;
     return sol;
+}
 }
 
 

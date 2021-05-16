@@ -3,6 +3,8 @@
 #include <vector>
 #include <array>
 
+namespace viltrum {
+
 template<typename T, std::size_t DIMBINS>
 class vector_dimensions {
     std::vector<T> data;
@@ -53,4 +55,6 @@ public:
 
     std::size_t size() const { return raw_data().size(); }
 };
+
+}
 

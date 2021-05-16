@@ -2,6 +2,8 @@
 #include <array>
 #include <algorithm>
 
+namespace viltrum {
+
 template<typename T, std::size_t N>
 auto operator|(const std::array<T,N>& a, const T& t) noexcept -> std::array<T,N+1> {
 	std::array<T,N+1> s;
@@ -41,3 +43,5 @@ std::array<float,NNEW> resize(const std::array<float,N>& a) {
     for (std::size_t i = 0; i<NNEW; ++i) s[i] = a[std::min(i,N-1)];
     return s;
 } 
+
+}

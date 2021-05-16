@@ -1,10 +1,4 @@
-#include "../quadrature/integrate-bins-stepper.h"
-#include "../quadrature/integrate-bins.h"
-#include "../quadrature/integrate-bins-adaptive.h"
-#include "../quadrature/integrate-adaptive-control-variates.h"
-#include "../quadrature/integrate-optimized-adaptive-stratified-control-variates.h"
-#include "../quadrature/monte-carlo.h"
-#include "../quadrature/control-variates.h"
+#include "../viltrum.h"
 #include "../functions/functions2d.h"
 #include "../plot/integration2d.h"
 #include <svg-cpp-plot/svg-cpp-plot.h>
@@ -12,6 +6,8 @@
 #include <iostream>
 #include <cmath>
 #include <chrono>
+
+using namespace viltrum;
 
 template<typename F>
 class FunctionWrapper {

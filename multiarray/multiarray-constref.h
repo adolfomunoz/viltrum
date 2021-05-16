@@ -2,6 +2,7 @@
 
 #include "multiarray-crtp.h"
 
+namespace viltrum {
 //Class to avoid copies in other multiarray classes.
 template<typename Base>
 class multiarray_constref : public multiarray_const<multiarray_constref<Base>> {
@@ -16,3 +17,5 @@ public:
 	multiarray_constref(const Base& base):base(base) {}
 	value_type operator[](const index_type& indices) const { return base[indices]; }
 };
+
+}

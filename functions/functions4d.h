@@ -118,7 +118,7 @@ Function4D function4d(int& i, int argc, char **argv) {
     }
 
     if (!has_groundtruth) groundtruth = [func,ground_truth_samples,seed] (double a0, double a1, double a2, double a3, double b0, double b1, double b2, double b3) {
-        return integrator_monte_carlo_uniform(ground_truth_samples,seed).integrate([func] (const std::array<double,4>& x) { return func(std::get<0>(x),std::get<1>(x), std::get<2>(x), std::get<3>(x)); },range(a0,a1,a2,a3,b0,b1,b2,b3));
+        return viltrum::integrator_monte_carlo_uniform(ground_truth_samples,seed).integrate([func] (const std::array<double,4>& x) { return func(std::get<0>(x),std::get<1>(x), std::get<2>(x), std::get<3>(x)); },viltrum::range(a0,a1,a2,a3,b0,b1,b2,b3));
 	};
 
 	return std::make_tuple(func,groundtruth);     

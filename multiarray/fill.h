@@ -4,7 +4,7 @@
 #include "array.h"
 
 
-
+namespace viltrum {
 
 namespace detail {
 template<typename F, typename MA>
@@ -63,4 +63,5 @@ auto sample(const F& f) -> multiarray<decltype(f(std::declval<std::array<double,
 }
 */
 
+}
 }

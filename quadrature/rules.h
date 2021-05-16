@@ -1,6 +1,8 @@
 #pragma once
 #include <array>
 
+namespace viltrum {
+
 struct Trapezoidal {	
 	static constexpr std::size_t samples = 2;
 	
@@ -246,4 +248,6 @@ public:
 template<std::size_t N, typename Q> 
 auto steps(const Q& quadrature) {
 	return Steps<Q,N>(quadrature);
+}
+
 }

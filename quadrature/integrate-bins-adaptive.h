@@ -3,6 +3,8 @@
 #include <vector>
 #include "integrate-bins-stepper.h"
 
+namespace viltrum {
+
 template<typename Nested, typename Error>
 class StepperBinsAdaptive {
     StepperAdaptive<Nested,Error> adaptive;
@@ -58,6 +60,7 @@ auto stepper_bins_adaptive(Nested&& nested, Error&& error) {
 template<typename N>
 auto stepper_bins_adaptive(N&& nested) {
     return stepper_bins_adaptive(std::forward<N>(nested), error_single_dimension_standard());
+}
 }
 
 

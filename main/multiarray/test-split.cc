@@ -6,6 +6,8 @@
 #include <sstream>
 #include <algorithm>
 
+using namespace viltrum;
+
 template<std::size_t size>
 void test1(std::size_t parts) {
 	unsigned int evals = 0;

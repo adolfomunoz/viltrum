@@ -70,7 +70,7 @@ Function2D function2d(int& i, int argc, char **argv) {
     }
 
     if (!has_groundtruth) groundtruth = [func,ground_truth_samples,seed] (double a0, double a1, double b0, double b1) {
-        return integrator_monte_carlo_uniform(ground_truth_samples,seed).integrate([func] (const std::array<double,2>& x) { return func(std::get<0>(x),std::get<1>(x)); },range(a0,a1,b0,b1));
+        return viltrum::integrator_monte_carlo_uniform(ground_truth_samples,seed).integrate([func] (const std::array<double,2>& x) { return func(std::get<0>(x),std::get<1>(x)); },viltrum::range(a0,a1,b0,b1));
 	};
 
 	return std::make_tuple(func,groundtruth);     

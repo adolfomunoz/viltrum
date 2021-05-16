@@ -2,6 +2,8 @@
 
 #include <array>
 
+namespace viltrum {
+
 template<typename T, std::size_t DIM>
 class Range : public std::array<std::array<T,DIM>,2> {
 	T _volume;
@@ -128,4 +130,6 @@ Range<T,3> range(const T& a0, const T& a1, const T& a2, const T& b0, const T& b1
 template<typename T>
 Range<T,4> range(const T& a0, const T& a1, const T& a2, const T& a3, const T& b0, const T& b1, const T& b2, const T& b3) {
     return Range<T,4>(std::array<T,4>{a0,a1,a2,b3},std::array<T,4>{b0,b1,b2,b3});
+}
+
 }

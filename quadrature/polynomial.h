@@ -5,6 +5,8 @@
 #include "range.h"
 #include "../quadrature/multidimensional-range.h"
 
+namespace viltrum {
+
 template<std::size_t N>
 struct horner {
 	template<typename Float, typename T, std::size_t DIM>
@@ -111,3 +113,5 @@ public:
 			this->coefficients());
 	}
 };
+
+}

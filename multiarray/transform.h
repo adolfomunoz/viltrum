@@ -2,6 +2,7 @@
 
 #include "multiarray-constref.h"
 
+namespace viltrum {
 
 //F is a function that gets an array of size SIZE and an index returns a value.
 //This class is not meant to be used directly.
@@ -70,5 +71,6 @@ auto transform_all(Base& base, F&& f) {
 	return detail::transform_all_helper<0>::apply(multiarray_constref<std::decay_t<Base>>(base),std::forward<F>(f));
 }
 */
+}
 }
 

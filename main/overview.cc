@@ -1,36 +1,13 @@
 #include <memory>
-//#define C_DIM_N 2 //Dos parece ser el mínimo o explota la interpolación polinomial. De todas formas ignoramos una de las dos dimensiones.
 #include <svg-cpp-plot/svg-cpp-plot.h>
-#include "../quadrature/integrate.h"
+#include "../viltrum.h"
 #include "../functions/functions1d.h"
 
 #include <iostream>
 #include <cmath>
 
-/*
-template<typename F, typename R>
-svg_cpp_plot::_2d::Group plot_residual(const F& f, const std::vector<R>& regions) {
-    auto sol = svg_cpp_plot::_2d::group();
-    for (const auto& r : regions) 
-        sol.add(svg_cpp_plot::_2d::function([f,r] (float x) { return f(x) - r.approximation_at(std::array<float,1>{x}); }, r.range().min(0),r.range().max(0)));
-    return sol;
-}
-
-
-template<typename R>
-svg_cpp_plot::_2d::Group plot_boundaries(const std::vector<R>& regions) {
-    auto sol = svg_cpp_plot::_2d::group();
-    sol.add(svg_cpp_plot::_2d::line({0,0},{0,1}));
-    for (const auto& r : regions) {
-        sol.add(svg_cpp_plot::_2d::line({r.range().max(0),0},{r.range().max(0),1}));
-    }
-    return sol;
-}
-*/
-
-
 int main(int argc, char **argv) {	
-	const char* output = "output.svg";
+	const char* output = "overview.svg";
     float frequency = 3;
     float offset = 0.5;
     float scale = 0.6;
@@ -70,7 +47,7 @@ int main(int argc, char **argv) {
 	svg_cpp_plot::SVG svg;
 
     svg_cpp_plot::SVGPlot plt;
-    for (int i = 0; i<6; ++i) plt.subplot(1,6,i).figsize({width,width}).xticks({0,1}).yticks({0}).axis({0,1,0,1});
+    for (int i = 0; i<6; ++i) plt.subplot(1,6,i).figsize({width,width}).xticks({0,1}).yticks({0});
     for (int i = 1; i<5; ++i) plt.subplot(1,6,i).axis({0,1,0,1});
     plt.subplots_adjust().wspace(0.02);
     plt.subplot(1,6,0).plot(svg_cpp_plot::linspace(0,1,plot_samples),plottable_pdf).linewidth(graph_width).color(color_pdf);
@@ -78,9 +55,9 @@ int main(int argc, char **argv) {
     plt.subplot(1,6,0).xticklabels({"a","b"});
     plt.subplot(1,6,1).plot(svg_cpp_plot::linspace(0,1,plot_samples),integrand_primary).linewidth(graph_width).color(color_integrand);
 
-    auto stepper = stepper_adaptive(nested(simpson,trapezoidal));
-    auto regions = stepper.init(adaptable_integrand,range(0.0f,1.0f));
-    for (int i = 0; i < iterations; ++i) stepper.step(adaptable_integrand, range(0.0f,1.0f), regions);
+    auto stepper = viltrum::stepper_adaptive(viltrum::nested(viltrum::simpson,viltrum::trapezoidal));
+    auto regions = stepper.init(adaptable_integrand,viltrum::range(0.0f,1.0f));
+    for (int i = 0; i < iterations; ++i) stepper.step(adaptable_integrand, viltrum::range(0.0f,1.0f), regions);
 
     for (int i = 0; i<=2; ++i) {
         plt.subplot(1,6,2+i).plot(svg_cpp_plot::linspace(0,1,100),integrand_primary).linewidth(graph_width).color(color_integrand);
@@ -95,8 +72,8 @@ int main(int argc, char **argv) {
                     .linewidth(0.5*graph_width).color(color_cv);
         }
 
-        if (i<2) stepper.step(adaptable_integrand, range(0.0f,1.0f), regions);
-        if (i==1) for(int j=i;j<(iterations_end-iterations)-1;++j) stepper.step(adaptable_integrand, range(0.0f,1.0f), regions);
+        if (i<2) stepper.step(adaptable_integrand, viltrum::range(0.0f,1.0f), regions);
+        if (i==1) for(int j=i;j<(iterations_end-iterations)-1;++j) stepper.step(adaptable_integrand, viltrum::range(0.0f,1.0f), regions);
     }
     
     for (const auto& r : regions) {

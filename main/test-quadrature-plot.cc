@@ -1,8 +1,5 @@
 #include <iostream>
-#include "../multiarray/fold.h"
-#include "../multiarray/fill.h"
-#include "../multiarray/multiarray.h"
-#include "../quadrature/rules.h"
+#include "../viltrum.h"
 #include <cmath>
 #include <random>
 #include <svg-cpp-plot/svg-cpp-plot.h>

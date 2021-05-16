@@ -5,7 +5,10 @@
 #include "multiarray.h"
 #include <list>
 
+namespace viltrum {
+
 namespace detail {
+    
 
 template<typename F, typename MA>
 std::vector<multiarray<typename MA::value_type,MA::size,MA::dimensions>>
@@ -79,4 +82,5 @@ auto sample(const F& f) -> multiarray<decltype(f(std::declval<std::array<double,
 }
 */
 
+}
 }

@@ -4,6 +4,8 @@
 #include "../multiarray/fill.h"
 #include <iostream>
 
+using namespace viltrum;
+
 int main(int argc, char **argv) {	
 	multiarray<float,3,2> m(0);
 	std::cout<<m<<std::endl;

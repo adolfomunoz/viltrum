@@ -1,9 +1,10 @@
-#include "../quadrature/integrate.h"
-#include "../quadrature/monte-carlo.h"
+#include "../viltrum.h"
 #include <iostream>
 #include <iomanip>
 #include <functional>
 #include <numeric>
+
+using namespace viltrum;
 
 class Function {
 	mutable unsigned long evals = 0;

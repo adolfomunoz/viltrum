@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+namespace viltrum {
+
 class ErrorSingleDimensionStandard {
     float norm(float f) const { return std::abs(f); }
     double norm(double f) const { return std::abs(f); }
@@ -146,6 +148,7 @@ public:
 
 ErrorPartiallyRelativeSingleDimensionSize error_partially_relative_single_dimension_size(double size_factor = 1.e-5, std::size_t relative_dimensions = 2, double offset = 1.e-6) { return ErrorPartiallyRelativeSingleDimensionSize(size_factor, relative_dimensions, offset); }
 
+}
 
 
 

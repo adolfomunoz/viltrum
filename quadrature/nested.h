@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 
+namespace viltrum {
 
 template<typename H, typename L>
 class Nested : public H {
@@ -35,4 +36,6 @@ struct is_nested<Nested<H,L>> : std::integral_constant<bool,true> {};
 template<typename H, typename L>
 auto nested(const H& h, const L& l) {
 	return Nested<H,L>(h,l);
+}
+
 }

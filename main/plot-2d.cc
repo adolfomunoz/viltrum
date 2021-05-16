@@ -1,10 +1,11 @@
-#include "../quadrature/integrate.h"
-#include "../functions/functions2d.h"
+#include "../viltrum.h"
 #include "../plot/integration2d.h"
 #include <svg-cpp-plot/svg-cpp-plot.h>
 
 #include <iostream>
 #include <cmath>
+
+using namespace viltrum;
 
 int main(int argc, char **argv) {
 	const char* output = "output.svg";

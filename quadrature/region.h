@@ -13,6 +13,8 @@
 #include "nested.h"
 #include <cmath>
 
+namespace viltrum {
+
 
 template<typename Float, typename Q, std::size_t DIM, typename VT>
 class Region {
@@ -249,3 +251,5 @@ public:
 	
 	const E& extra() const { return e; }
 };
+
+}

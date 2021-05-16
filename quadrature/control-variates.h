@@ -4,6 +4,8 @@
 #include "monte-carlo.h"
 #include "integrate-bins-stepper.h"
 
+namespace viltrum {
+
 /**
  * A control variate should be evaluable and integrable 
  *      Result operator()(const std::array<Float,DIM>& x) 
@@ -212,6 +214,8 @@ auto stepper_control_variate(CVG&& cv_generator, std::size_t seed = std::random_
 template<typename CVG>
 auto stepper_bins_control_variate(CVG&& cv_generator, std::size_t seed = std::random_device()()) {
     return stepper_bins_control_variate(std::forward<CVG>(cv_generator),stepper_bins_per_bin(stepper_monte_carlo_uniform(seed)));
+}
+
 }
 
 

@@ -2,7 +2,7 @@
 
 #include "multiarray-constref.h"
 
-
+namespace viltrum {
 //F is a function that gets an array of size SIZE and returns a single element.
 //This class is not meant to be used directly.
 template<typename F, typename Base, std::size_t DIM = Base::dimensions - 1> //We need a particular case when DIM becomes 0
@@ -105,6 +105,7 @@ struct fold_all_helper<Base,F,0> {
 template<typename Base, typename F>
 auto fold_all(Base&& base, F&& f) {
 	return detail::fold_all_helper<Base,F>::apply(std::forward<Base>(base),std::forward<F>(f));
+}
 }
 }
 

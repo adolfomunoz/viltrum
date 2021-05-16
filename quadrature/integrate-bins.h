@@ -4,6 +4,8 @@
 #include "integrate.h"
 #include "multidimensional-range.h"
 
+namespace viltrum {
+
 template<typename IntegratorPerBin>
 class IntegratorBinsPerBin {
     IntegratorPerBin bin_integrator;
@@ -52,6 +54,8 @@ template<typename IntegratorBins, typename T, typename F, typename Float, std::s
 void integrate_bins(const IntegratorBins& integrator_bins, std::vector<T>& bins, const F& function, const Range<Float,DIM>& range) {
     auto vb = vector_bins(bins);
     integrate_bins(integrator_bins, vb, vector_resolution(bins), function, range);
+}
+
 }
 
 

@@ -8,6 +8,8 @@
 #include <array>
 #include <type_traits>
 
+namespace viltrum {
+
 template<typename Nested, typename Error>
 class RegionGenerator {
 	StepperAdaptive<Nested,Error> stepper;
@@ -428,6 +430,8 @@ auto integrator_alpha1_perregion_adaptive_stratified_control_variates(Nested&& n
 			
 	return integrator_alpha1_perregion_adaptive_stratified_control_variates(
 		std::forward<Nested>(nested),std::forward<Error>(error),adaptive_iterations, spp, std::mt19937_64(seed));
+}
+
 }
 
 

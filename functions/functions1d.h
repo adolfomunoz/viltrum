@@ -68,7 +68,7 @@ Function1D function1d(int& i, int argc, char** argv) {
     }   
 
     if (!has_groundtruth) groundtruth = [f,ground_truth_samples,seed] (double a, double b) {
-        return integrator_monte_carlo_uniform(ground_truth_samples,seed).integrate([f] (const std::array<double,1>& x) { return f(std::get<0>(x)); },range(a,b));
+        return viltrum::integrator_monte_carlo_uniform(ground_truth_samples,seed).integrate([f] (const std::array<double,1>& x) { return f(std::get<0>(x)); },viltrum::range(a,b));
 	};
 	return std::make_tuple(f,groundtruth);    
 }

@@ -2,6 +2,8 @@
 #include "multiarray-crtp.h"
 #include <cassert>
 
+namespace viltrum {
+    
 //Class that fixes one dimension to a specific index and returns the rest
 //static_assert when base dimension is 1
 template<typename Base>
@@ -71,4 +73,6 @@ auto slice(MA& ma, std::size_t  dimension, std::size_t index) noexcept {
 	static_assert(MA::dimensions > 1, "Cannot slice a dimension 1 multiarray");
 	assert( (dimension >= 0) && (dimension<MA::dimensions) && (index < MA::size) );	return multiarray_slice<MA>(ma,dimension,index);
 }
+}
+
 }

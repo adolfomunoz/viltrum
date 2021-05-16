@@ -5,6 +5,8 @@
 #include <cassert>
 #include <stdexcept>
 
+namespace viltrum {
+
 template<typename T, std::size_t SIZE, std::size_t DIM>
 class multiarray;
 namespace detail {
@@ -147,3 +149,5 @@ MThis& operator=(const MThis& that) { \
 	} \
 	return (*this); \
 }  
+
+}

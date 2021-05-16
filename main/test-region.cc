@@ -1,9 +1,9 @@
-#include "../quadrature/region.h"
-#include "../quadrature/rules.h"
-#include "../multiarray/array.h"
+#include "../viltrum.h"
 #include <iostream>
 #include <iomanip>
 
+
+using namespace viltrum;
 
 class Function {
 public:

@@ -5,7 +5,8 @@
 #include "multiarray-crtp.h"
 #include "../quadrature/multidimensional-range.h"
 
-
+namespace viltrum {
+    
 template<typename T, std::size_t SIZE, std::size_t DIM>
 class multiarray  : public multiarray_mutable<multiarray<T,SIZE,DIM>> {
 	std::vector<T> data; //We use a vector (even though it is on dynamic memory) because of move semantics. It will be faster to return.	
@@ -67,4 +68,5 @@ multiarray<typename M::value_type, M::size, M::dimensions> clone(const multiarra
     multiarray<typename M::value_type, M::size, M::dimensions> sol;
     sol=m;
     return sol;
+}
 }

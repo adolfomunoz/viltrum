@@ -6,6 +6,8 @@
 #include "integrate.h"
 #include "vector-dimensions.h"
 
+namespace viltrum {
+
 template<typename RNG>
 class StepperMonteCarloUniform {
     mutable RNG rng;
@@ -120,6 +122,8 @@ auto integrator_monte_carlo_uniform(RNG&& rng, unsigned long samples) {
 
 auto integrator_monte_carlo_uniform(unsigned long samples, std::size_t seed = std::random_device()()) {
     return integrator_stepper(stepper_monte_carlo_uniform(seed),samples);
+}
+
 }
 
 

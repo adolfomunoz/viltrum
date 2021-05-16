@@ -3,6 +3,8 @@
 #include "../multiarray/io.h"
 #include <iostream>
 
+using namespace viltrum;
+
 float avg(const std::array<float,5>& p,std::size_t i) {
 	if (i==0) return (p[0]+p[1])/2.0f;
     else if (i==4) return (p[3]+p[4])/2.0f;
