@@ -6,28 +6,13 @@
 //#include <numeric>
 //#include <execution>
 
-template<typename F>
-class FunctionWrapper {
-	F f;
-	mutable unsigned long evals = 0;
-public:
-	FunctionWrapper(const F& f) : f(f) {}
-	FunctionWrapper(F&& f) : f(std::forward<F>(f)) {}
-	
-    template<typename Float>
-	auto operator()(const std::array<Float, 1>& pos) const {
-		++evals;
-		return f(std::get<0>(pos));
-	}
-	
-	unsigned long evaluations() const { return evals; }
-};
+
 
 using namespace viltrum;
 
 template<typename F, typename I>
 void test(const char* name, const I& integrator, const F& f, double rmin = 0, double rmax=1) {
-	auto wrapper = FunctionWrapper<F>(f);
+	auto wrapper = FunctionWrapperCount<F>(f);
     auto integral = integrator.integrate(wrapper, range(rmin, rmax));
 	std::cout<<name<<" -> "
 	         <<std::setw(15)<<std::setprecision(8)<<std::scientific<<integral

@@ -8,15 +8,16 @@
 
 int main(int argc, char **argv) {	
 	const char* output = "overview.svg";
-    float frequency = 3;
+    float frequency = 1;
     float offset = 0.5;
     float scale = 0.6;
-    std::size_t seed = std::random_device()();
+//    std::size_t seed = std::random_device()();
+    std::size_t seed = 2;
 	int iterations = 9;
     float width = 1280;
     float height = 720;
-    int plot_samples = 100;
-//    int spacing = 40;
+    int bins = 10;
+    int plot_samples = 1000;
 
 	for (int i = 0; i<argc-1; ++i) {
 		if (std::string(argv[i])=="-output") { output = argv[++i]; }
@@ -25,6 +26,7 @@ int main(int argc, char **argv) {
 		else if (std::string(argv[i])=="-seed") { seed = atol(argv[++i]); } 
 		else if (std::string(argv[i])=="-width") { width = atof(argv[++i]); }
 		else if (std::string(argv[i])=="-height") { height = atof(argv[++i]); }
+        else if (std::string(argv[i])=="-bins") { bins = atoi(argv[++i]); }
         else if (std::string(argv[i])=="-plot-samples") { plot_samples = atoi(argv[++i]); }
 	}
 
@@ -38,8 +40,7 @@ int main(int argc, char **argv) {
     auto pdf = [] (float x) { return 0.5*M_PI*std::cos(M_PI*(x - 0.5)); };
     auto cdf = [] (float x) { return 0.5*std::sin(M_PI*(x - 0.5)) + 0.5; };
     auto integrand_primary = [&] (float x) { 
-        return scale*(siv::PerlinNoise(std::uint32_t(seed)).noise1D(x*frequency) +
-                  0.35*siv::PerlinNoise(std::uint32_t(seed+1)).noise1D(5.4f*x*frequency))  + offset; };
+        return scale*(siv::PerlinNoise(std::uint32_t(seed)).noise1D(x*frequency)  + offset; };
     auto integrand = [&] (float x) { return pdf(x)*integrand_primary(cdf(x)); };
     auto plottable_pdf = [&] (float x) { return pdf(x)/(0.7*M_PI); };
     auto adaptable_integrand = [&] (const std::array<float,1>& x) { return integrand_primary(x[0]); };
