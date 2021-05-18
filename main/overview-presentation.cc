@@ -8,15 +8,14 @@
 
 int main(int argc, char **argv) {	
 	const char* output = "overview.svg";
-    float frequency = 1;
+    float frequency = 3;
     float offset = 0.5;
-    float scale = 0.6;
+    float scale = 0.6; float smallscale = 0.35; float freqfactor = 5.4;
 //    std::size_t seed = std::random_device()();
-    std::size_t seed = 2;
+    std::size_t seed = 3;
 	int iterations = 9;
     float width = 1280;
     float height = 720;
-    int bins = 10;
     int plot_samples = 1000;
 
 	for (int i = 0; i<argc-1; ++i) {
@@ -26,7 +25,6 @@ int main(int argc, char **argv) {
 		else if (std::string(argv[i])=="-seed") { seed = atol(argv[++i]); } 
 		else if (std::string(argv[i])=="-width") { width = atof(argv[++i]); }
 		else if (std::string(argv[i])=="-height") { height = atof(argv[++i]); }
-        else if (std::string(argv[i])=="-bins") { bins = atoi(argv[++i]); }
         else if (std::string(argv[i])=="-plot-samples") { plot_samples = atoi(argv[++i]); }
 	}
 
@@ -40,10 +38,11 @@ int main(int argc, char **argv) {
     auto pdf = [] (float x) { return 0.5*M_PI*std::cos(M_PI*(x - 0.5)); };
     auto cdf = [] (float x) { return 0.5*std::sin(M_PI*(x - 0.5)) + 0.5; };
     auto integrand_primary = [&] (float x) { 
-        return scale*(siv::PerlinNoise(std::uint32_t(seed)).noise1D(x*frequency)  + offset; };
+        return scale*(siv::PerlinNoise(std::uint32_t(seed)).noise1D(x*frequency) +
+                  smallscale*siv::PerlinNoise(std::uint32_t(seed+1)).noise1D(freqfactor*x*frequency))  + offset; };
     auto integrand = [&] (float x) { return pdf(x)*integrand_primary(cdf(x)); };
     auto plottable_pdf = [&] (float x) { return pdf(x)/(0.7*M_PI); };
-    auto adaptable_integrand = [&] (const std::array<float,1>& x) { return integrand_primary(x[0]); };
+    viltrum::FunctionWrapperProfile adaptable_integrand(integrand_primary);
 
     {   //Integrand
         svg_cpp_plot::SVGPlot plt;
@@ -80,10 +79,27 @@ int main(int argc, char **argv) {
             plt.plot({r.range().min(0),r.range().min(0)},{0,1}).linewidth(0.5*graph_width).color(color_cv);
             plt.plot({r.range().max(0),r.range().max(0)},{0,1}).linewidth(0.5*graph_width).color(color_cv); 
         }
+        plt.scatter(adaptable_integrand.params(0),adaptable_integrand.values()).c(color_integrand).edgecolors(color_cv).s(1.5*graph_width).linewidths(0.35*graph_width);
         plt.savefig(std::string("iteration")+std::to_string(i)+"_"+output);
         if (i < (iterations-1)) stepper.step(adaptable_integrand, viltrum::range(0.0f,1.0f), regions);
     }
         
+    {
+        svg_cpp_plot::SVGPlot plt;
+        plt.figsize({width,height}).axis({0,1,0,1});
+        plt.set_xticks({0,1}).fontsize(tickfontsize);
+        plt.set_yticks({0}).fontsize(tickfontsize);
+        plt.plot({0,1},{0,0}).linewidth(0.5*graph_width).color(color_graph);
+        for (const auto& r : regions) {
+            plt.plot(
+                svg_cpp_plot::linspace(r.range().min(0),r.range().max(0),float(plot_samples)/(r.range().max(0)-r.range().min(0))),
+                [r] (float x) { return r.approximation_at(std::array<float,1>{x}); })
+                    .linewidth(graph_width).color(color_cv);
+        }
+        
+        plt.savefig(std::string("controlvariate_")+output);
+    }
+
     {
         svg_cpp_plot::SVGPlot plt;
         plt.figsize({width,height}).axis({0,1,-0.5,0.5});
