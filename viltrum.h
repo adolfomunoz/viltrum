@@ -20,5 +20,6 @@
 #include "quadrature/rules.h"
 #include "quadrature/sample-vector.h"
 #include "quadrature/vector-dimensions.h"
+#include "quadrature/bins-containers-adaptor.h"
 
 #include "utils/function-wrapper.h"

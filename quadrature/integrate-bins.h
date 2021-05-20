@@ -29,6 +29,8 @@ public:
 //    IntegratorQuadrature(const Q& q) : quadrature(q) { }
     IntegratorBinsPerBin(IntegratorPerBin&& pi) : 
 	    bin_integrator(std::forward<IntegratorPerBin>(pi)) { }
+    IntegratorBinsPerBin(const IntegratorPerBin& pi) : 
+	    bin_integrator(pi) { }
 
 };
 
@@ -43,6 +45,7 @@ void integrate_bins(const IntegratorBins& integrator_bins, Bins& bins, const std
     integrator_bins.integrate(bins,resolution, function, range);
 }
 
+/*
 template<typename T>
 auto vector_bins(std::vector<T>& bins) {
     return [&bins] (const std::array<std::size_t,1>& i) -> T& { return bins[i[0]]; };
@@ -55,6 +58,8 @@ void integrate_bins(const IntegratorBins& integrator_bins, std::vector<T>& bins,
     auto vb = vector_bins(bins);
     integrate_bins(integrator_bins, vb, vector_resolution(bins), function, range);
 }
+*/
+
 
 }
 

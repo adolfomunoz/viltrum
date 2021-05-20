@@ -34,10 +34,11 @@ int main(int argc, char **argv) {
 
     {   //Bins
         svg_cpp_plot::SVGPlot plt;
-        std::vector<float> sol(bins);
+        std::vector<float> solv(bins);
+        auto sol = viltrum::adaptor(solv);
         viltrum::FunctionWrapperProfile f(integrand_smooth);
         auto stepper = viltrum::stepper_bins_adaptive(viltrum::nested(viltrum::simpson,viltrum::trapezoidal));
-        auto regions = stepper.init(viltrum::vector_resolution(sol),f,viltrum::range(0.0f,1.0f));
+        auto regions = stepper.init(sol.resolution(),f,viltrum::range(0.0f,1.0f));
         plt.figsize({width,height});
         plt.xticks({});
 //        plt.set_xticks({-1,1}).fontsize(tickfontsize);
@@ -53,9 +54,8 @@ int main(int argc, char **argv) {
         
         svg_cpp_plot::SVGPlot plti;
         plti.figsize({width,height}).xticks({}).set_yticks({0}).fontsize(tickfontsize);
-        auto vb = viltrum::vector_bins(sol);
-        stepper.integral(vb, viltrum::vector_resolution(sol), f, viltrum::range(0.0f,1.0f), regions); 
-        plti.bar(svg_cpp_plot::arange(bins),sol).width({1}).color(svg_cpp_plot::rgb(0.75,0.75,0));
+        stepper.integral(sol, sol.resolution(), f, viltrum::range(0.0f,1.0f), regions); 
+        plti.bar(svg_cpp_plot::arange(bins),solv).width({1}).color(svg_cpp_plot::rgb(0.75,0.75,0));
         plti.savefig(std::string("bins_")+output);
     }
     

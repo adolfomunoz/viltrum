@@ -1,7 +1,14 @@
 #pragma once
 #include <cimg-all.h>
 
-template<typename T>
+namespace viltrum {
+
+/**
+ * CImgWrapper adapts a CImg image so it can hold the results of a 2D integral with integration methods.
+ * T -> type (usually float or double)
+ * C -> number of channels (usually 3) although it can be a different number
+ **/
+template<typename T, std::size_t C = 3>
 class CImgWrapper {
     cimg_library::CImg<T> image;
 public:
@@ -12,12 +19,12 @@ public:
         Pixel(cimg_library::CImg<T>& image, int i, int j) : image(image), i(i), j(j) { }
 		template<typename A>
         Pixel& operator=(const A& p) {
-            for (int c = 0; c<3; ++c) image(i,j,0,c)=p[c]; 
+            for (int c = 0; c<C; ++c) image(i,j,0,c)=p[c]; 
 			return (*this);
         }
 		template<typename A>
         Pixel& operator+=(const A& p) {
-            for (int c = 0; c<3; ++c) image(i,j,0,c)+=p[c]; 
+            for (int c = 0; c<C; ++c) image(i,j,0,c)+=p[c]; 
 			return (*this);
         }
 		T& operator[](int c) { return image(i,j,0,c); }
@@ -30,7 +37,7 @@ public:
 		const T& operator[](int c) const { return image(i,j,0,c); }
 
     };
-    CImgWrapper(int w, int h) : image(w,h,1,3) { }
+    CImgWrapper(int w, int h) : image(w,h,1,C) { }
     void clear() { image.fill(T(0)); }
 
     Pixel operator()(const std::array<std::size_t,2>& pos) {
@@ -69,5 +76,7 @@ public:
 		image.print();
 	}
 };
+
+}
 
 

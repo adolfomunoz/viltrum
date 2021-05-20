@@ -93,6 +93,11 @@ add_dependencies(polynomials-presentation svg-cpp-plot ${function_1d_deps})
 target_link_libraries(polynomials-presentation ${svg_cpp_plot_libs} ${function_1d_libs})
 target_compile_definitions(polynomials-presentation PRIVATE ${svg_cpp_plot_defs} ${function_1d_defs})
 
+add_executable(motivation-presentation main/motivation-presentation.cc)
+add_dependencies(motivation-presentation svg-cpp-plot)
+target_link_libraries(motivation-presentation ${svg_cpp_plot_libs})
+target_compile_definitions(motivation-presentation PRIVATE ${svg_cpp_plot_defs})
+
 #add_executable(plot-2d main/plot-2d.cc)
 #add_dependencies(plot-2d svg-cpp-plot ${function_2d_deps})
 #target_link_libraries(plot-2d ${svg_cpp_plot_libs} ${function_2d_libs})
