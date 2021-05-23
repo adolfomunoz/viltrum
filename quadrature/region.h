@@ -61,6 +61,16 @@ public:
 				quadrature(q), _range(range_min, range_max) {
 		data.fill(this->f_in_range(f));
 	}
+    
+	Region(const Q& q, const Range<Float,DIM>& r, multiarray<value_type,Q::samples,DIM>&& d) : 
+				quadrature(q), _range(r), 
+				data(std::forward<multiarray<value_type,Q::samples,DIM>>(d)) { }
+
+	template<typename F>
+	Region(const F& f, const Q& q, const Range<Float,DIM>& r) : 
+				quadrature(q), _range(r) {
+		data.fill(this->f_in_range(f));
+	}
 
     const Q& quadrature_rule() const { return quadrature; }
 	
@@ -238,6 +248,11 @@ auto region(const F& f, const Q& q,
 			const std::array<Float, DIM>& range_min, 
 			const std::array<Float, DIM>& range_max) {
 	return Region<Float,Q,DIM,std::decay_t<decltype(f(range_min))>>(f,q,range_min, range_max);
+}
+
+template<typename Float, typename F, typename Q, std::size_t DIM>
+auto region(const F& f, const Q& q, const Range<Float,DIM> range) {
+	return Region<Float,Q,DIM,std::decay_t<decltype(f(range.min()))>>(f,q,range);
 }
 
 template<typename R, typename E>

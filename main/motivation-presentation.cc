@@ -25,14 +25,16 @@ int main(int argc, char **argv) {
         else if (std::string(argv[i])=="-bins") { bins = atol(argv[++i]); }
 	}
     
-    auto pixel = [] (float z) {return 1.0f - z*z; };
+    auto pixel = [] (float z) {return std::cos(0.5*M_PI*z); };
     auto f = [pixel] (float x, float y, float z) { return pixel(z); };
 
     auto color_integrand = svg_cpp_plot::rgb(1,0,0);
     auto color_samples = svg_cpp_plot::rgb(0,0,0);
-    auto color_graph = svg_cpp_plot::rgb(0,0,0);
+//    auto color_graph = svg_cpp_plot::rgb(0,0,0);
+    auto color_approximation = svg_cpp_plot::rgb(0,0.6,0);
+    float alpha_approximation = 0.25;
     float graph_width = height/100.0;
-    float labelfontsize = height/10.0;
+//    float labelfontsize = height/10.0;
     
 
     {   
@@ -42,8 +44,9 @@ int main(int argc, char **argv) {
         viltrum::integrate_bins(image_integrator,data,viltrum::FunctionWrapper(f),viltrum::range(0.0f,0.0f,0.0f,1.0f,1.0f,1.0f));
         svg_cpp_plot::SVGPlot plt;
         plt.figsize({width,width}).xticks({}).yticks({});
-        plt.set_xlabel("x").fontsize(labelfontsize);
-        plt.set_ylabel("y").fontsize(labelfontsize);
+//      ADD LABELS MANUALLY vv
+//        plt.set_xlabel("x").fontsize(labelfontsize);
+//        plt.set_ylabel("y").fontsize(labelfontsize);
         plt.imshow(data).cmap("grayscale").vmin(0).vmax(1);
         plt.savefig(std::string("montecarlo_")+output);
         for (int i = 0; i < pixel_graphs; ++i) {
@@ -53,7 +56,9 @@ int main(int argc, char **argv) {
             plt.figsize({width,height}).xticks({}).yticks({}).axis({0,1,0,1});
             plt.plot(svg_cpp_plot::linspace(0.0f,1.0f,100),pixel).color(color_integrand).linewidth(graph_width);
             plt.scatter(f.params(0),f.values()).s(1.5*graph_width).c(color_samples);
-            plt.set_xlabel("z").fontsize(labelfontsize);
+            plt.bar({0.5},f.values()).width({1.0f}).color(color_approximation).alpha(alpha_approximation);
+//      ADD LABELS MANUALLY vv
+//            plt.set_xlabel("z").fontsize(labelfontsize);
             plt.savefig(std::string("montecarlo_")+std::to_string(i)+output);
         }
     }
@@ -65,8 +70,9 @@ int main(int argc, char **argv) {
         viltrum::integrate_bins(image_integrator,data,viltrum::FunctionWrapper(f),viltrum::range(0.0f,0.0f,0.0f,1.0f,1.0f,1.0f));
         svg_cpp_plot::SVGPlot plt;
         plt.figsize({width,width}).xticks({}).yticks({});
-        plt.set_xlabel("x").fontsize(labelfontsize);
-        plt.set_ylabel("y").fontsize(labelfontsize);
+//      ADD LABELS MANUALLY vv
+//        plt.set_xlabel("x").fontsize(labelfontsize);
+//        plt.set_ylabel("y").fontsize(labelfontsize);
         plt.imshow(data).cmap("grayscale").vmin(0).vmax(1);
         plt.savefig(std::string("trapezoidal_")+output);
         {
@@ -76,9 +82,14 @@ int main(int argc, char **argv) {
             plt.figsize({width,height}).xticks({}).yticks({}).axis({0,1,0,1});
             plt.plot(svg_cpp_plot::linspace(0.0f,1.0f,100),pixel).color(color_integrand).linewidth(graph_width);
             plt.scatter(f.params(0),f.values()).s(1.5*graph_width).c(color_samples);
-            plt.set_xlabel("z").fontsize(labelfontsize);
+//      ADD LABELS MANUALLY vv
+//            plt.set_xlabel("z").fontsize(labelfontsize);
             plt.savefig(std::string("trapezoidal_0")+output);
-            plt.plot(svg_cpp_plot::linspace(0.0f,1.0f,100),pixel).color("green").format("--").linewidth(1.1*graph_width);
+            auto region = viltrum::region(viltrum::FunctionWrapper(pixel),viltrum::simpson,viltrum::range(0.0f,1.0f));
+            plt.plot(svg_cpp_plot::linspace(0.0f,1.0f,100),[&] (float x) { return region.approximation_at(x); })
+                    .color(color_approximation).linewidth(graph_width);
+            plt.bar(svg_cpp_plot::linspace(0.0f,1.0f,100),[&] (float x) { return region.approximation_at(x); })
+                    .width(0.0101f).color(color_approximation).alpha(alpha_approximation);
             plt.savefig(std::string("trapezoidal_1")+output);
             plt.scatter(f.params(0),f.values()).s(1.5*graph_width).c(color_samples);
         }
