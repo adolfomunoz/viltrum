@@ -29,8 +29,8 @@ Range<double,DIM> default_range() {
 template<std::size_t DIM, typename Stepper>
 long samples_per_iteration(const Stepper& stepper) {
 	Function fant, f;
-	auto sant = integrator_stepper(stepper,1).integrate(fant,default_range<DIM>());
-	auto s = integrator_stepper(stepper,2).integrate(f,default_range<DIM>());
+	/*auto sant = */integrator_stepper(stepper,1).integrate(fant,default_range<DIM>());
+	/*auto s = */integrator_stepper(stepper,2).integrate(f,default_range<DIM>());
 	return f.evaluations()-fant.evaluations();
 }
 
