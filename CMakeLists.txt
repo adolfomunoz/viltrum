@@ -25,7 +25,7 @@ add_dependencies(test-quadrature-bins ${function_1d_deps})
 #add_dependencies(test-quadrature-plot svg-cpp-plot ${function_1d_deps})
 add_executable(test-multidimensional-range main/test-multidimensional-range.cc)
 
-add_executable(sphere main/doc/sphere.cc)
+add_executable(integrands main/doc/integrands.cc)
 
 #add_executable(convergence-1d main/convergence-1d.cc)
 #add_dependencies(convergence-1d svg-cpp-plot ${function_1d_deps})

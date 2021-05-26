@@ -132,7 +132,7 @@ Range<T,4> range(const T& a0, const T& a1, const T& a2, const T& a3, const T& b0
     return Range<T,4>(std::array<T,4>{a0,a1,a2,b3},std::array<T,4>{b0,b1,b2,b3});
 }
 
-template<typename T, std::size_t N>
+template<std::size_t N, typename T>
 Range<T,N> range_all(const T& va, const T& vb) {
     std::array<T,N> a, b;
     for (std::size_t i = 0;i<N;++i) {

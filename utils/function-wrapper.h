@@ -21,7 +21,28 @@ public:
 		return std::apply(f,params);
 	}
 };
- 
+
+template<typename F>
+auto function_wrapper(F&& f) {
+    return FunctionWrapper<std::decay_t<F>>(std::forward<std::decay_t<F>>(f)); 
+}
+
+template<typename F>
+auto function_wrapper(const F& f) {
+    return FunctionWrapper<std::decay_t<F>>(f); 
+}
+
+/*
+template<typename F>
+auto function_wrapper(F& f) {
+    return FunctionWrapper<std::decay_t<F>&>(f); 
+}
+*/
+
+
+
+
+
 /**
  * This function wrapper helps counting number of function invocations. 
  * It also adapts functions of "N" parameters into the "array" version that is required for viltrum ndimensional integrators
