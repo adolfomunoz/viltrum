@@ -1,4 +1,4 @@
-# Installation
+# `viltrum` - Installation
 
 `viltrum` is a header-only library, so installation is rather simple (it does not require any compilation process). You just need to download the library in a specific folder:
 
