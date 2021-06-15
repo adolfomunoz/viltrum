@@ -21,7 +21,7 @@ auto operator|(const T& t, const std::array<T,N>& a) noexcept -> std::array<T,N+
 }
 
 template<typename T, std::size_t N1, std::size_t N2>
-auto operator|(const std::array<T,N1>& a1,const std::array<T,N1>& a2) noexcept -> std::array<T,N1+N2> {
+auto operator|(const std::array<T,N1>& a1,const std::array<T,N2>& a2) noexcept -> std::array<T,N1+N2> {
 	std::array<T,N1+N2> s;
 	std::copy(a1.begin(),a1.end(),s.begin());
 	std::copy(a2.begin(),a2.end(),s.begin()+N1);

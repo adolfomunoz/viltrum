@@ -1,6 +1,8 @@
 #pragma once
 
-#include <array>
+#include "../multiarray/array.h"
+#include <tuple>
+#include <type_traits>
 
 namespace viltrum {
 
@@ -13,13 +15,13 @@ public:
 		_volume = T(1);
 		for (std::size_t i = 0; i<DIM; ++i) _volume*=(b[i]-a[i]);
 	}
-	
+    
 	const std::array<T,DIM>& min() const { return (*this)[0]; }
 	T min(std::size_t i) const { return min()[i]; }
 	const std::array<T,DIM>& max() const { return (*this)[1]; }
 	T max(std::size_t i) const { return max()[i]; }
 	T volume() const { return _volume; }
-
+    
     bool is_inside(const std::array<T,DIM>& x) const {
         bool is = true;
         for (std::size_t i = 0; (i<DIM) && is; ++i)
@@ -106,13 +108,19 @@ public:
     }
 };
 
+
 template<typename T, std::size_t DIM>
 Range<T,DIM> range(const std::array<T,DIM>& a, const std::array<T,DIM>& b) {
     return Range<T,DIM>(a,b);
 }
 
+template<typename T, std::size_t N1, std::size_t N2>
+auto operator|(const Range<T,N1>& r1,const Range<T,N2>& r2) noexcept -> Range<T,N1+N2> {
+    return range(r1.min() | r2.min(), r1.max() | r2.max());
+}
+
 template<typename T>
-Range<T,1> range(const T& a, const T& b) {
+Range<T,1> range(const T& a, const T& b, std::enable_if_t<std::is_floating_point_v<T>,int> dummy = 0) {
     return Range<T,1>(std::array<T,1>{a},std::array<T,1>{b});
 }
 
@@ -120,6 +128,7 @@ template<typename T>
 Range<T,2> range(const T& a0, const T& a1, const T& b0, const T& b1) {
     return Range<T,2>(std::array<T,2>{a0,a1},std::array<T,2>{b0,b1});
 }
+
 
 template<typename T>
 Range<T,3> range(const T& a0, const T& a1, const T& a2, const T& b0, const T& b1, const T& b2) {
@@ -144,12 +153,7 @@ Range<T,N> range_all(const T& va, const T& vb) {
 
 template<std::size_t N, typename T = float>
 Range<T,N> range_primary() {
-    std::array<T,N> a, b;
-    for (std::size_t i = 0;i<N;++i) {
-        a[i]=T(0);
-        b[i]=T(1);
-    }
-    return range(a,b);
+    return range_all<N>(T(0),T(1));
 }
 
 }
