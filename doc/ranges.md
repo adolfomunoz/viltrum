@@ -40,6 +40,7 @@ int main(int argc, char** argv) {
     std::cout<<"2D = "<<method.integrate(Gaussian(),viltrum::range(min2d,max2d))<<std::endl;
     std::array<double,3> min3d{0.0,0.0,0.0}; std::array<double,3> max3d{1.0,1.0,1.0};
     std::cout<<"3D = "<<method.integrate(Gaussian(),viltrum::range(min3d,max3d))<<std::endl;
+}
 ```
 
 Defining first the `std::array`s and then the integration range is quite boilerplate-y, so the `viltrum::range` function can be called with the per-dimesion limits directly (first the real numbers for the lower limits and then the real numbers for the upper limits) as illustrated in the following example:
@@ -51,6 +52,7 @@ int main(int argc, char** argv) {
     std::cout<<"1D = "<<method.integrate(Gaussian(),viltrum::range(0.0, 1.0))<<std::endl;
     std::cout<<"2D = "<<method.integrate(Gaussian(),viltrum::range(0.0,0.0, 1.0,1.0))<<std::endl;
     std::cout<<"3D = "<<method.integrate(Gaussian(),viltrum::range(0.0,0.0,0.0, 1.0,1.0,1.0))<<std::endl;
+}
 ```
 
 Obviously, the number of floating point parameters must be even.
@@ -64,6 +66,7 @@ int main(int argc, char** argv) {
     std::cout<<"1D = "<<method.integrate(Gaussian(),viltrum::range_all<1>(0.0,1.0))<<std::endl;
     std::cout<<"2D = "<<method.integrate(Gaussian(),viltrum::range_all<2>(0.0,1.0))<<std::endl;
     std::cout<<"3D = "<<method.integrate(Gaussian(),viltrum::range_all<3>(0.0,1.0))<<std::endl;
+}
 ```
 
 Last helper function is `viltrum::range_primary<NDIM,real>()` which generates a `NDIM`-dimensional range of `real` floating point type between between 0 and 1 for all dimensions. If omitted, the `real` parameter defaults to `float`. It can be used as follows:
@@ -75,6 +78,7 @@ int main(int argc, char** argv) {
     std::cout<<"1D = "<<method.integrate(Gaussian(),viltrum::range_primary<1>())<<std::endl;
     std::cout<<"2D = "<<method.integrate(Gaussian(),viltrum::range_primary<2>())<<std::endl;
     std::cout<<"3D = "<<method.integrate(Gaussian(),viltrum::range_primary<3>())<<std::endl;
+}
 ```
 
 The last option to generate ranges is to use the operator `|`, which concatenates two ranges, returning a higher dimensionality integration range, used as follows:
@@ -89,6 +93,7 @@ int main(int argc, char** argv) {
             viltrum::range(0.0,1.0) | viltrum::range(0.0,1.0))<<std::endl;
     std::cout<<"3D = "<<method.integrate(Gaussian(),
             viltrum::range(0.0,1.0) | viltrum::range(0.0,1.0) | viltrum::range(0.0,1.0))<<std::endl;
+}
 ```
 
 The code illustrated in this page can be tested and compiled in a [source code example](../main/doc/ranges.cc)
