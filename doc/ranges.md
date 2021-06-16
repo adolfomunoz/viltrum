@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
             viltrum::range(0.0,1.0) | viltrum::range(0.0,1.0) | viltrum::range(0.0,1.0))<<std::endl;
 ```
 
-The code illustrated in this page can be tested and compiled in a [source code example](../main/doc/ranges.md)
+The code illustrated in this page can be tested and compiled in a [source code example](../main/doc/ranges.cc)
  
 
 

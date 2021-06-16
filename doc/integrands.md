@@ -107,6 +107,6 @@ int main() {
 }
 ```
 
-The code illustrated in this page can be tested and compiled in a [source code example](../main/doc/integrands.md)
+The code illustrated in this page can be tested and compiled in a [source code example](../main/doc/integrands.cc)
 
 
