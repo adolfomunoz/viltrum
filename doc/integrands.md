@@ -6,9 +6,9 @@ Defining integrands in `viltrum` for their integration with any numerical method
 V f(const std::array<F,N>& x)
 ``` 
 where:
-- `N` is the number of dimensions explored by the function. It should be the same number than the dimensions of the integration range that is defined when integrating.
-- `F` is a floating point value that explores the function.
-- `V` is the resulting value of the function. `V` needs to have some numeric operations: addition `+`, multiplication by a scalar `*`, division by a scalar `/`... In general, floating point numbers and standard numerical algebra arrays (Eigen::Array) comply with this requirements.
+- `N` is the number of dimensions explored by the function. It should be the same number than the dimensions of the (integration range)[ranges.md] that is defined when integrating.
+- `F` is a floating point value that explores the function (commonly `float` or `double`) and must match the data type of the (integration range)[ranges.md].
+- `V` is the resulting value of the function. `V` needs to have some numeric operations: addition `+`, multiplication by a scalar `*`, division by a scalar `/`... In general, floating point numbers and standard numerical algebra arrays (`Eigen::Array`) comply with this requirements.
 
 There are several ways in which such an integrand can be defined in C++, and each of them will be illustrated with an working example. All of the examples below approximate the volume of a sphere using Monte Carlo integration.
 
@@ -107,6 +107,6 @@ int main() {
 }
 ```
 
-
+The code illustrated in this page can be tested and compiled in a [source code example](../main/doc/integrands.md)
 
 

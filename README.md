@@ -23,7 +23,7 @@ That would be enough to use all the features of the library. There are other alt
 Integrating a function in a specific n-dimensional range is rather simple. You need the following information:
 - An *integrator*, a numerical integration method.
 - An *integrand*, a function to be integrated. It's only parameter has to be a `std::array<F,N>`, where `F` is a floating point number and `N` is the number of dimensions. There are [several ways in which such integrand can be defined](doc/integrands.md)
-- A *range*, the integration domain, that is composed on two `std::array<F,N>` marking the limits of the integration domain.
+- A *range*, the integration domain, that is composed on two `std::array<F,N>` marking the limits of the potentially multidimensional integration domain, which [can be defined in different ways](doc/ranges.md)
 
 Example:
 
