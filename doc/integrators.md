@@ -107,7 +107,31 @@ where:
 
 ## Adaptive nested Newton-Cotes rules (iteration-based)
 
-The main problem of a tolerance-based adaptive approach is that the tolerance parameter is heavily linked with the error metric, and it is impossible to anticipate calculation time from such combination. Another option is to order all subranges into a heap according to their estimated error, and keep subdividing the top of the heap and reintroducing into the heap the subranges. This enables a finer control over the computational budget at an additional cost of heap removal and insertion, which is negligible unless a very high number of iterations is requiered.
+The main problem of a tolerance-based adaptive approach is that the tolerance parameter is heavily linked with the error metric, and it is impossible to anticipate calculation time from such combination. Another option is to order all subranges into a heap according to their estimated error, and keep subdividing the top of the heap and reintroducing into the heap the subranges. This enables a finer control over the computational budget at an additional cost of heap removal and insertion, which is logarithmic with respect to the number of iterations and pays of if this cost is negligible compared with the cost of evaluating the integrand. Each iteration has the same theoretical cost (plus heap insertion/removal) because the number of samples (points in which the integral is evaluated) is proportional to the number of iterations. 
+
+The integrator that applies this strategy is:
+
+```
+integrator_adaptive_iterations(<nested>,<error>,<iterations>)
+``
+where:
+- `<nested>` represents a nested quadrature rule, constructed as `nested(<rulehigh>,<rulelow>)` where `<rulehigh>` and `<rulelow>` are the high and low order quadrature rules.
+- `<error>` is a (error metric)[error.md], by default (if omitted) being an absolute error metric separated by dimension (`error_absolute_single_dimension()`).
+- `<tolerance>` is a positive integral number that defines the number of iterations. The computational cost is proportional to this number (plus a small extra for heap insertion/removal). 
+
+The following C++ code illustrate this integrator:
+
+```cpp
+std::cout<<viltrum::integrator_adaptive_iterations(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),viltrum::error_relative_single_dimension(),10).integrate(function,range)<<" ";
+std::cout<<viltrum::integrator_adaptive_iterations(viltrum::nested(viltrum::boole,viltrum::simpson),10).integrate(function,range)<<"\n";
+```
+
+where:
+- The first line creates an adaptive integrator with a nested Simpsoin-Trapezoidal rule, a relative error metric per dimension and 10 iterations.
+- The second line creates an adaptive integrator with a nested Boole-Simpson rule, the default error metric and 10 iterations.
+
+
+
 
 The code illustrated in this page can be tested and compiled in a [source code example](../main/doc/integrators.cc)
 
