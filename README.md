@@ -39,6 +39,29 @@ int main() {
 }
 ```
 
+## License
+
+This code is released under the [GPL v3](LICENSE). Additionally, if you are using this code in academic research, we would be grateful if you cited our paper, for which we generated with this source code:
+
+```bibtex
+@article{crespo21primary,
+	title = {Primary-Space Adaptive Control Variates using Piecewise-Polynomial Approximations.},
+	year = {2021},
+	journal = {ACM Transactions on Graphics},
+	author = {Crespo, Miguel and Jarabo, Adrian and Mu\~{n}oz, Adolfo},
+    volume = {40},
+    number = {3},
+    issn = {0730-0301},
+    url = {https://doi.org/10.1145/3450627},
+    doi = {10.1145/3450627},
+    issue_date = {July 2021},
+    month = jul,
+    articleno = {25},
+    numpages = {15},
+    keywords = {adaptive quadrature, numerical integration, control variates, rendering, piecewise polynomial}
+}
+```
+
 
 
 
