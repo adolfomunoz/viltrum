@@ -33,6 +33,45 @@ public:
 };
 
 ErrorSingleDimensionStandard error_single_dimension_standard() { return ErrorSingleDimensionStandard(); }
+ErrorSingleDimensionStandard error_absolute_single_dimension() { return ErrorSingleDimensionStandard(); }
+
+class ErrorRelativeSingleDimensionStandard {
+    float norm(float f) const { return std::abs(f); }
+    double norm(double f) const { return std::abs(f); }
+    template<typename V>
+    auto norm(const V& v) const {
+        auto i = v.begin();
+        auto s = norm(*i); ++i;
+        while (i!=v.end()) {
+            s += norm(*i); ++i;
+        }
+        return s;
+    }
+    
+    double offset;
+
+public:
+    template<typename R>
+    auto operator()(const R& region) const {
+        using real = decltype(norm(region.integral()));
+        double den = std::max(norm(region.integral()),real(offset));
+        auto max_err = norm(region.error(0))/den; std::size_t max_dim = 0; 
+
+        decltype(max_err) err;
+        for (std::size_t d = 1; d<R::dimensions; ++d) {
+            err = norm(region.error(d))/den;
+            if (err>max_err) {
+                max_err = err; max_dim = d;
+            }
+        }
+        return std::make_tuple(max_err,max_dim);
+    }
+    
+    ErrorRelativeSingleDimensionStandard(double offset) : offset(offset) {}
+};
+
+ErrorRelativeSingleDimensionStandard error_relative_single_dimension(double offset = 1.e-6) { return ErrorRelativeSingleDimensionStandard(offset); }
+
 
 class ErrorSingleDimensionSize {
     float norm(float f) const { return std::abs(f); }
@@ -89,9 +128,9 @@ class ErrorRelativeSingleDimensionSize {
 public:
     template<typename R>
     auto operator()(const R& region) const {
-        auto max_err = norm(region.error(0)); std::size_t max_dim = 0;
-        max_err += std::abs(size_factor*(region.range().max(0) - region.range().min(0)));
         double den = std::max(norm(region.integral()),offset);
+        auto max_err = norm(region.error(0))/den; std::size_t max_dim = 0;
+        max_err += std::abs(size_factor*(region.range().max(0) - region.range().min(0)));
         decltype(max_err) err;
         for (std::size_t d = 1; d<R::dimensions; ++d) {
             err = norm(region.error(d))/den;
@@ -128,9 +167,10 @@ class ErrorPartiallyRelativeSingleDimensionSize {
 public:
     template<typename R>
     auto operator()(const R& region) const {
-        auto max_err = norm(region.error(0)); std::size_t max_dim = 0;
-        max_err += std::abs(size_factor*(region.range().max(0) - region.range().min(0)));
         double den = std::max(norm(region.integral()),offset);
+        auto max_err = norm(region.error(0)); std::size_t max_dim = 0;
+        if (relative_dimensions>0) max_err/=den;
+        max_err += std::abs(size_factor*(region.range().max(0) - region.range().min(0)));
         decltype(max_err) err;
         for (std::size_t d = 1; d<R::dimensions; ++d) {
             err = norm(region.error(d));

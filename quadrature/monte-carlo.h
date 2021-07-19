@@ -116,7 +116,8 @@ auto stepper_bins_monte_carlo_uniform(std::size_t seed = std::random_device()())
 
 
 template<typename RNG>
-auto integrator_monte_carlo_uniform(RNG&& rng, unsigned long samples) {
+auto integrator_monte_carlo_uniform(RNG&& rng, unsigned long samples, 
+    std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
     return integrator_stepper(stepper_monte_carlo_uniform(std::forward<RNG>(rng)),samples);
 }
 

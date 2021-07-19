@@ -76,7 +76,7 @@ auto integrator_adaptive_tolerance(N&& nested, Error&& error, double tolerance) 
 
 
 template<typename N>
-auto integrator_adaptive_tolerance(N&& nested, double tolerance) {
+auto integrator_adaptive_tolerance(N&& nested, double tolerance = 1.e-3) {
     return integrator_adaptive_tolerance(std::forward<N>(nested), error_single_dimension_standard(), tolerance);
 }
 
