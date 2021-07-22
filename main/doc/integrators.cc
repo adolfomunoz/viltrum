@@ -29,33 +29,14 @@ int main(int argc, char **argv) {
     //Adaptive Nested Newton-Cotes with number of steps
     std::cout<<viltrum::integrator_adaptive_iterations(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),viltrum::error_relative_single_dimension(),10).integrate(function,range)<<" ";
     std::cout<<viltrum::integrator_adaptive_iterations(viltrum::nested(viltrum::boole,viltrum::simpson),10).integrate(function,range)<<"\n";
-  
-/*
-	std::cout<<std::endl<<"Adaptive tolerance"<<std::endl;
-	test("Tr.Simp. e-2  ",integrator_adaptive_tolerance(nested(simpson,trapezoidal),1.e-2),f,rmin,rmax);
-	test("Tr.Simp. e-4  ",integrator_adaptive_tolerance(nested(simpson,trapezoidal),1.e-4),f,rmin,rmax);
-	test("Tr.Simp. e-6  ",integrator_adaptive_tolerance(nested(simpson,trapezoidal),1.e-6),f,rmin,rmax);
-	test("Simp.Boole e-2",integrator_adaptive_tolerance(nested(boole,simpson),1.e-2),f,rmin,rmax);
-	test("Simp.Boole e-4",integrator_adaptive_tolerance(nested(boole,simpson),1.e-4),f,rmin,rmax);
-	test("Simp.Boole e-6",integrator_adaptive_tolerance(nested(boole,simpson),1.e-6),f,rmin,rmax);
 
-	std::cout<<std::endl<<"Adaptive iterations"<<std::endl;
-	test("Tr.Simp.    1 ",integrator_adaptive_iterations(nested(simpson,trapezoidal),1),f,rmin,rmax);
-	test("Tr.Simp.   10 ",integrator_adaptive_iterations(nested(simpson,trapezoidal),10),f,rmin,rmax);
-	test("Tr.Simp.  100 ",integrator_adaptive_iterations(nested(simpson,trapezoidal),100),f,rmin,rmax);
-	test("Tr.Simp. 1000 ",integrator_adaptive_iterations(nested(simpson,trapezoidal),1000),f,rmin,rmax);
-	test("Simp.Boole   1",integrator_adaptive_iterations(nested(boole,simpson),1),f,rmin,rmax);
-	test("Simp.Boole  10",integrator_adaptive_iterations(nested(boole,simpson),10),f,rmin,rmax);
-	test("Simp.Boole 100",integrator_adaptive_iterations(nested(boole,simpson),100),f,rmin,rmax);
-	test("Simp.Boole1000",integrator_adaptive_iterations(nested(boole,simpson),1000),f,rmin,rmax);
-
-
-	std::cout<<std::endl<<"Monte Carlo"<<std::endl;
-	test("Uniform     1 ",integrator_monte_carlo_uniform(1),f,rmin,rmax);
-	test("Uniform    10 ",integrator_monte_carlo_uniform(10),f,rmin,rmax);
-	test("Uniform   100 ",integrator_monte_carlo_uniform(100),f,rmin,rmax);
-	test("Uniform  1000 ",integrator_monte_carlo_uniform(1000),f,rmin,rmax);
-*/
+    //Adaptive Nested Newton-Cotes control variates
+    std::cout<<viltrum::integrator_adaptive_control_variates(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),viltrum::error_relative_single_dimension(),4,std::ranlux48(),80).integrate(function,range)<<" ";
+    std::cout<<viltrum::integrator_adaptive_control_variates(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),4,std::ranlux48(),80).integrate(function,range)<<" ";
+    std::cout<<viltrum::integrator_adaptive_control_variates(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),viltrum::error_relative_single_dimension(),4,80,0).integrate(function,range)<<" ";
+    std::cout<<viltrum::integrator_adaptive_control_variates(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),4,std::ranlux48(),80,0).integrate(function,range)<<" ";
+    std::cout<<viltrum::integrator_adaptive_control_variates(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),viltrum::error_relative_single_dimension(),4,80).integrate(function,range)<<" ";
+    std::cout<<viltrum::integrator_adaptive_control_variates(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),4,std::ranlux48(),80).integrate(function,range)<<"\n";
 
 	return 0;
 }

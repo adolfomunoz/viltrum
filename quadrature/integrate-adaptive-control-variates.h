@@ -91,6 +91,34 @@ auto stepper_adaptive_control_variates(Nested&& nested, unsigned long adaptive_i
 	error_single_dimension_standard(),stepper_monte_carlo_uniform(seed_mc),vector_sampler_uniform(seed_vs),adaptive_iterations);
 }
 
+template<typename Nested, typename Error, typename RNG>
+auto integrator_adaptive_control_variates(Nested&& nested, Error&& error, unsigned long iterations, const RNG& r, unsigned long nsamples, 
+    std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
+    RNG rng = r;
+    return integrator_stepper(stepper_adaptive_control_variates(std::forward<Nested>(nested),
+	std::forward<Error>(error),stepper_monte_carlo_uniform(RNG(rng()+1)),vector_sampler_uniform(RNG(rng()+2)), iterations), nsamples);
+}
+
+template<typename Nested, typename RNG>
+auto integrator_adaptive_control_variates(Nested&& nested, unsigned long iterations, const RNG& r, unsigned long nsamples, 
+    std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
+    RNG rng = r;
+    return integrator_stepper(stepper_adaptive_control_variates(std::forward<Nested>(nested),
+	error_single_dimension_standard(),stepper_monte_carlo_uniform(RNG(rng()+1)),vector_sampler_uniform(RNG(rng()+2)), iterations), nsamples);
+}
+
+template<typename Nested, typename Error>
+auto integrator_adaptive_control_variates(Nested&& nested, Error&& error, unsigned long iterations, unsigned long nsamples, std::size_t seed = std::random_device()()) {
+    return integrator_stepper(stepper_adaptive_control_variates(std::forward<Nested>(nested),
+	std::forward<Error>(error),stepper_monte_carlo_uniform(seed+1),vector_sampler_uniform(seed+2), iterations), nsamples);
+}
+
+template<typename Nested>
+auto integrator_adaptive_control_variates(Nested&& nested, unsigned long iterations, unsigned long nsamples, std::size_t seed = std::random_device()()) {
+    return integrator_stepper(stepper_adaptive_control_variates(std::forward<Nested>(nested),
+	error_single_dimension_standard(),stepper_monte_carlo_uniform(seed+1),vector_sampler_uniform(seed+2), iterations), nsamples);
+}
+
 
 template<typename Nested, typename Error, typename ResidualStepper, typename VectorSampler>
 class StepperBinsAdaptiveControlVariates {
