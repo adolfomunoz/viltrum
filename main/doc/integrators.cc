@@ -34,9 +34,8 @@ int main(int argc, char **argv) {
     std::cout<<viltrum::integrator_adaptive_control_variates(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),viltrum::error_relative_single_dimension(),4,std::ranlux48(),80).integrate(function,range)<<" ";
     std::cout<<viltrum::integrator_adaptive_control_variates(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),4,std::ranlux48(),80).integrate(function,range)<<" ";
     std::cout<<viltrum::integrator_adaptive_control_variates(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),viltrum::error_relative_single_dimension(),4,80,0).integrate(function,range)<<" ";
-    std::cout<<viltrum::integrator_adaptive_control_variates(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),4,std::ranlux48(),80,0).integrate(function,range)<<" ";
-    std::cout<<viltrum::integrator_adaptive_control_variates(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),viltrum::error_relative_single_dimension(),4,80).integrate(function,range)<<" ";
-    std::cout<<viltrum::integrator_adaptive_control_variates(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),4,std::ranlux48(),80).integrate(function,range)<<"\n";
+    std::cout<<viltrum::integrator_adaptive_control_variates(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),4,80,0).integrate(function,range)<<" ";
+    std::cout<<viltrum::integrator_adaptive_control_variates(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),4,80).integrate(function,range)<<"\n";
 
 	return 0;
 }

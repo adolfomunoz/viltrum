@@ -113,11 +113,12 @@ The integrator that applies this strategy is:
 
 ```
 integrator_adaptive_iterations(<nested>,<error>,<iterations>)
-``
+```
+
 where:
 - `<nested>` represents a nested quadrature rule, constructed as `nested(<rulehigh>,<rulelow>)` where `<rulehigh>` and `<rulelow>` are the high and low order quadrature rules.
 - `<error>` is a (error metric)[error.md], by default (if omitted) being an absolute error metric separated by dimension (`error_absolute_single_dimension()`).
-- `<tolerance>` is a positive integral number that defines the number of iterations. The computational cost is proportional to this number (plus a small extra for heap insertion/removal). 
+- `<iterations>` is a positive integral number that defines the number of iterations. The computational cost is proportional to this number (plus a small extra for heap insertion/removal). 
 
 The following C++ code illustrate this integrator:
 
@@ -127,8 +128,54 @@ std::cout<<viltrum::integrator_adaptive_iterations(viltrum::nested(viltrum::bool
 ```
 
 where:
-- The first line creates an adaptive integrator with a nested Simpsoin-Trapezoidal rule, a relative error metric per dimension and 10 iterations.
+- The first line creates an adaptive integrator with a nested Simpson-Trapezoidal rule, a relative error metric per dimension and 10 iterations.
 - The second line creates an adaptive integrator with a nested Boole-Simpson rule, the default error metric and 10 iterations.
+
+
+## Adaptive nested Newton-Cotes control variates with Monte Carlo integration of the residual
+
+This strategy is the base of our paper (**Primary-Space Adaptive Control Variates using Piecewise-Polynomial Approximations**)[https://mcrescas.github.io/publications/primary-space-cv/], and it preserves the best of both strategies: the low frequency regions are better recovered using adaptive Newton-Cotes for a number of iterations and high frequency details are better recovered using Monte-Carlo (of the residual with respect to the Newton-Cotes approximation). 
+
+This integrator follows a sampling strategy for the residual in which each individual region, represented by a single multivariate polynomial in the piecewise control variate, is selected randomly and uniformly, and then again uniformly inside each region. This means that smaller regions (with allegedly larger error estimations) will get more sample density than larger regions. 
+
+This integrator is constructed as follows:
+
+```
+integrator_adaptive_control_variates(<nested>,<error>,<iterations>,<rng>,<nsamples>)
+```
+
+where
+- `<nested>` represents a nested quadrature rule, constructed as `nested(<rulehigh>,<rulelow>)` where `<rulehigh>` and `<rulelow>` are the high and low order quadrature rules.
+- `<error>` is a (error metric)[error.md], by default (if omitted) being an absolute error metric separated by dimension (`error_absolute_single_dimension()`).
+- `<iterations>` is a positive integral number that defines the number of iterations for constructing the piecewise-polynomial control variate. The computational cost of this construction is proportional to this number (plus a small extra for heap insertion/removal). 
+- `<rng>` is a C++11 random number generator, such as `std::mt19937_64` (which is the default) or `std::ranlux48`
+- `<nsamples>` which is the number of random samples chosen randomly and uniformly within the integration range.
+
+Alternativelly, instead of indicating a random number generator it is possible to use the default `std::mt19937_64` generator by just writing the `<seed>`, as follows:
+
+```
+integrator_adaptive_control_variates(<nested>,<error>,<iterations>,<nsamples>,<seed>)
+```
+
+where `<seed>` is the seed that, if omitted, is calculated randomly.
+
+These constructions are illustrated in the following code:
+
+```cpp
+std::cout<<viltrum::integrator_adaptive_control_variates(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),viltrum::error_relative_single_dimension(),4,std::ranlux48(),80).integrate(function,range)<<" ";
+std::cout<<viltrum::integrator_adaptive_control_variates(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),4,std::ranlux48(),80).integrate(function,range)<<" ";
+std::cout<<viltrum::integrator_adaptive_control_variates(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),viltrum::error_relative_single_dimension(),4,80,0).integrate(function,range)<<" ";
+std::cout<<viltrum::integrator_adaptive_control_variates(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),4,std::ranlux48(),80,0).integrate(function,range)<<" ";
+std::cout<<viltrum::integrator_adaptive_control_variates(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),4,80,0).integrate(function,range)<<" ";
+std::cout<<viltrum::integrator_adaptive_control_variates(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),4,80).integrate(function,range)<<"\n";
+```
+
+where
+- The first call constructs an adaptive control variate using the Simpson-Trapezoidal nested rule, with a relative error metric and four adaptive iterations, and the residual uses 80 Monte Carlo samples using the `std::ranlux48()` random number generator.
+- The second call constructs an adaptive control variate using the Simpson-Trapezoidal nested rule, with the default absolute error metric and four adaptive iterations, and the residual uses 80 Monte Carlo samples using the `std::ranlux48()` random number generator.
+- The third call constructs an adaptive control variate using the Simpson-Trapezoidal nested rule, with a relative error metric and four adaptive iterations, and the residual uses 80 Monte Carlo samples using the default random number generator with seed 0.
+- The fourth call constructs an adaptive control variate using the Simpson-Trapezoidal nested rule, with the default absolute error metric and four adaptive iterations, and the residual uses 80 Monte Carlo samples using default random number generator width seed 0.
+- The last call constructs an adaptive control variate using the Simpson-Trapezoidal nested rule, with the default absolute error metric and four adaptive iterations, and the residual uses 80 Monte Carlo samples using default random number generator width random seed.
 
 
 
