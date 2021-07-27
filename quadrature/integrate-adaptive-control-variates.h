@@ -4,6 +4,13 @@
 #include "monte-carlo.h"
 #include "sample-vector.h"
 
+#if (__cplusplus < 201703L)
+namespace std {
+    template< class T >
+    inline constexpr bool is_integral_v = std::is_integral<T>::value;
+}
+#endif
+
 namespace viltrum {
 
 template<typename Nested, typename Error, typename ResidualStepper, typename VectorSampler>

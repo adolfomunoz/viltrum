@@ -4,6 +4,13 @@
 #include <tuple>
 #include <type_traits>
 
+#if (__cplusplus < 201703L)
+namespace std {
+    template< class T >
+    inline constexpr bool is_floating_point_v = std::is_floating_point<T>::value;
+}
+#endif
+
 namespace viltrum {
 
 template<typename T, std::size_t DIM>
