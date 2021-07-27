@@ -45,10 +45,10 @@ This code is released under the [GPL v3](LICENSE). Additionally, if you are usin
 
 ```bibtex
 @article{crespo21primary,
-	title = {Primary-Space Adaptive Control Variates using Piecewise-Polynomial Approximations.},
-	year = {2021},
-	journal = {ACM Transactions on Graphics},
-	author = {Crespo, Miguel and Jarabo, Adrian and Mu\~{n}oz, Adolfo},
+    title = {Primary-Space Adaptive Control Variates using Piecewise-Polynomial Approximations.},
+    year = {2021},
+    journal = {ACM Transactions on Graphics},
+    author = {Crespo, Miguel and Jarabo, Adrian and Mu\~{n}oz, Adolfo},
     volume = {40},
     number = {3},
     issn = {0730-0301},
