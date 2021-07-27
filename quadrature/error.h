@@ -107,7 +107,8 @@ public:
     ErrorSingleDimensionSize(double sf) : size_factor(sf) { }
 };
 
-ErrorSingleDimensionSize error_single_dimension_size(double size_factor = 0.01) { return ErrorSingleDimensionSize(size_factor); }
+ErrorSingleDimensionSize error_single_dimension_size(double size_factor = 0.00001) { return ErrorSingleDimensionSize(size_factor); }
+ErrorSingleDimensionSize error_absolute_single_dimension_size(double size_factor = 0.00001) { return ErrorSingleDimensionSize(size_factor); }
 
 class ErrorRelativeSingleDimensionSize {
     float norm(float f) const { return std::abs(f); }
