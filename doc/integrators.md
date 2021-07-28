@@ -3,7 +3,7 @@
 A `viltrum` integrator represents al algorithm, a numerical method that is able to approximate an integral. All integrators present the same method:
 
 ```cpp
-integrator.integrate(<integrand>,<range>)` 
+integrator.integrate(<integrand>,<range>) 
 ```
 
 that applies the algorithm defined on the integrator `integrator` to the integral of `<integrand>` along the range `<range>`. There are several ways in which (integrands can be defined)[integrands.md] and in which (integration ranges can be defined)[ranges.md].
@@ -12,7 +12,7 @@ For each integrator, its parameters are defined when constructing it, and the ty
 
 ## Monte Carlo integrator
 
-(Monte Carlo integration)[https://en.wikipedia.org/wiki/Monte_Carlo_integration] uses random numbers to approximate a definite integral, randomly selecting the positions of the evaluated samples within the integration range. The more samples, the longer computation time but the more accuracy.
+[Monte Carlo integration](https://en.wikipedia.org/wiki/Monte_Carlo_integration) uses random numbers to approximate a definite integral, randomly selecting the positions of the evaluated samples within the integration range. The more samples, the longer computation time but the more accuracy.
 
 It can be defined in two ways:
 
@@ -46,7 +46,7 @@ std::cout<<viltrum::integrator_monte_carlo_uniform(100).integrate(function,range
 
 ## Newton-Cotes quadrature rules
 
-(Newton-Cotes formulas)[https://en.wikipedia.org/wiki/Newton%E2%80%93Cotes_formulas] are a group of formulas that estimate the integral by evaluating a function at regularly spaced sample points, approximating the integrand by a polynomial. Higher order rules are theoretically more accurate than low order rules.
+[Newton-Cotes formulas](https://en.wikipedia.org/wiki/Newton%E2%80%93Cotes_formulas) are a group of formulas that estimate the integral by evaluating a function at regularly spaced sample points, approximating the integrand by a polynomial. Higher order rules are theoretically more accurate than low order rules.
 
 It can be constructed as follows:
 
@@ -134,7 +134,7 @@ where:
 
 ## Adaptive nested Newton-Cotes control variates with Monte Carlo integration of the residual
 
-This strategy is the base of our paper (**Primary-Space Adaptive Control Variates using Piecewise-Polynomial Approximations**)[https://mcrescas.github.io/publications/primary-space-cv/], and it preserves the best of both strategies: the low frequency regions are better recovered using adaptive Newton-Cotes for a number of iterations and high frequency details are better recovered using Monte-Carlo (of the residual with respect to the Newton-Cotes approximation). 
+This strategy is the base of our paper [**Primary-Space Adaptive Control Variates using Piecewise-Polynomial Approximations**](https://mcrescas.github.io/publications/primary-space-cv/), and it preserves the best of both strategies: the low frequency regions are better recovered using adaptive Newton-Cotes for a number of iterations and high frequency details are better recovered using Monte-Carlo (of the residual with respect to the Newton-Cotes approximation). 
 
 This integrator follows a sampling strategy for the residual in which each individual region, represented by a single multivariate polynomial in the piecewise control variate, is selected randomly and uniformly, and then again uniformly inside each region. This means that smaller regions (with allegedly larger error estimations) will get more sample density than larger regions. 
 
