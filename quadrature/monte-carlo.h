@@ -4,6 +4,7 @@
 #include <random>
 #include "range.h"
 #include "integrate.h"
+#include "integrate-bins-stepper.h"
 #include "vector-dimensions.h"
 
 #if (__cplusplus < 201703L)
@@ -130,6 +131,16 @@ auto integrator_monte_carlo_uniform(RNG&& rng, unsigned long samples,
 
 auto integrator_monte_carlo_uniform(unsigned long samples, std::size_t seed = std::random_device()()) {
     return integrator_stepper(stepper_monte_carlo_uniform(seed),samples);
+}
+
+template<typename RNG>
+auto integrator_bins_monte_carlo_uniform(RNG&& rng, unsigned long samples, 
+    std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
+    return integrator_bins_stepper(stepper_bins_monte_carlo_uniform(std::forward<RNG>(rng)),samples);
+}
+
+auto integrator_bins_monte_carlo_uniform(unsigned long samples, std::size_t seed = std::random_device()()) {
+    return integrator_bins_stepper(stepper_bins_monte_carlo_uniform(seed),samples);
 }
 
 }
