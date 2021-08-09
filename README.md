@@ -128,9 +128,9 @@ This functional version is able to deduce the bin accesor as well as the resolut
     std::cout<<std::endl;
 ```
 
-If you want to define your own automatic bin accesors you can take inspiration from (our source code for the case of vectors)[quadrature/bins-containers-adaptor.h] but we do not provide documentation for that (you can always use the general version by explicitly indicating bin accesor and resolution independently as illustrated above).
+If you want to define your own automatic bin accesors you can take inspiration from [our source code for the case of vectors](quadrature/bins-containers-adaptor.h) but we do not provide documentation for that (you can always use the general version by explicitly indicating bin accesor and resolution independently as illustrated above).
 
-Last, there are (several bin integrators to choose from)[doc/binintegrators.md]. However, if you want to use exactly the same integrator with the default parameters than we use in (our paper)[https://mcrescas.github.io/publications/primary-space-cv/] define the bin integrator as follows:
+Last, there are [several bin integrators to choose from](doc/binintegrators.md). However, if you want to use exactly the same integrator with the default parameters than we use in [our paper](https://mcrescas.github.io/publications/primary-space-cv/) define the bin integrator as follows:
   
 ```cpp
 unsigned long spp_cv = std::max(1UL,(unsigned long)(spp*(1.0/16.0)));
