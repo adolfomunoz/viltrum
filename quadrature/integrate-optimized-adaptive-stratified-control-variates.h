@@ -379,7 +379,8 @@ auto integrator_optimized_adaptive_stratified_control_variates(Nested&& nested, 
 
 template<typename Nested, typename Error, typename RNG>
 auto integrator_optimized_perpixel_adaptive_stratified_control_variates(Nested&& nested, Error&& error, 
-		unsigned long adaptive_iterations, unsigned long spp, RNG&& rng) {
+		unsigned long adaptive_iterations, unsigned long spp, RNG&& rng,
+        std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
 			
 	return integrator_stratified_pixel_control_variates(region_generator(std::forward<Nested>(nested), std::forward<Error>(error), adaptive_iterations), AlphaOptimized(), FunctionSampler(), std::forward<RNG>(rng), spp);
 }

@@ -15,8 +15,16 @@ int main(int argc, char **argv) {
     integrator_bins.integrate(output_array_access,std::array<std::size_t,1>{16},slope,range);
     for (float f : output_array) std::cout<<f<<" ";
     std::cout<<std::endl;
+
+    auto output_array_access_2d = [&output_array] (const std::array<std::size_t,2>& i) -> float& { return output_array[4*i[0]+i[1]]; }; 
+    integrator_bins.integrate(output_array_access_2d,std::array<std::size_t,2>{4,4},slope,range);
+    for (float f : output_array) std::cout<<f<<" ";
+    std::cout<<std::endl;
     
     integrate_bins(integrator_bins,output_array_access,std::array<std::size_t,1>{16},slope,range);
+    for (float f : output_array) std::cout<<f<<" ";
+    std::cout<<std::endl;
+    integrate_bins(integrator_bins,output_array_access_2d,std::array<std::size_t,2>{4,4},slope,range);
     for (float f : output_array) std::cout<<f<<" ";
     std::cout<<std::endl;
     
@@ -25,7 +33,7 @@ int main(int argc, char **argv) {
     for (float f : output_vector) std::cout<<f<<" ";
     std::cout<<std::endl;
     
-    std::vector<std::vector<float>> output_matrix(16,std::vector<float>(16));
+    std::vector<std::vector<float>> output_matrix(4,std::vector<float>(4));
     integrate_bins(integrator_bins, output_matrix, slope, range);
     std::cout<<std::endl;
     for (const std::vector<float>& row : output_matrix) {
