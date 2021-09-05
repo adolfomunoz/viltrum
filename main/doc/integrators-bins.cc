@@ -2,72 +2,120 @@
 #include <iomanip>
 #include "../viltrum.h"
 #include <cmath>
-#include "../functions/functions1d.h"
-//#include <numeric>
-//#include <execution>
 
-
-
-using namespace viltrum;
-
-template<typename F, typename I>
-void test(const char* name, const I& integrator, unsigned int bins, const F& f, double rmin = 0, double rmax=1) {
-	auto wrapper = FunctionWrapperCount<F>(f);
-    std::vector<double> result(bins);
-    integrate_bins(integrator,result,wrapper, range(rmin, rmax));
-	std::cout<<name<<" -> [";
-    for (double r : result)
-        std::cout<<std::setw(10)<<std::setprecision(2)<<std::scientific<<r<<" ";
-    std::cout <<"]\t("<<std::setw(6)<<wrapper.evaluations()<<" evaluations)"<<std::endl;
-}
-
-
+float slope(const std::array<float,2>& x) { return (x[1]<x[0])?1.0f:0.0f; }
 
 int main(int argc, char **argv) {
-	auto [f,groundtruth] = function1d(argc,argv);
-    unsigned int bins = 4;
-	double rmin = 0; double rmax = 1;
-	for (int i = 0; i < argc; ++i) {
-		if ( (std::string(argv[i]) == "-range") && (i<(argc-2)) ) {
-			rmin = atof(argv[++i]); rmax = atof(argv[++i]);
-		}
-        else if ( (std::string(argv[i]) == "-bins") && (i<(argc-1)) ) {
-            bins = atoi(argv[++i]);
-        }
-	}
+    auto range = viltrum::range(std::array<float,2>{0,0},std::array<float,2>{1,1});
+    std::vector<float> output(16);
+    
+    //Monte-Carlo
+    viltrum::integrate_bins(
+        viltrum::integrator_bins_monte_carlo_uniform(std::ranlux48(),100), 
+        output, slope, range);
+    for (float f : output) std::cout<<f<<" ";  
+    std::cout<<std::endl;  
+    viltrum::integrate_bins(
+        viltrum::integrator_bins_monte_carlo_uniform(100,0), 
+        output, slope, range);
+    for (float f : output) std::cout<<f<<" ";  
+    std::cout<<std::endl;  
+    viltrum::integrate_bins(
+        viltrum::integrator_bins_monte_carlo_uniform(100), 
+        output, slope, range);
+    for (float f : output) std::cout<<f<<" ";  
+    std::cout<<std::endl;
+    std::cout<<std::endl;
+    
+    
+    //Adaptive (only iterations in this case)
+    viltrum::integrate_bins(
+        viltrum::integrator_bins_adaptive(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),
+        viltrum::error_relative_single_dimension(),100), 
+        output, slope, range);
+    for (float f : output) std::cout<<f<<" ";  
+    std::cout<<std::endl;  
+    viltrum::integrate_bins(
+        viltrum::integrator_bins_adaptive(viltrum::nested(viltrum::boole,viltrum::simpson),100), 
+        output, slope, range);
+    for (float f : output) std::cout<<f<<" ";  
+    std::cout<<std::endl;  
+    std::cout<<std::endl;
+    
 
-	std::cout<<"Ground truth  "<<" -> [";
-    double dr = (rmax - rmin)/double(bins);
-    for (unsigned int i = 0; i < bins; ++i)
-        std::cout<<std::setw(10)<<std::setprecision(2)<<std::scientific<<bins*groundtruth(rmin + i*dr,rmin + (i+1)*dr)<<" ";
-    std::cout<<" ]"<<std::endl;
-	std::cout<<std::endl<<"Per pixel"<<std::endl;	
-	test("Trapezoidal   ",integrator_bins_per_bin(integrator_quadrature(trapezoidal)), bins, f,rmin,rmax);
-	test("Simpson       ",integrator_bins_per_bin(integrator_quadrature(simpson)), bins, f,rmin,rmax);
-	test("Boole         ",integrator_bins_per_bin(integrator_quadrature(boole)), bins, f,rmin,rmax);
-	test("M-C         1 ",integrator_bins_per_bin(integrator_monte_carlo_uniform(1)), bins, f,rmin,rmax);
-	test("M-C        10 ",integrator_bins_per_bin(integrator_monte_carlo_uniform(10)), bins, f,rmin,rmax);
-	test("M-C       100 ",integrator_bins_per_bin(integrator_monte_carlo_uniform(100)), bins, f,rmin,rmax);
-	test("M-C      1000 ",integrator_bins_per_bin(integrator_monte_carlo_uniform(1000)), bins, f,rmin,rmax);
-	std::cout<<std::endl<<"Global"<<std::endl;	
-	test("Simpson       ",integrator_bins_stepper(stepper_bins_adaptive(nested(simpson,trapezoidal)),0), bins, f,rmin,rmax);
-	test("Boole         ",integrator_bins_stepper(stepper_bins_adaptive(nested(boole,simpson)),0), bins, f,rmin,rmax);
-	test("M-C         1 ",integrator_bins_stepper(stepper_bins_monte_carlo_uniform(),1), bins, f,rmin,rmax);
-	test("M-C        10 ",integrator_bins_stepper(stepper_bins_monte_carlo_uniform(),10), bins, f,rmin,rmax);
-	test("M-C       100 ",integrator_bins_stepper(stepper_bins_monte_carlo_uniform(),100), bins, f,rmin,rmax);
-	test("M-C      1000 ",integrator_bins_stepper(stepper_bins_monte_carlo_uniform(),1000), bins, f,rmin,rmax);
-	
-	std::cout<<std::endl<<"Adaptive optimized stratified control variates"<<std::endl;
-	test("ST   1      4 ",integrator_optimized_adaptive_stratified_control_variates(
-		nested(simpson,trapezoidal),error_relative_single_dimension_size(1.e-6),1,4), bins, f, rmin, rmax);
-	test("ST   2      4 ",integrator_optimized_adaptive_stratified_control_variates(
-		nested(simpson,trapezoidal),error_relative_single_dimension_size(1.e-6),2,4), bins, f, rmin, rmax);
-	test("ST   4      4 ",integrator_optimized_adaptive_stratified_control_variates(
-		nested(simpson,trapezoidal),error_relative_single_dimension_size(1.e-6),4,4), bins, f, rmin, rmax);
-	test("ST   4      8 ",integrator_optimized_adaptive_stratified_control_variates(
-		nested(simpson,trapezoidal),error_relative_single_dimension_size(1.e-6),4,8), bins, f, rmin, rmax);
-	test("ST   8      8 ",integrator_optimized_adaptive_stratified_control_variates(
-		nested(simpson,trapezoidal),error_relative_single_dimension_size(1.e-6),8,8), bins, f, rmin, rmax);
+    //Per bin
+    viltrum::integrate_bins(
+        viltrum::integrator_bins_per_bin(viltrum::integrator_quadrature(viltrum::trapezoidal)), 
+        output, slope, range);
+    for (float f : output) std::cout<<f<<" ";  
+    std::cout<<std::endl;    
+    viltrum::integrate_bins(
+        viltrum::integrator_bins_per_bin(viltrum::integrator_adaptive_tolerance(viltrum::nested(viltrum::boole,viltrum::simpson),1.e-3)), 
+        output, slope, range);
+    for (float f : output) std::cout<<f<<" ";  
+    std::cout<<std::endl;    
+    viltrum::integrate_bins(
+        viltrum::integrator_bins_per_bin(viltrum::integrator_monte_carlo_uniform(100)), 
+        output, slope, range);
+    for (float f : output) std::cout<<f<<" ";  
+    std::cout<<std::endl;  
+    std::cout<<std::endl;  
+
+    //Optimized adaptive stratified control variates
+    viltrum::integrate_bins(
+        viltrum::integrator_optimized_perpixel_adaptive_stratified_control_variates(
+            viltrum::nested(viltrum::simpson,viltrum::trapezoidal), // nested rule, order 2 polynomials
+            viltrum::error_single_dimension_size(1.e-5), // error heuristic
+            16, // number of adaptive iterations calculated from the spps
+            100, // number of spps for the residual
+            std::ranlux48()            // random number generator
+        ), 
+        output, slope, range);
+    for (float f : output) std::cout<<f<<" ";  
+    std::cout<<std::endl;  
+    viltrum::integrate_bins(
+        viltrum::integrator_optimized_perpixel_adaptive_stratified_control_variates(
+            viltrum::nested(viltrum::simpson,viltrum::trapezoidal), // nested rule, order 2 polynomials
+            viltrum::error_single_dimension_size(1.e-5), // error heuristic
+            16, // number of adaptive iterations calculated from the spps
+            100, // number of spps for the residual
+            0 // seed (can be omitted)
+        ), 
+        output, slope, range);
+    for (float f : output) std::cout<<f<<" ";  
+    std::cout<<std::endl;  
+    viltrum::integrate_bins(
+        viltrum::integrator_alpha1_perpixel_adaptive_stratified_control_variates(
+            viltrum::nested(viltrum::simpson,viltrum::trapezoidal), // nested rule, order 2 polynomials
+            viltrum::error_single_dimension_size(1.e-5), // error heuristic
+            16, // number of adaptive iterations calculated from the spps
+            100 // seed (can be omitted)
+        ), 
+        output, slope, range);
+    for (float f : output) std::cout<<f<<" ";  
+    std::cout<<std::endl;  
+    viltrum::integrate_bins(
+        viltrum::integrator_optimized_perregion_adaptive_stratified_control_variates(
+            viltrum::nested(viltrum::simpson,viltrum::trapezoidal), // nested rule, order 2 polynomials
+            viltrum::error_single_dimension_size(1.e-5), // error heuristic
+            16, // number of adaptive iterations calculated from the spps
+            100, // number of spps for the residual
+            0 // seed (can be omitted)
+        ), 
+        output, slope, range);
+    for (float f : output) std::cout<<f<<" ";  
+    std::cout<<std::endl;  
+    viltrum::integrate_bins(
+        viltrum::integrator_alpha1_perregion_adaptive_stratified_control_variates(
+            viltrum::nested(viltrum::simpson,viltrum::trapezoidal), // nested rule, order 2 polynomials
+            viltrum::error_single_dimension_size(1.e-5), // error heuristic
+            16, // number of adaptive iterations calculated from the spps
+            100 // seed (can be omitted)
+        ), 
+        output, slope, range);
+    for (float f : output) std::cout<<f<<" ";  
+    std::cout<<std::endl;  
+    std::cout<<std::endl;  
 
 	return 0;
 }

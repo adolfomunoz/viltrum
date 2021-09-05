@@ -4,16 +4,16 @@ VILTRUM: Varied Integration Layouts for arbiTRary integrals in a Unified Manner 
 
 <p align="center">
 
-  <h1 align="center"><a href="https://mcrescas.github.io/publications/primary-space-cv/">Primary-Space Adaptive Control Variates using Piecewise-Polynomial Approximations</a></h1>
+  <h1 align="center"><a href="https://mcrespo.me/publications/primary-space-cv/">Primary-Space Adaptive Control Variates using Piecewise-Polynomial Approximations</a></h1>
 
-  <a href="https://mcrescas.github.io/publications/primary-space-cv/">
+  <a href="https://mcrespo.me/publications/primary-space-cv/">
     <img src="https://mcrescas.github.io/publications/primary-space-cv/figures/socialMedia.png" alt="Logo" width="100%">
   </a>
 
   <p align="center">
     ACM Transactions on Graphics - 2021
     <br />
-    <a href="https://mcrescas.github.io"><strong>Miguel Crespo</strong></a>
+    <a href="https://mcrespo.me/"><strong>Miguel Crespo</strong></a>
     ·
     <a href="http://giga.cps.unizar.es/~ajarabo/"><strong>Adrian Jarabo</strong></a>
     ·

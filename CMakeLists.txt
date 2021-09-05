@@ -32,6 +32,7 @@ add_executable(integrands main/doc/integrands.cc)
 add_executable(ranges main/doc/ranges.cc)
 add_executable(integrators main/doc/integrators.cc)
 add_executable(bins main/doc/bins.cc)
+add_executable(integrators-bins main/doc/integrators-bins.cc)
 
 #add_executable(convergence-1d main/convergence-1d.cc)
 #add_dependencies(convergence-1d svg-cpp-plot ${function_1d_deps})

@@ -115,7 +115,8 @@ auto integrator_adaptive_control_variates(Nested&& nested, unsigned long iterati
 }
 
 template<typename Nested, typename Error>
-auto integrator_adaptive_control_variates(Nested&& nested, Error&& error, unsigned long iterations, unsigned long nsamples, std::size_t seed = std::random_device()()) {
+auto integrator_adaptive_control_variates(Nested&& nested, Error&& error, unsigned long iterations, unsigned long nsamples, std::size_t seed = std::random_device()(), 
+    std::enable_if_t<!std::is_integral_v<Error>,int> dummy = 0) {
     return integrator_stepper(stepper_adaptive_control_variates(std::forward<Nested>(nested),
 	std::forward<Error>(error),stepper_monte_carlo_uniform(seed+1),vector_sampler_uniform(seed+2), iterations), nsamples);
 }

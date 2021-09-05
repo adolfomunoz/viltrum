@@ -61,6 +61,21 @@ template<typename N>
 auto stepper_bins_adaptive(N&& nested) {
     return stepper_bins_adaptive(std::forward<N>(nested), error_single_dimension_standard());
 }
+
+template<typename Nested, typename Error>
+auto integrator_bins_adaptive(Nested&& nested, Error&& error, unsigned long iterations) {
+    return integrator_bins_stepper(
+        stepper_bins_adaptive(std::forward<Nested>(nested),std::forward<Error>(error)),
+    iterations);
+}
+
+template<typename N>
+auto integrator_bins_adaptive(N&& nested, unsigned long iterations) {
+    return integrator_bins_stepper(
+        stepper_bins_adaptive(std::forward<N>(nested)),
+    iterations);
+}
+
 }
 
 

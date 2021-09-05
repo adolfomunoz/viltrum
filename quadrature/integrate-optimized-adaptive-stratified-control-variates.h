@@ -372,7 +372,8 @@ auto integrator_stratified_region_control_variates(RegionGenerator&& rg,
 
 template<typename Nested, typename Error, typename RNG>
 auto integrator_optimized_adaptive_stratified_control_variates(Nested&& nested, Error&& error, 
-		unsigned long adaptive_iterations, unsigned long spp, RNG&& rng) {
+		unsigned long adaptive_iterations, unsigned long spp, RNG&& rng,
+        std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
 			
 	return integrator_stratified_all_control_variates(region_generator(std::forward<Nested>(nested), std::forward<Error>(error), adaptive_iterations), AlphaOptimized(), FunctionSampler(), std::forward<RNG>(rng), spp);
 }
@@ -387,16 +388,26 @@ auto integrator_optimized_perpixel_adaptive_stratified_control_variates(Nested&&
 
 template<typename Nested, typename Error, typename RNG>
 auto integrator_optimized_perregion_adaptive_stratified_control_variates(Nested&& nested, Error&& error, 
-		unsigned long adaptive_iterations, unsigned long spp, RNG&& rng) {
+		unsigned long adaptive_iterations, unsigned long spp, RNG&& rng,
+        std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
 			
 	return integrator_stratified_region_control_variates(region_generator(std::forward<Nested>(nested), std::forward<Error>(error), adaptive_iterations), AlphaOptimized(), FunctionSampler(), std::forward<RNG>(rng), spp);
 }
 
 template<typename Nested, typename Error, typename RNG>
 auto integrator_alpha1_perregion_adaptive_stratified_control_variates(Nested&& nested, Error&& error, 
-		unsigned long adaptive_iterations, unsigned long spp, RNG&& rng) {
+		unsigned long adaptive_iterations, unsigned long spp, RNG&& rng,
+        std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
 			
 	return integrator_stratified_region_control_variates(region_generator(std::forward<Nested>(nested), std::forward<Error>(error), adaptive_iterations), AlphaConstant(), FunctionSampler(), std::forward<RNG>(rng), spp);
+}
+
+template<typename Nested, typename Error, typename RNG>
+auto integrator_alpha1_perpixel_adaptive_stratified_control_variates(Nested&& nested, Error&& error, 
+		unsigned long adaptive_iterations, unsigned long spp, RNG&& rng,
+        std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
+			
+	return integrator_stratified_pixel_control_variates(region_generator(std::forward<Nested>(nested), std::forward<Error>(error), adaptive_iterations), AlphaConstant(), FunctionSampler(), std::forward<RNG>(rng), spp);
 }
 
 
@@ -430,6 +441,14 @@ auto integrator_alpha1_perregion_adaptive_stratified_control_variates(Nested&& n
 		unsigned long adaptive_iterations, unsigned long spp, std::size_t seed = std::random_device()()) {
 			
 	return integrator_alpha1_perregion_adaptive_stratified_control_variates(
+		std::forward<Nested>(nested),std::forward<Error>(error),adaptive_iterations, spp, std::mt19937_64(seed));
+}
+
+template<typename Nested, typename Error>
+auto integrator_alpha1_perpixel_adaptive_stratified_control_variates(Nested&& nested, Error&& error, 
+		unsigned long adaptive_iterations, unsigned long spp, std::size_t seed = std::random_device()()) {
+			
+	return integrator_alpha1_perpixel_adaptive_stratified_control_variates(
 		std::forward<Nested>(nested),std::forward<Error>(error),adaptive_iterations, spp, std::mt19937_64(seed));
 }
 
