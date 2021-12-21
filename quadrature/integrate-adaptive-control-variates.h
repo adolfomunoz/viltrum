@@ -64,7 +64,8 @@ public:
 				data.vector_sampler = vector_sampler(data.regions);
 				++data.cv_iterations;
 			}
-			auto [index, probability] = data.vector_sampler.sample();
+			std::size_t index; Float probability;
+			std::tie(index, probability)  = data.vector_sampler.sample();
 			const R& chosen_region = data.regions[index];
 			residual_stepper.step([&] (const std::array<Float,DIM>& x)
 		      { return (f(x) - chosen_region.approximation_at(x))/probability; },
@@ -179,7 +180,8 @@ public:
 				data.vector_sampler = vector_sampler(data.regions);
 				++data.cv_iterations;
 			}
-			auto [index, probability] = data.vector_sampler.sample();
+            std::size_t index; Float probability;
+			std::tie(index, probability)  = data.vector_sampler.sample();
 			const R& chosen_region = data.regions[index];
 			residual_stepper.step(resolution,[&] (const std::array<Float,DIM>& x)
 		      { return (f(x) - chosen_region.approximation_at(x))/probability; },
@@ -287,7 +289,8 @@ public:
 		std::array<Float,DIMBINS> drange;
         for (std::size_t i=0;i<DIMBINS;++i) drange[i] = (range.max(i) - range.min(i))/Float(resolution[i]);
 		for (auto pos : multidimensional_range(resolution)) {
-			auto [index, probability] = data.bin_data[pos].sampler.sample();
+            std::size_t index; Float probability;
+			std::tie(index, probability) = data.bin_data[pos].sampler.sample();
 			const R* chosen_region = data.bin_data[pos].regions[index];
 			std::array<Float, DIMBINS> submin, submax;
             for (std::size_t i=0;i<DIMBINS;++i) {

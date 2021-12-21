@@ -64,7 +64,8 @@ public:
     void step(const std::array<std::size_t,DIMBINS>& resolution, const F& f, const Range<Float,DIM>& range, Data<R,Float,DIM,DIMBINS,ResData>& data) const
 	{
        for (auto pos : multidimensional_range(resolution)) {
-			auto [index, probability] = data.bin_data[pos].sampler.sample();
+			std::size_t index; Float probability;
+			std::tie(index, probability)  = data.bin_data[pos].sampler.sample();
 			const R* chosen_region = data.bin_data[pos].regions[index];
 			chosen_region = data.bin_data[pos].regions[index];
 			residual_stepper.step([&] (const std::array<Float,DIM>& x) { return (f(x) - chosen_region->approximation_at(x))/probability; },
