@@ -8,6 +8,7 @@ install_manifest.txt
 svg-cpp-plot-prefix/
 CmakeCache.txt
 CmakeSettings.json
+.vscode
 
 Makefile
 cmake_install.cmake
