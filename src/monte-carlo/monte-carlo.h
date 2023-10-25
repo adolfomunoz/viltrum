@@ -28,6 +28,9 @@ public:
 	void integrate(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
 		const F& f, const Range<Float,DIM>& range) const {
 
+        double resolution_factor = 1;
+        for (std::size_t i=0;i<DIMBINS;++i) resolution_factor*=bin_resolution[i];
+
         unsigned long i;
         for (i=0;i<samples;++i) {
             std::array<Float,DIM> sample;
@@ -44,7 +47,7 @@ public:
             }
         }
         for (auto pos : multidimensional_range(bin_resolution)) 
-            bins(pos)*=(range.volume()/double(samples)); 
+            bins(pos)*=(resolution_factor*range.volume()/double(samples)); 
 	}
 };
 
