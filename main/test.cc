@@ -20,7 +20,6 @@ int main() {
     }
     {
         std::vector<float> sol(bins,0.0f); 
-        //This integrator is (most probably) using the same seed for all bins which is bad
         integrate(integrator_per_bin(monte_carlo(samples)),sol,f,range_primary<2>());
         for (float v : sol) std::cout<<v<<" ";
         std::cout<<std::endl;
