@@ -21,7 +21,7 @@ void integrate(const Integrator& integrator, Bins& bins, const std::array<std::s
 template<typename Integrator, typename F, typename R, typename Logger>
 auto integrate(const Integrator& integrator, const F& function, const R& range, Logger& logger) {
     using T = decltype(function(range.min()));
-    T sol;
+    T sol(0);
     auto bins = [&sol] (const std::array<std::size_t,1>& i) -> T& { return sol; };
     std::array<std::size_t,1> res{1};
     integrate(integrator,bins,res,function,range,logger);

@@ -26,6 +26,9 @@ public:
         if (number<=Number(0)) {
             start = std::chrono::steady_clock::now();
             std::cerr<<name<<" -                           \r";
+        } else if (number >= last) {
+            auto elapsed = std::chrono::duration_cast<std::chrono::duration<double> >(std::chrono::steady_clock::now() - start);
+            std::cerr<<name<<" - \t [DONE]\t("<<std::setprecision(3)<<std::setw(6)<<elapsed.count()<<" seconds)\n";
         } else if (std::abs(double(number)-double(prev_number))>(double(last)*0.01)) {
             auto elapsed = std::chrono::duration_cast<std::chrono::duration<double> >(std::chrono::steady_clock::now() - start);
             std::cerr<<name<<" - \t"<<std::fixed<<std::setprecision(2)<<std::setw(6)<<(100.0f*float(number)/float(last))<<"%\t("<<std::setprecision(3)<<std::setw(6)<<elapsed.count()<<" seconds)\r";

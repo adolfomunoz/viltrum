@@ -12,7 +12,7 @@ int main() {
     };
     {
         LoggerProgress logger("Simple");
-        std::cout<<integrate(monte_carlo(samples),f,range_primary<2>())<<std::endl;  
+        std::cout<<integrate(monte_carlo(samples),f,range_primary<2>(),logger)<<std::endl;  
     }
 
     {
