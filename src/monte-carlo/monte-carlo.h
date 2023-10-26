@@ -24,15 +24,16 @@ class MonteCarlo {
 public:
     MonteCarlo(RNG&& r, unsigned long s) : rng(std::move(r)), samples(s) {} 
 
-	template<typename Bins, std::size_t DIMBINS, typename F, typename Float, std::size_t DIM>
+	template<typename Bins, std::size_t DIMBINS, typename F, typename Float, std::size_t DIM, typename Logger>
 	void integrate(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
-		const F& f, const Range<Float,DIM>& range) const {
+		const F& f, const Range<Float,DIM>& range, Logger& logger) const {
 
         double resolution_factor = 1;
         for (std::size_t i=0;i<DIMBINS;++i) resolution_factor*=bin_resolution[i];
 
         unsigned long i;
         for (i=0;i<samples;++i) {
+            logger.log_progress(i,samples);
             std::array<Float,DIM> sample;
 	        for (std::size_t i=0;i<DIM;++i) {
 		        std::uniform_real_distribution<Float> dis(range.min(i),range.max(i));
@@ -48,6 +49,7 @@ public:
         }
         for (auto pos : multidimensional_range(bin_resolution)) 
             bins(pos)*=(resolution_factor*range.volume()/double(samples)); 
+        logger.log_progress(samples,samples);
 	}
 };
 
