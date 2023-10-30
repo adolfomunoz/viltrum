@@ -11,8 +11,10 @@ include(Compiler)
 ###########################################################################################
 # TARGETS
 ###########################################################################################
+find_package(TBB REQUIRED)
+
 add_executable(test main/test.cc)
-target_link_libraries(test tbb)
+target_link_libraries(test PRIVATE TBB::tbb)
 
 ##########
 # FOR DOCUMENTATION
