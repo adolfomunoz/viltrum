@@ -6,12 +6,12 @@ using namespace viltrum;
 
 int main() {
     const std::size_t bins = 24;
-    const unsigned long samples = 4096000;
-    auto f =[] (const std::array<float,2>& x) {
-        if ((x[0]+x[1])<1) return 1.0f;
-        else return 0.0f;
+    const unsigned long samples = 16096000;
+    auto f =[] (const std::array<float,2>& x) -> double {
+        if ((x[0]+x[1])<1) return 1.0;
+        else return 0.0;
     };
-    //For some reason for a very large number of samples, monte_carlo fails to converge?
+    //With floats, due to numerica stability, for a very large number of samples, monte_carlo fails to converge?
     {
         LoggerProgress logger("Simple");
         std::cout<<integrate(monte_carlo(samples*bins),f,range_primary<2>(),logger)<<std::endl;  
