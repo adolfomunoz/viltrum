@@ -12,6 +12,7 @@ include(Compiler)
 # TARGETS
 ###########################################################################################
 add_executable(test main/test.cc)
+target_link_libraries(test tbb)
 
 ##########
 # FOR DOCUMENTATION

@@ -30,7 +30,7 @@ public:
 
         double resolution_factor = 1;
         for (std::size_t i=0;i<DIMBINS;++i) resolution_factor*=bin_resolution[i];
-
+        double factor = resolution_factor*range.volume()/double(samples);
         unsigned long i;
         for (i=0;i<samples;++i) {
             logger.log_progress(i,samples);
@@ -44,11 +44,9 @@ public:
                 for (std::size_t i=0;i<DIMBINS;++i) {
                     pos[i] = std::size_t(bin_resolution[i]*(sample[i] - range.min(i))/(range.max(i) - range.min(i)));
                 }
-                bins(pos) += f(sample);
+                bins(pos) += f(sample)*factor;
             }
         }
-        for (auto pos : multidimensional_range(bin_resolution)) 
-            bins(pos)*=(resolution_factor*range.volume()/double(samples)); 
         logger.log_progress(samples,samples);
 	}
 };
