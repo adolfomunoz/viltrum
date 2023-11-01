@@ -1,4 +1,4 @@
-#include "../viltrum.h"
+#include "../../viltrum.h"
 #include <iostream>
 #include <iomanip>
 
@@ -7,10 +7,12 @@ using namespace viltrum;
 int main() {
     const std::size_t bins = 24;
     const unsigned long samples = 1000000;
+
     auto f =[] (const std::array<float,2>& x) -> double {
-        if ((x[0]+x[1])<1) return 1.0;
-        else return 0.0;
+       if ((x[0]+x[1])<1) return 1.0;        
+       else return 0.0;
     };
+
     //With floats, due to numerica stability, for a very large number of samples, monte_carlo fails to converge?
     {
         LoggerProgress logger("Simple");

@@ -22,6 +22,9 @@ public:
 		_volume = T(1);
 		for (std::size_t i = 0; i<DIM; ++i) _volume*=(b[i]-a[i]);
 	}
+
+    using value_type = T;
+    static constexpr std::size_t size = DIM;
     
 	const std::array<T,DIM>& min() const { return (*this)[0]; }
 	T min(std::size_t i) const { return min()[i]; }

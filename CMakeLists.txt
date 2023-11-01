@@ -13,8 +13,11 @@ include(Compiler)
 ###########################################################################################
 find_package(TBB REQUIRED)
 
-add_executable(test main/test.cc)
-target_link_libraries(test PRIVATE TBB::tbb)
+add_executable(test-array-parameter main/compilation-tests/array-parameter.cc)
+target_link_libraries(test-array-parameter PRIVATE TBB::tbb)
+add_executable(test-multiple-parameters main/compilation-tests/multiple-parameters.cc)
+target_link_libraries(test-multiple-parameters PRIVATE TBB::tbb)
+add_executable(test-random-sequence main/compilation-tests/random-sequence.cc)
 
 ##########
 # FOR DOCUMENTATION
