@@ -1,13 +1,15 @@
 #pragma once
 
 #include "range.h"
+#include "range-infinite.h"
 #include "log.h"
 #include <vector>
 #include <array>
 
 namespace viltrum {
 
-namespace detail {
+namespace detail {  
+
     template<typename P, typename F, typename Enable = void>
     struct Integrand {
         static const F& adapt(const F& f) { return f; } 
@@ -56,6 +58,14 @@ void integrate(const Integrator& integrator, Bins& bins, const std::array<std::s
     integrator.integrate(bins,resolution, detail::adapt<Float>(function), range, logger);
 }
 
+template<typename Integrator, typename Bins, std::size_t DIMBINS, typename F, typename Float, typename Logger>
+void integrate(const Integrator& integrator, Bins& bins, const std::array<std::size_t,DIMBINS>& resolution, 
+            const F& function, const RangeInfinite<Float>& range, Logger& logger,
+            std::enable_if_t<std::is_convertible_v<
+                std::decay_t<decltype(function(std::vector<Float>()))>,
+                std::decay_t<decltype(bins(std::array<std::size_t,DIMBINS>()))>>,int> dummy=0) {
+    integrator.integrate(bins,resolution, function, range, logger);
+}
 
 
 template<typename Integrator, typename Bins, std::size_t DIMBINS, typename F, typename Float, std::size_t DIM>
@@ -64,15 +74,26 @@ void integrate(const Integrator& integrator, Bins& bins, const std::array<std::s
     integrate(integrator, bins, resolution, function, range, log);
 }
 
-template<typename Integrator, typename F, typename R, typename Logger>
-auto integrate(const Integrator& integrator, const F& function, const R& range, Logger& logger) {
-    using T = decltype(detail::adapt<typename R::value_type>(function)(range.min()));
+template<typename Integrator, typename F, typename Float, std::size_t DIM, typename Logger>
+auto integrate(const Integrator& integrator, const F& function, const Range<Float,DIM>& range, Logger& logger) {
+    using T = decltype(detail::adapt<Float>(function)(range.min()));
     T sol(0.0);
     auto bins = [&sol] (const std::array<std::size_t,1>& i) -> T& { return sol; };
     std::array<std::size_t,1> res{1};
     integrate(integrator,bins,res,function,range,logger);
     return sol;
 }
+
+template<typename Integrator, typename F, typename Float, typename Logger>
+auto integrate(const Integrator& integrator, const F& function, const RangeInfinite<Float>& range, Logger& logger) {
+    using T = decltype(function(std::vector<Float>()));
+    T sol(0.0);
+    auto bins = [&sol] (const std::array<std::size_t,1>& i) -> T& { return sol; };
+    std::array<std::size_t,1> res{1};
+    integrate(integrator,bins,res,function,range,logger);
+    return sol;
+}
+
 
 template<typename Integrator, typename F, typename R>
 auto integrate(const Integrator& integrator, const F& function, const R& range) {

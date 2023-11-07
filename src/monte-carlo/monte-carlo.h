@@ -3,6 +3,14 @@
 #include <random>
 #include "../multidimensional-range.h"
 #include "../range.h"
+#include "../range-infinite.h"
+#include "random-sequence.h"
+
+
+
+
+
+
 
 
 
@@ -49,6 +57,28 @@ public:
         }
         logger.log_progress(samples,samples);
 	}
+
+	template<typename Bins, std::size_t DIMBINS, typename F, typename Float, typename Logger>
+	void integrate(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
+		const F& f, const RangeInfinite<Float>& range, Logger& logger) const {
+
+        double resolution_factor = 1;
+        for (std::size_t i=0;i<DIMBINS;++i) resolution_factor*=bin_resolution[i];
+        double factor = resolution_factor*range.volume()/double(samples);
+        unsigned long i;
+        for (i=0;i<samples;++i) {
+            logger.log_progress(i,samples);
+            auto sample = random_sequence<Float,RNG>(range,std::size_t(rng())); //Seeds the RNG
+            std::array<std::size_t,DIMBINS> pos;
+            auto it = sample.begin();
+            for (std::size_t i=0;i<DIMBINS;++i,++it) {
+                pos[i] = std::size_t(bin_resolution[i]*((*it) - range.min(i))/(range.max(i) - range.min(i)));
+            }
+            bins(pos) += f(sample)*factor;
+        }
+        logger.log_progress(samples,samples);
+	}
+
 };
 
 template<typename RNG>

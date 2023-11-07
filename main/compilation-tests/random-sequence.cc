@@ -6,7 +6,7 @@
 using namespace viltrum;
 
 int main() {
-    auto l = random_sequence(0.0,1.0);
+    auto l = random_sequence(RangeInfinite(std::vector{-2.0},std::vector{2.0}));
     int i = 0;
     for (double d : l) {
         std::cout<<d<<" ";
