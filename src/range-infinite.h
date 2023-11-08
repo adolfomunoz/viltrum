@@ -101,6 +101,29 @@ auto operator|(const Range<T,N1>& r1,const RangeInfinite<T>& r2) noexcept -> Ran
     return range_infinite(a,b);
 }
 
+template<typename T>
+RangeInfinite<T> range_infinite(const T& a, const T& b, std::enable_if_t<std::is_floating_point_v<T>,int> dummy = 0) {
+    return RangeInfinite<T>(std::vector<T>{a},std::vector<T>{b});
+}
+
+template<typename T>
+RangeInfinite<T> range_infinite(const T& a0, const T& a1, const T& b0, const T& b1) {
+    return RangeInfinite<T>(std::vector<T>{a0,a1},std::vector<T>{b0,b1});
+}
+
+
+template<typename T>
+RangeInfinite<T> range_infinite(const T& a0, const T& a1, const T& a2, const T& b0, const T& b1, const T& b2) {
+    return RangeInfinite<T>(std::vector<T>{a0,a1,a2},std::vector<T>{b0,b1,b2});
+}
+
+
+template<typename T>
+RangeInfinite<T> range_infinite(const T& a0, const T& a1, const T& a2, const T& a3, const T& b0, const T& b1, const T& b2, const T& b3) {
+    return RangeInfinite<T>(std::vector<T>{a0,a1,a2,b3},std::vector<T>{b0,b1,b2,b3});
+}
+
+
 template<typename T = float>
 RangeInfinite<T> range_primary_infinite() {
     return RangeInfinite<T>();
