@@ -17,13 +17,13 @@ class IntegratorPerBinParallel {
     Integrator bin_integrator;
 
 public:
-	template<typename Bins, std::size_t DIMBINS, typename F, typename Float, std::size_t DIM, typename Logger>
+	template<typename Bins, std::size_t DIMBINS, typename F, typename R, typename Logger>
 	void integrate(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
-		const F& f, const Range<Float,DIM>& range, Logger& logger) const {
+		const F& f, const R& range, Logger& logger) const {
         std::size_t factor(1);   
         for (std::size_t i = 0; i < DIMBINS; ++i) factor*=bin_resolution[i];
-        std::array<Float,DIMBINS> drange;
-        for (std::size_t i=0;i<DIMBINS;++i) drange[i] = (range.max(i) - range.min(i))/Float(bin_resolution[i]);
+        std::array<typename R::value_type,DIMBINS> drange;
+        for (std::size_t i=0;i<DIMBINS;++i) drange[i] = (range.max(i) - range.min(i))/((typename R::value_type)(bin_resolution[i]));
 
         std::size_t ntasks = bin_resolution[0]; 
         std::vector<std::size_t> idxs(bin_resolution[0]), done(bin_resolution[0],0);
@@ -45,7 +45,7 @@ public:
                 idxs.begin(),idxs.end(),
                 [&] (std::size_t d) {
                     for (auto pos : multidimensional_range(task_dims)) {
-                        Range<Float,DIM> subrange = range;
+                        R subrange = range;
                         subrange=range.subrange_dimension(0,range.min(0)+d*drange[0],range.min(0)+(d+1)*drange[0]);
                         for (std::size_t n=1;n<DIMBINS;++n)
                             subrange = subrange.subrange_dimension(n,range.min(n)+pos[n-1]*drange[n],range.min(n)+(pos[n-1]+1)*drange[n]);
@@ -57,7 +57,7 @@ public:
             std::for_each(std::execution::par_unseq,
                 idxs.begin(),idxs.end(),
                 [&] (std::size_t d) {
-                    Range<Float,DIM> subrange = range;
+                    R subrange = range;
                     subrange=range.subrange_dimension(0,range.min(0)+d*drange[0],range.min(0)+(d+1)*drange[0]);
                     bins(std::array<std::size_t,1>{d}) = double(factor)*viltrum::integrate(bin_integrator,f,subrange);
                     ++done[d];         

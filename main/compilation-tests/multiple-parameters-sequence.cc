@@ -32,20 +32,21 @@ int main() {
         for (float v : sol) std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
         std::cout<<std::endl;
     }
-    /*
+    
     {
         LoggerProgress logger("Per bin");
         std::vector<float> sol(bins,0.0f); 
-        integrate(integrator_per_bin(monte_carlo(samples)),sol,f,range_primary<2>(),logger);
+        integrate(integrator_per_bin(monte_carlo(samples)),sol,f,range_primary_infinite(),logger);
         for (float v : sol) std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
         std::cout<<std::endl;
     }
+    
     {
         LoggerProgress logger("Parallel"); //I'm suprised this works with a RNG shared among threads
         std::vector<float> sol(bins,0.0f); 
-        integrate(integrator_per_bin_parallel(monte_carlo(samples)),sol,f,range_primary<2>(),logger);
+        integrate(integrator_per_bin_parallel(monte_carlo(samples)),sol,f,range_primary_infinite(),logger);
         for (float v : sol) std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
         std::cout<<std::endl;
     }
-    */
+    
 } 
