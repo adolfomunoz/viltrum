@@ -40,5 +40,19 @@ int main() {
         for (float v : sol) std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
         std::cout<<std::endl;
     }
+    {
+        LoggerProgress logger("Trapezoids");
+        std::vector<float> sol(bins,0.0f); 
+        integrate(newton_cotes(steps<bins/2>(trapezoidal)),sol,f,range_primary<2>(),logger);
+        for (float v : sol) std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
+        std::cout<<std::endl;
+    }
+    {
+        LoggerProgress logger("Perbin trapezoids");
+        std::vector<float> sol(bins,0.0f); 
+        integrate(integrator_per_bin(newton_cotes(steps<16>(trapezoidal))),sol,f,range_primary<2>(),logger);
+        for (float v : sol) std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
+        std::cout<<std::endl;
+    }
 
 } 
