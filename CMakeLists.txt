@@ -1,5 +1,5 @@
-project(plot)
 cmake_minimum_required(VERSION 3.10)
+project(viltrum)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -20,6 +20,7 @@ target_link_libraries(test-multiple-parameters PRIVATE TBB::tbb)
 add_executable(test-multiple-parameters-sequence main/compilation-tests/multiple-parameters-sequence.cc)
 target_link_libraries(test-multiple-parameters-sequence PRIVATE TBB::tbb)
 add_executable(test-random-sequence main/compilation-tests/random-sequence.cc)
+add_executable(test-concat main/compilation-tests/concat.cc)
 
 ##########
 # FOR DOCUMENTATION
