@@ -17,9 +17,9 @@ public:
         for (std::size_t i = 0; i < DIMBINS; ++i) factor*=bin_resolution[i];
         std::array<typename R::value_type,DIMBINS> drange;
         for (std::size_t i=0;i<DIMBINS;++i) drange[i] = (range.max(i) - range.min(i))/((typename R::value_type)(bin_resolution[i]));
-        std::size_t i = 0;
+        std::size_t r = 0;
         for (auto pos : multidimensional_range(bin_resolution)) {
-            logger.log_progress(i++,factor);
+            logger.log_progress(r++,factor);
             R subrange = range;
             for (std::size_t i=0;i<DIMBINS;++i)
                 subrange = subrange.subrange_dimension(i,range.min(i)+pos[i]*drange[i],range.min(i)+(pos[i]+1)*drange[i]);

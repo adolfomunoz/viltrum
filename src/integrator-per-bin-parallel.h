@@ -63,8 +63,8 @@ public:
                     ++done[d];         
                 });  
         } 
-        logger.log_progress(factor,factor);
         for_log.join();  
+        logger.log_progress(factor,factor);
 	}
 
     IntegratorPerBinParallel(Integrator&& pi) : 

@@ -42,5 +42,10 @@ public:
     void log(const Data& data) {}
 };
 
+template<typename Logger>
+Logger logger_step(const Logger& logger, std::string step_name) {
+    return Logger(logger.name()+" | "+step_name);
+}
+
 };
 
