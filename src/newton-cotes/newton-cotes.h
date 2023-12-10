@@ -31,4 +31,6 @@ NewtonCotes<R> newton_cotes(const R& rule, bool parallel = false){
     return NewtonCotes<R>(rule, parallel);
 } 
 
+
+
 }

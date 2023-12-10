@@ -8,6 +8,7 @@
 #include "../multiarray/io.h"
 #include "../multiarray/split.h"
 #include "../range.h"
+#include "../nested/nested.h"
 #include <cmath>
 
 namespace viltrum {
@@ -204,7 +205,7 @@ public:
 		return sol;
 	}
 	
-/*
+
 	template<typename QDT = Q, typename = typename std::enable_if<is_nested<QDT>::value>::type >
 	value_type error(std::size_t dim) const {
 		assert(dim < DIM);
@@ -212,29 +213,37 @@ public:
 			data.fold([&] (const auto& v) { return quadrature.error(v); },dim)
 			    .fold_all(quadrature);
 	}
-*/
+
+	template<typename ErrorMetric, typename QDT = Q, typename = typename std::enable_if<is_nested<QDT>::value>::type >
+	auto error(std::size_t dim,const ErrorMetric& error_metric) const {
+		assert(dim < DIM);
+		return range().volume()*
+			data.fold([&] (const auto& v) { return quadrature.error(v,error_metric); },dim)
+			    .fold_all(quadrature);
+	}
+
 	
 	/*
-	 * Norm :: value_type -> Float
+	 * ErrorMetric :: (value_type,value_type) -> arithmetic
 	 */
 
-/*
-	template<typename Norm, typename QDT = Q, typename = typename std::enable_if<is_nested<QDT>::value>::type >
-	std::tuple<Float,std::size_t> max_error_dimension(const Norm& norm) const {
+
+	template<typename ErrorMetric, typename QDT = Q, typename = typename std::enable_if<is_nested<QDT>::value>::type >
+	auto max_error_dimension(const ErrorMetric& error_metric) const {
 		Float max_err = 0; std::size_t max_dim = 0; Float err;
 		for (std::size_t d = 0; d<DIM; ++d) {
-			err = norm(this->error(d));
+			err = this->error(d,error_metric);
 			if (err>max_err) {
 				max_err = err; max_dim = d;
 			}
 		}
-		return std::tuple<Float,std::size_t>(max_err,max_dim);
+		return std::tuple(max_err,max_dim);
 	}
-	
+
 	template<typename QDT = Q, typename = typename std::enable_if<is_nested<QDT>::value && std::is_arithmetic<value_type>::value>::type >
 	std::tuple<Float,std::size_t> max_error_dimension() const {
 		return max_error_dimension(
-			[] (const value_type& v) { return Float(std::abs(v)); }
+			[] (const value_type& v1,const value_type& v2) { return Float(std::abs(v2-v1)); }
 		);
 	}
 
@@ -243,7 +252,6 @@ public:
 		return range().volume()*(data.fold_all(quadrature) - 
 					   data.fold_all([&] (const auto& v) { return quadrature.low(v); }));
 	}		
-*/
 };
 
 template<typename Float, typename F, typename Q, std::size_t DIM>
