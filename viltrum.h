@@ -6,3 +6,4 @@
 #include "src/monte-carlo/monte-carlo.h"
 #include "src/newton-cotes/newton-cotes.h"
 #include "src/combination/fubini.h"
+#include "src/nested/integrator-adaptive-tolerance.h"

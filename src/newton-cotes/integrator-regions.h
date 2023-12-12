@@ -36,10 +36,12 @@ public:
             }
             if (start_bin == end_bin) bins(start_bin)+=r.integral();
             else for (auto pos : multidimensional_range(start_bin, end_bin)) {
-                Range<Float,DIM> subrange = range;
+                Range<Float,DIM> binrange = range;
                 for (std::size_t i=0;i<DIMBINS;++i)
-                    subrange = subrange.subrange_dimension(i,range.min(i)+pos[i]*drange[i],range.min(i)+(pos[i]+1)*drange[i]);
-                if (!subrange.empty()) bins(pos) += double(factor)*r.integral_subrange(subrange);
+                    binrange = binrange.subrange_dimension(i,range.min(i)+pos[i]*drange[i],range.min(i)+(pos[i]+1)*drange[i]);
+
+                Range<Float,DIM> region_bin_range = binrange.intersection(r.range());
+                if (!region_bin_range.empty()) bins(pos) += double(factor)*r.integral_subrange(region_bin_range);
             } 
         }
         logger.log_progress(final_progress,final_progress);
@@ -61,6 +63,7 @@ void integrate_regions(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_re
     }
 }
 
+
 template<typename RegionSeq, typename Bins, std::size_t DIMBINS, typename Float, std::size_t DIM, typename Logger>
 void integrate_regions(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
 		RegionSeq&& region_seq, const Range<Float,DIM>& range, bool parallel, Logger& logger) {
@@ -68,5 +71,21 @@ void integrate_regions(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_re
     RegionSeq rs = region_seq;
     integrate_regions(bins,bin_resolution,rs,range,parallel,logger);
 }
+
+template<typename Region, typename Bins, std::size_t DIMBINS, typename Float, std::size_t DIM, typename Logger>
+void integrate_region(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
+		const Region& region, const Range<Float,DIM>& range, bool parallel, Logger& logger) {
+
+    integrate_regions(bins,bin_resolution,std::array<Region,1>{region},range,parallel,logger);
+}
+
+template<typename Region, typename Bins, std::size_t DIMBINS, typename Float, std::size_t DIM>
+void integrate_region(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
+		const Region& region, const Range<Float,DIM>& range, bool parallel = false) {
+
+    LoggerNull logger;
+    integrate_region(bins,bin_resolution,region,range,parallel,logger);
+}
+
 
 }

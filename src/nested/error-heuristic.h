@@ -13,7 +13,7 @@ class error_heuristic_default {
 public:
     error_heuristic_default(const ErrorMetric& em) : error_metric(em) {}
     template<typename R>
-    auto error(const R& region) const {
+    auto operator()(const R& region) const {
         return region.max_error_dimension(error_metric);
     }
 };

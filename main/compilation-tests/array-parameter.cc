@@ -43,21 +43,28 @@ int main() {
     {
         LoggerProgress logger("Trapezoids");
         std::vector<float> sol(bins,0.0f); 
-        integrate(newton_cotes(steps<16*bins>(trapezoidal)),sol,f,range_primary<2>(),logger);
+        integrate(integrator_newton_cotes(steps<16*bins>(trapezoidal)),sol,f,range_primary<2>(),logger);
         for (float v : sol) std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
         std::cout<<std::endl;
     }
     {
         LoggerProgress logger("Parallel trapezoids");
         std::vector<float> sol(bins,0.0f); 
-        integrate(newton_cotes(steps<16*bins>(trapezoidal),true),sol,f,range_primary<2>(),logger);
+        integrate(integrator_newton_cotes(steps<16*bins>(trapezoidal),true),sol,f,range_primary<2>(),logger);
         for (float v : sol) std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
         std::cout<<std::endl;
     }
     {
         LoggerProgress logger("Perbin trapezoids");
         std::vector<float> sol(bins,0.0f); 
-        integrate(integrator_per_bin(newton_cotes(steps<16>(trapezoidal))),sol,f,range_primary<2>(),logger);
+        integrate(integrator_per_bin(integrator_newton_cotes(steps<16>(trapezoidal))),sol,f,range_primary<2>(),logger);
+        for (float v : sol) std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
+        std::cout<<std::endl;
+    }
+    {
+        LoggerProgress logger("Adaptive Simpson-Trapezoidal");
+        std::vector<float> sol(bins,0.0f); 
+        integrate(integrator_adaptive_tolerance(nested(simpson,trapezoidal),0.0001f),sol,f,range_primary<2>(),logger);
         for (float v : sol) std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
         std::cout<<std::endl;
     }

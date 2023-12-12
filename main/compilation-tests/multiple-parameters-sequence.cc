@@ -51,7 +51,7 @@ int main() {
     {
         LoggerProgress logger("Fubini"); //I'm suprised this works with a RNG shared among threads
         std::vector<float> sol(bins,0.0f); 
-        integrate(integrator_fubini<2>(newton_cotes(steps<bins/2>(trapezoidal)),monte_carlo(samples)),sol,f,range_infinite(-1.0,-1.0,1.0,1.0),logger);
+        integrate(integrator_fubini<2>(integrator_newton_cotes(steps<bins/2>(trapezoidal)),monte_carlo(samples)),sol,f,range_infinite(-1.0,-1.0,1.0,1.0),logger);
         for (float v : sol) std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
         std::cout<<std::endl;
     }

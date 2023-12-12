@@ -22,12 +22,12 @@ public:
         logger_region.log_progress(1,1);
 
         auto logger_integration = logger_step(logger, "subrange integration");
-        integrate_regions(bins,bin_resolution,std::vector<std::decay_t<decltype(r)>>{r},range,parallel,logger_integration);
+        integrate_region(bins,bin_resolution,r,range,parallel,logger_integration);
 	}
 };
 
 template<typename R>
-NewtonCotes<R> newton_cotes(const R& rule, bool parallel = false){
+NewtonCotes<R> integrator_newton_cotes(const R& rule, bool parallel = false){
     return NewtonCotes<R>(rule, parallel);
 } 
 
