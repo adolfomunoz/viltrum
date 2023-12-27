@@ -1,6 +1,7 @@
 #pragma once
 #include "region.h"
-#include "integrator-regions.h"
+#include "regions-integrator-sequential.h"
+#include "regions-integrator-parallel-bins.h"
 #include "rules.h"
 
 namespace viltrum {
@@ -22,7 +23,11 @@ public:
         logger_region.log_progress(1,1);
 
         auto logger_integration = logger_step(logger, "subrange integration");
-        integrate_region(bins,bin_resolution,r,range,parallel,logger_integration);
+        if (parallel)
+            regions_integrator_parallel_bins().integrate_regions(bins,bin_resolution,std::array<decltype(r),1>{r},range,logger_integration);
+        else    
+            regions_integrator_sequential().integrate_regions(bins,bin_resolution,std::array<decltype(r),1>{r},range,logger_integration);
+
 	}
 };
 

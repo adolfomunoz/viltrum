@@ -1,6 +1,6 @@
 #pragma once
 #include "../newton-cotes/region.h"
-#include "../newton-cotes/integrator-regions.h"
+#include "../newton-cotes/regions-integrator-sequential.h"
 #include "nested.h"
 #include "error-heuristic.h"
 
@@ -17,7 +17,8 @@ class IntegratorAdaptiveTolerance {
 		const F& f, const Range<Float,DIM>& range, Logger& logger) const {
             auto [error,dimension] = error_heuristic(r);
             if (error < tolerance) {
-                viltrum::integrate_region(bins,bin_resolution,r,range);
+                LoggerNull logger_region;
+                regions_integrator_sequential().integrate_regions(bins,bin_resolution,std::array<R,1>{r},range,logger_region);
                 integrated_volume += r.range().volume();
                 logger.log_progress(integrated_volume,range.volume());
             } else {
