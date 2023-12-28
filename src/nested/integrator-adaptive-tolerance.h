@@ -13,7 +13,7 @@ class IntegratorAdaptiveTolerance {
     float tolerance;
 
     template<typename R, typename Bins, std::size_t DIMBINS, typename F, typename Float, std::size_t DIM, typename Logger>
-	void integrate_region(const R& r, float& integrated_volume, Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
+	void integrate_region(const R& r, Float& integrated_volume, Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
 		const F& f, const Range<Float,DIM>& range, Logger& logger) const {
             auto [error,dimension] = error_heuristic(r);
             if (error < tolerance) {
@@ -33,7 +33,7 @@ public:
 	template<typename Bins, std::size_t DIMBINS, typename F, typename Float, std::size_t DIM, typename Logger>
 	void integrate(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
 		const F& f, const Range<Float,DIM>& range, Logger& logger) const {
-            float integrated_volume = 0;
+            Float integrated_volume(0);
             auto r = region(f,rule, range.min(), range.max());
             integrate_region(r,integrated_volume,bins,bin_resolution,f,range,logger);
         }
