@@ -17,11 +17,11 @@ class MutexedBins {
         return sum % mutexes.size();
     }
 public:
-    MutexedBins(std::size_t nmutexes, const std::array<std::size_t,DIMBINS>& br) : 
-        mutexes(nmutexes),bin_resolution(br) {}
-    value_type& operator()(const std::array<std::size_t,DIMBINS>& i) {
+    MutexedBins(Bins& b, const std::array<std::size_t,DIMBINS>& br,std::size_t nmutexes) : 
+        bins(b),bin_resolution(br),mutexes(nmutexes) {}
+    void add(const std::array<std::size_t,DIMBINS>& i,const value_type& v) {
         std::scoped_lock lock(mutexes[hash_of(i)]);
-        return bins[i];
+        bins(i) += v;
     }
 };
 
@@ -42,25 +42,32 @@ public:
         std::size_t factor = 1;
         for (std::size_t i=0;i<DIMBINS;++i) factor*=bin_resolution[i];
         std::atomic<std::size_t> progress = 0; std::size_t final_progress = seq_regions.size();
-        MutexedBins<Bins,DIMBINS> mutexedbins(bins,bin_resolution);
-        std::for_each(std::execution::par_unseq, seq_regions.begin(),seq_regions.end(),[&] {
-            logger.log_progress(std::size_t(progress++),final_progress);
+        MutexedBins<Bins,DIMBINS> mutexedbins(bins,bin_resolution,nmutexes);
+        std::thread for_log([&logger,&progress,final_progress] () {
+             while (std::size_t(progress)<final_progress) {
+                logger.log_progress(std::size_t(progress),final_progress);
+                std::this_thread::sleep_for(std::chrono::milliseconds(250));
+            } 
+        });
+        std::for_each(std::execution::par_unseq, seq_regions.begin(),seq_regions.end(),[&] (const auto& r) {
+            progress++;
             std::array<std::size_t,DIMBINS> start_bin, end_bin;
             for (std::size_t i = 0; i<DIMBINS;++i) {
                 start_bin[i] = std::size_t(std::max(Float(0),(r.range().min(i) - range.min(i))/drange[i]));
                 end_bin[i]   = std::min(bin_resolution[i],std::size_t((r.range().max(i) - range.min(i))/drange[i])+1);
             }
-            if (start_bin == end_bin) mutexedbins(start_bin)+=r.integral();
+            if (start_bin == end_bin) mutexedbins.add(start_bin,r.integral());
             else for (auto pos : multidimensional_range(start_bin, end_bin)) {
                 Range<Float,DIM> binrange = range;
                 for (std::size_t i=0;i<DIMBINS;++i)
                     binrange = binrange.subrange_dimension(i,range.min(i)+pos[i]*drange[i],range.min(i)+(pos[i]+1)*drange[i]);
 
                 Range<Float,DIM> region_bin_range = binrange.intersection(r.range());
-                if (!region_bin_range.empty()) mutexedbins(pos) += double(factor)*r.integral_subrange(region_bin_range);
+                if (!region_bin_range.empty()) mutexedbins.add(pos,double(factor)*r.integral_subrange(region_bin_range));
             } 
         });
         
+        for_log.join();  
         logger.log_progress(final_progress,final_progress);
     }
 };

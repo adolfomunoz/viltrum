@@ -45,7 +45,7 @@ auto integrator_adaptive_tolerance(const Rule& rule, const ErrorHeuristic& error
 }
 
 template<typename Rule>
-auto integrator_adaptive_tolerance(const Rule& rule, float tolerance = 1.e-3) {
+auto integrator_adaptive_tolerance(const Rule& rule, float tolerance = 1.e-3f) {
     return integrator_adaptive_tolerance(rule,error_heuristic_default(error_metric_absolute()),tolerance);
 }
 

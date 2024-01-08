@@ -22,7 +22,7 @@ public:
             };
 
             logger.log_progress(std::size_t(0),subdivisions);
-            auto r = region(f,nested,range.min(),range.max());
+            auto r = region(f,rule,range.min(),range.max());
             auto errdim = error_heuristic(r);
             std::vector<ExtendedRegion<decltype(r),decltype(errdim)> > heap;
             heap.emplace_back(r,errdim);
@@ -43,8 +43,8 @@ public:
 };
 
 template<typename Rule, typename ErrorHeuristic>
-auto regions_generator_adaptive_heap(const Rule& r, const ErrorHeuristic& er) {
-    return RegionsGeneratorAdaptiveHeap<Rule,ErrorHeuristic>(r,er);
+auto regions_generator_adaptive_heap(const Rule& r, const ErrorHeuristic& er, std::size_t subdivisions) {
+    return RegionsGeneratorAdaptiveHeap<Rule,ErrorHeuristic>(r,er,subdivisions);
 }
 
 
