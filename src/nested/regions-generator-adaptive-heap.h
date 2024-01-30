@@ -25,6 +25,7 @@ public:
             auto r = region(f,rule,range.min(),range.max());
             auto errdim = error_heuristic(r);
             std::vector<ExtendedRegion<decltype(r),decltype(errdim)> > heap;
+            heap.reserve(subdivisions+1);
             heap.emplace_back(r,errdim);
             for (std::size_t i = 0; i<subdivisions;++i) {
     	        auto r = heap.front();
