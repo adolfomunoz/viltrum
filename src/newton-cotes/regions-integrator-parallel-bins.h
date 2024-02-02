@@ -10,15 +10,12 @@ namespace viltrum {
  */
 class RegionsIntegratorParallelBins {
 public:
-	template<typename Bins, std::size_t DIMBINS, typename SeqRegions, typename Float, std::size_t DIM, typename Logger>
+	template<typename Bins, std::size_t DIMBINS, typename SeqRegions, typename F, typename Float, std::size_t DIM, typename Logger>
 	void integrate_regions(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
-		const SeqRegions& seq_regions, const Range<Float,DIM>& range, Logger& logger) const {
+		const SeqRegions& seq_regions, const F& f, const Range<Float,DIM>& range, Logger& logger) const {
         
-        auto dummy_function = 
-            [] (const std::array<Float,DIM>& x) { return typename std::decay_t<decltype(seq_regions.front())>::value_type(); };
-
         integrator_per_bin_parallel(regions_integrator_sequential().integrator_wrapper(seq_regions)).
-            integrate(bins,bin_resolution,dummy_function,range,logger);
+            integrate(bins,bin_resolution,f,range,logger);
     }
 };
 

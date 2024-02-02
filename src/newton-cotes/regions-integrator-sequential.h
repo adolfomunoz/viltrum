@@ -23,7 +23,7 @@ class RegionsIntegratorSequential {
         template<typename Bins, std::size_t DIMBINS, typename F, typename Float, std::size_t DIM, typename Logger>
         void integrate(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
             const F& f, const Range<Float,DIM>& range, Logger& logger) const {
-                return ir.integrate_regions(bins,bin_resolution,seq_regions,range,logger);
+                return ir.integrate_regions(bins,bin_resolution,seq_regions,f,range,logger);
         }
 
     };
@@ -34,9 +34,9 @@ public:
         return IntegratorWrapper<SeqRegions>(*this,seq);
     }
 
-	template<typename Bins, std::size_t DIMBINS, typename SeqRegions, typename Float, std::size_t DIM, typename Logger>
+	template<typename Bins, std::size_t DIMBINS, typename SeqRegions, typename F, typename Float, std::size_t DIM, typename Logger>
 	void integrate_regions(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
-		const SeqRegions& seq_regions, const Range<Float,DIM>& range, Logger& logger) const {
+		const SeqRegions& seq_regions, const F& f, const Range<Float,DIM>& range, Logger& logger) const {
 
         std::array<Float,DIMBINS> drange;
         for (std::size_t i=0;i<DIMBINS;++i) drange[i] = (range.max(i) - range.min(i))/Float(bin_resolution[i]);

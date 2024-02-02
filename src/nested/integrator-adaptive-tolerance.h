@@ -18,7 +18,7 @@ class IntegratorAdaptiveTolerance {
             auto [error,dimension] = error_heuristic(r);
             if (error < tolerance) {
                 LoggerNull logger_region;
-                regions_integrator_sequential().integrate_regions(bins,bin_resolution,std::array<R,1>{r},range,logger_region);
+                regions_integrator_sequential().integrate_regions(bins,bin_resolution,std::array<R,1>{r},f,range,logger_region);
                 integrated_volume += r.range().volume();
                 logger.log_progress(integrated_volume,range.volume());
             } else {

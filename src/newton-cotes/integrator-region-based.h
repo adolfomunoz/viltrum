@@ -17,7 +17,7 @@ public:
         auto logger_generator = logger_step(logger,"region generation");
         auto seq_regions = regions_generator.generate(bin_resolution,f,range,logger_generator);
         auto logger_integration = logger_step(logger, "region integration");
-        regions_integrator.integrate_regions(bins,bin_resolution,seq_regions,range,logger_integration);
+        regions_integrator.integrate_regions(bins,bin_resolution,seq_regions,f,range,logger_integration);
         }
 };
 
