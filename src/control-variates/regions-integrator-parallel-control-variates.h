@@ -74,7 +74,7 @@ public:
             [&] (const std::array<std::size_t, DIMBINS>& pos) {
                 //This is the control variate
                 for (const auto& [r,region_bin_range] : perbin[pos]) {
-                    bins(pos) = double(factor)*r->integral_subrange(region_bin_range);
+                    bins(pos) += double(factor)*r->integral_subrange(region_bin_range);
 	            }
                 //This is the MonteCarlo residual, RR among regions
                 std::uniform_int_distribution<std::size_t> rr(0,perbin[pos].size()-1);
