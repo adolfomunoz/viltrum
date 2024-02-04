@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <mutex>
+#include <random>
 #include "../range.h"
 #include "../tensor.h"
 
@@ -22,9 +23,10 @@ class MutexedTensorVector {
 public:
     MutexedTensorVector(const std::array<std::size_t, DIMBINS>& r,std::size_t nmutexes) : 
         data(r), mutexes(nmutexes) {}
-    void push_at(const std::array<std::size_t,DIMBINS>& i,const T& v) {
+
+    void push_at(const std::array<std::size_t,DIMBINS>& i,T&& v) {
         std::scoped_lock lock(mutexes[hash_of(i)]);
-        data[i].push_back(v);
+        data[i].push_back(std::forward<T>(v));
     }
     //Read only access
     const std::vector<T>& operator[](const std::array<std::size_t,DIMBINS>& p) const {
@@ -35,7 +37,7 @@ public:
 
 template<typename RNG>
 class RegionsIntegratorParallelControlVariates {
-    RNG rng;
+    mutable RNG rng;
     unsigned long samples;
     std::size_t nmutexes;
 
@@ -52,10 +54,10 @@ public:
         for (std::size_t i=0;i<DIMBINS;++i) drange[i] = (range.max(i) - range.min(i))/Float(bin_resolution[i]);
         std::size_t factor = 1;
         for (std::size_t i=0;i<DIMBINS;++i) factor*=bin_resolution[i];
-        std::atomic<std::size_t> progress = 0; std::size_t final_progress = seq_regions.size();
-        MutexedTensorVector<std::tuple<Reg,Range<Float,DIM>>,DIMBINS> perbin(bin_resolution,nmutexes);
+        std::size_t progress = 0; std::size_t final_progress = seq_regions.size();
+        MutexedTensorVector<std::tuple<const Reg*,Range<Float,DIM>>,DIMBINS> perbin(bin_resolution,nmutexes);
         auto logger_bins = logger_step(logger, "region bin stratification");
-        logger_bins.log_progress(0,1);
+        logger_bins.log_progress(progress,final_progress);
         std::for_each(std::execution::par_unseq, seq_regions.begin(),seq_regions.end(),[&] (const auto& r) {
             for (auto pos : pixels_in_region(r,bin_resolution,range)) {
                 Range<Float,DIM> binrange = range;
@@ -63,7 +65,7 @@ public:
                     binrange = binrange.subrange_dimension(i,range.min(i)+pos[i]*drange[i],range.min(i)+(pos[i]+1)*drange[i]);
 
                 Range<Float,DIM> region_bin_range = binrange.intersection(r.range());
-                if (!region_bin_range.empty()) perbin.push_at(pos,{r,region_bin_range});
+                if (!region_bin_range.empty()) perbin.push_at(pos,std::tuple(&r,region_bin_range));
             } 
         });  
         logger_bins.log_progress(final_progress,final_progress);
@@ -72,10 +74,10 @@ public:
             [&] (const std::array<std::size_t, DIMBINS>& pos) {
                 //This is the control variate
                 for (const auto& [r,region_bin_range] : perbin[pos]) {
-                    bins(pos) = double(factor)*r.integral_subrange(region_bin_range);
+                    bins(pos) = double(factor)*r->integral_subrange(region_bin_range);
 	            }
-                //This is the MonteCarlo residual, RR amongn regions
-                std::uniform_int_distribution<std::size_t> rr(0,perbin[pos].size());
+                //This is the MonteCarlo residual, RR among regions
+                std::uniform_int_distribution<std::size_t> rr(0,perbin[pos].size()-1);
                 for (unsigned long i=0;i<samples;++i) {
                     std::size_t chosen = rr(rng);
                     const auto& [r,region_bin_range] = perbin[pos][chosen];
@@ -84,7 +86,7 @@ public:
 		                std::uniform_real_distribution<Float> dis(region_bin_range.min(i),region_bin_range.max(i));
 		                sample[i] = dis(rng);
                     }
-                    bins(pos) += (f(sample)-r.approximation_at(sample))*region_bin_range.volume()*double(perbin[pos].size())/double(samples);
+                    bins(pos) += (f(sample)-r->approximation_at(sample))*region_bin_range.volume()*double(perbin[pos].size())/double(samples);
                 }
         }   ,logger_control_variates);
     }
