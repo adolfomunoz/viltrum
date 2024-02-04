@@ -278,4 +278,15 @@ public:
 	const E& extra() const { return e; }
 };
 
+template<typename Float, std::size_t DIM, std::size_t DIMBINS, typename R>
+auto pixels_in_region(const R& r, const std::array<std::size_t,DIMBINS>& bin_resolution, const Range<Float,DIM>& range) {
+	std::array<std::size_t,DIMBINS> start_bin, end_bin;
+    for (std::size_t i = 0; i<DIMBINS;++i) {
+        start_bin[i] = std::max(std::size_t(0),std::size_t(Float(bin_resolution[i])*(r.range().min(i) - range.min(i))/(range.max(i) - range.min(i))));
+        end_bin[i]   = std::max(start_bin[i]+1,std::min(bin_resolution[i],std::size_t(0.99f + 
+                    (Float(bin_resolution[i])*(r.range().max(i) - range.min(i))/(range.max(i) - range.min(i))))));
+    }
+	return multidimensional_range(start_bin,end_bin);
+}
+
 }

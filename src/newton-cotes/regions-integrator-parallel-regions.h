@@ -51,13 +51,7 @@ public:
         });*/
         std::for_each(std::execution::par_unseq, seq_regions.begin(),seq_regions.end(),[&] (const auto& r) {
 //            progress++;
-            std::array<std::size_t,DIMBINS> start_bin, end_bin;
-            for (std::size_t i = 0; i<DIMBINS;++i) {
-                start_bin[i] = std::size_t(std::max(Float(0),(r.range().min(i) - range.min(i))/drange[i]));
-                end_bin[i]   = std::min(bin_resolution[i],std::size_t((r.range().max(i) - range.min(i))/drange[i])+1);
-            }
-            if (start_bin == end_bin) mutexedbins.add(start_bin,r.integral());
-            else for (auto pos : multidimensional_range(start_bin, end_bin)) {
+            for (auto pos: pixels_in_region(r,bin_resolution,range)) {
                 Range<Float,DIM> binrange = range;
                 for (std::size_t i=0;i<DIMBINS;++i)
                     binrange = binrange.subrange_dimension(i,range.min(i)+pos[i]*drange[i],range.min(i)+(pos[i]+1)*drange[i]);
