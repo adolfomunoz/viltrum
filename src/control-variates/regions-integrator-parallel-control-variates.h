@@ -86,7 +86,7 @@ public:
 		                std::uniform_real_distribution<Float> dis(region_bin_range.min(i),region_bin_range.max(i));
 		                sample[i] = dis(rng);
                     }
-                    bins(pos) += (f(sample)-r->approximation_at(sample))*region_bin_range.volume()*double(perbin[pos].size())/double(samples);
+                    bins(pos) += (f(sample)-r->approximation_at(sample))*double(factor)*region_bin_range.volume()*double(perbin[pos].size())/double(samples);
                 }
         }   ,logger_control_variates);
     }
