@@ -55,9 +55,9 @@ int main() {
     }
 
     {
-        LoggerProgress logger("Adaptive variance reduction");
+        LoggerProgress logger("Adaptive variance reduction - full importance sampling");
         std::vector<std::vector<float>> sol(bins,std::vector<float>(bins,0.0f));
-        integrate(integrator_adaptive_variance_reduction_parallel(nested(simpson,trapezoidal),128,rr_integral_region(),control_variates_fixed_weight(0.0),samples),sol,f,range_primary<3>(),logger);
+        integrate(integrator_adaptive_variance_reduction_parallel(nested(simpson,trapezoidal),128,rr_integral_region(),cv_fixed_weight(0.0),samples),sol,f,range_primary<3>(),logger);
         for (const auto& vv : sol) {
             for (float v : vv)
                 std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
@@ -66,4 +66,15 @@ int main() {
         std::cout<<std::endl;
     }
 
+    {
+        LoggerProgress logger("Adaptive variance reduction - optimize cv-is weight");
+        std::vector<std::vector<float>> sol(bins,std::vector<float>(bins,0.0f));
+        integrate(integrator_adaptive_variance_reduction_parallel(nested(simpson,trapezoidal),128,rr_integral_region(),cv_optimize_weight(),samples),sol,f,range_primary<3>(),logger);
+        for (const auto& vv : sol) {
+            for (float v : vv)
+                std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
+            std::cout<<std::endl;
+        }
+        std::cout<<std::endl;
+    }
 } 

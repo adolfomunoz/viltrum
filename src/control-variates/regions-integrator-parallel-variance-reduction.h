@@ -75,21 +75,80 @@ public:
     }
 };
 
-class control_variates_fixed_weight {
+class cv_fixed_weight {
     double alpha; //This should go from zero (full importance sampling) to 1 (full control variates)
 public:
-    control_variates_fixed_weight(double a = 1) : alpha(a) {}
+    cv_fixed_weight(double a = 1) : alpha(a) {}
 
-    template<typename Samples>
-    auto integral(const Samples& function_samples, const Samples& approximation_samples, 
-            const typename Samples::value_type& approximation) const {
+    template<typename Sample>
+    class Accumulator {
+    private:
+        Sample sum; std::size_t size; double alpha;
+        Accumulator(double alpha, const Sample& ini = Sample(0)) : 
+            sum(ini), size(0), alpha(alpha) {}
+    public:
+        void push(const Sample& function_sample, const Sample& approximation_sample) {
+            sum += function_sample - alpha*approximation_sample;
+            ++size;
+        }
 
-        std::size_t size = 0;
-        typename Samples::value_type sum(0);
-        //We assume the same number of elements in both samples
-        for (const auto& s : function_samples) { sum+=s; ++size; }
-        for (const auto& s : approximation_samples) sum -= alpha*s;
-        return sum/double(size) + alpha*approximation;
+        Sample integral(const Sample& approximation) const {
+            return sum/double(size) + alpha*approximation;
+        }
+        friend class cv_fixed_weight;
+    };
+
+    template<typename Sample>
+    Accumulator<Sample> accumulator(const Sample& ini = Sample(0)) const {
+        return Accumulator(alpha,ini);
+    }
+};
+
+template<typename Norm = NormDefault>
+class cv_optimize_weight {
+    Norm norm;
+public:
+    cv_optimize_weight(const Norm& n = Norm()) : norm(n) {}
+    template<typename Sample>
+    class Accumulator {
+    private:
+        Norm norm;
+        Sample sum_f, sum_app; std::size_t size;
+        //These are for online calculation of variance and covariance
+        double k_f, k_app, e_f, e_ap, e_ap2, e_fap;
+        Accumulator(const Norm& n, const Sample& ini = Sample(0)) : 
+            norm(n),sum_f(ini),sum_app(ini),size(0),
+            k_f(0), k_app(0), e_f(0), e_ap(0), e_ap2(0), e_fap(0) {}
+    public:
+        void push(const Sample& function_sample, const Sample& approximation_sample) {
+            //For online variance and covariance (and alpha)
+            if (size==0) {
+                k_f = norm(function_sample); k_app = norm(approximation_sample);
+            }
+
+            e_f += (norm(function_sample) - k_f);
+            e_ap += (norm(function_sample) - k_app);
+            e_ap2 += (norm(function_sample) - k_app)*(norm(function_sample) - k_app);
+            e_fap += (norm(function_sample) - k_f)*(norm(function_sample) - k_app);
+
+            sum_f += function_sample; sum_app += approximation_sample; 
+            ++size;
+        }
+
+        Sample integral(const Sample& approximation) const {
+            double covariance = (e_fap - (e_f*e_ap)/double(size))/double(size-1);
+            double variance = (e_ap2 - (e_ap*e_ap)/double(size))/double(size-1);
+            double alpha;
+            if (variance <= 1.e-10) alpha = 1.0;
+            else alpha = std::max(0.0,std::min(1.0, covariance/variance));
+            return (sum_f - alpha*sum_app)/double(size) + alpha*approximation;
+        }
+        friend class cv_optimize_weight;
+    };
+
+    template<typename Sample>
+    Accumulator<Sample> accumulator(const Sample& ini = Sample(0)) const {
+        return Accumulator<Sample>(norm,ini);
     }
 };
 
@@ -141,8 +200,8 @@ public:
                 for (const auto& [r,region_bin_range] : perbin[pos]) {
                     approximation += double(factor)*r->integral_subrange(region_bin_range);
 	            }
-                //These are the samples for the residual
-                std::list<Sample> samples_f, samples_cv;
+                //These are the samples for the residual, accumulated into accumulator
+                auto accumulator = cv.accumulator(Sample(0));
                 auto roulette = rr.russian_roulette(perbin[pos]);
                 for (unsigned long i=0;i<samples;++i) {
                     auto [chosen,rrfactor] = roulette.choose(rng);
@@ -152,11 +211,12 @@ public:
 		                std::uniform_real_distribution<Float> dis(region_bin_range.min(i),region_bin_range.max(i));
 		                sample[i] = dis(rng);
                     }
-                    samples_f.push_back(f(sample)*double(factor)*rrfactor*region_bin_range.volume());
-                    samples_cv.push_back(r->approximation_at(sample)*double(factor)*rrfactor*region_bin_range.volume());
-                    //This is the MonteCarlo residual, RR among regions
-                    bins(pos) = cv.integral(samples_f,samples_cv,approximation);
+                    accumulator.push(
+                        f(sample)*double(factor)*rrfactor*region_bin_range.volume(),
+                        r->approximation_at(sample)*double(factor)*rrfactor*region_bin_range.volume()
+                    );
                 }
+                bins(pos) = accumulator.integral(approximation);    
         }   ,logger_control_variates);
     }
 };
@@ -173,7 +233,7 @@ auto regions_integrator_parallel_variance_reduction(RR&& rr, CV&& cv, unsigned l
 
 template<typename RR>
 auto regions_integrator_parallel_variance_reduction(RR&& rr, double alpha, unsigned long samples, std::size_t seed = std::random_device()(), std::size_t nmutexes = 16) {
-    return regions_integrator_parallel_variance_reduction(std::forward<RR>(rr), control_variates_fixed_weight(alpha), std::mt19937(seed),samples,nmutexes);
+    return regions_integrator_parallel_variance_reduction(std::forward<RR>(rr), cv_fixed_weight(alpha), std::mt19937(seed),samples,nmutexes);
 }
 
 }
