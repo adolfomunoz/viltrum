@@ -6,7 +6,7 @@ using namespace viltrum;
 
 int main() {
     const std::size_t bins = 10;
-    const unsigned long samples = 1000000;
+    const unsigned long samples = 10000;
 
     auto f =[] (float x, float y,float z) -> double {
         if (((x-0.5)*(x-0.5)+(y-0.5)*(y-0.5)+(z-0.5)*(z-0.5))<0.25) return 1.0;
@@ -57,7 +57,7 @@ int main() {
     {
         LoggerProgress logger("Adaptive variance reduction");
         std::vector<std::vector<float>> sol(bins,std::vector<float>(bins,0.0f));
-        integrate(integrator_adaptive_variance_reduction_parallel<RRIntegralRegion>(nested(simpson,trapezoidal),128,samples),sol,f,range_primary<3>(),logger);
+        integrate(integrator_adaptive_variance_reduction_parallel(nested(simpson,trapezoidal),128,rr_integral_region(),control_variates_fixed_weight(0.0),samples),sol,f,range_primary<3>(),logger);
         for (const auto& vv : sol) {
             for (float v : vv)
                 std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";

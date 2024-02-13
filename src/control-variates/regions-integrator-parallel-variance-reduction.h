@@ -5,27 +5,11 @@
 
 namespace viltrum {
 
-class RRUniformRegion {
-    //This is the MonteCarlo residual, RR among regions
-    std::uniform_int_distribution<std::size_t> rr;
-public:
-    template<typename Rs>
-    RRUniformRegion(const Rs& regions) : rr(0,regions.size()-1) {}
-
-    template<typename RNG>
-    std::tuple<std::size_t,double> choose(RNG& rng) { 
-        return std::tuple(rr(rng),rr.max()+1); 
-    }
-};
-
-class RRIntegralRegion {
-    //This is the MonteCarlo residual, RR among regions
-    std::discrete_distribution<std::size_t> rr;
-    std::vector<double> weights;
-    float norm(float v) const { return v; }
-    double norm(double v) const { return v; }
+struct NormDefault {
+    float operator()(float v) const { return v; }
+    double operator()(double v) const { return v; }
     template<typename V>
-    auto norm(const V& v, typename std::enable_if_t<std::is_arithmetic_v<typename V::value_type>, int> = 0) const {
+    auto operator()(const V& v, typename std::enable_if_t<std::is_arithmetic_v<typename V::value_type>, int> = 0) const {
         auto i = v.begin(); 
         using S = decltype(norm(*i));
         S s; bool first = true;
@@ -33,35 +17,95 @@ class RRIntegralRegion {
         while (i != v.end()) { s += norm(*i); ++i; }
         return s;
     }     
-    
-public:
-    template<typename Rs>
-    RRIntegralRegion(const Rs& regions) : weights(regions.size()) {
-        std::size_t i = 0;
-        for (const auto& [r,region_bin_range] : regions) {
-            weights[i++] = norm(r->integral_subrange(region_bin_range));
-	    }
-        rr = std::discrete_distribution<std::size_t>(weights.begin(),weights.end());
-    }
+};
 
-    template<typename RNG>
-    std::tuple<std::size_t,double> choose(RNG& rng) { 
-        std::size_t choice = rr(rng);
-        return std::tuple(choice,1.0/rr.probabilities()[choice]); 
+class rr_uniform_region {
+public:
+    class RR {
+    private:
+        //This is the MonteCarlo residual, RR among regions
+        std::uniform_int_distribution<std::size_t> rr;
+        template<typename Rs>
+        RR(const Rs& regions) : rr(0,regions.size()-1) {}
+    public:
+        template<typename RNG>
+        std::tuple<std::size_t,double> choose(RNG& rng) { 
+            return std::tuple(rr(rng),rr.max()+1); 
+        }
+        friend class rr_uniform_region;
+    };
+    template<typename Regions>
+    RR russian_roulette(const Regions& regions) const {
+        return RR(regions);
+    }
+};
+
+template<typename Norm = NormDefault>
+class rr_integral_region {
+    Norm norm;
+public:
+    rr_integral_region(const Norm& n = Norm()) : norm(n) {}
+    class RR {
+    private:
+        //This is the MonteCarlo residual, RR among regions
+        std::discrete_distribution<std::size_t> rr;
+        std::vector<double> weights;
+        Norm norm;
+
+        template<typename Rs>
+        RR(const Rs& regions, const Norm& n) : weights(regions.size()), norm(n) {
+            std::size_t i = 0;
+            for (const auto& [r,region_bin_range] : regions) {
+                weights[i++] = norm(r->integral_subrange(region_bin_range));
+            }
+            rr = std::discrete_distribution<std::size_t>(weights.begin(),weights.end());
+        }
+        
+    public:
+        template<typename RNG>
+        std::tuple<std::size_t,double> choose(RNG& rng) { 
+            std::size_t choice = rr(rng);
+            return std::tuple(choice,1.0/rr.probabilities()[choice]); 
+        }
+        friend class rr_integral_region;
+    };
+    template<typename Regions>
+    RR russian_roulette(const Regions& regions) const {
+        return RR(regions,norm);
+    }
+};
+
+class control_variates_fixed_weight {
+    double alpha; //This should go from zero (full importance sampling) to 1 (full control variates)
+public:
+    control_variates_fixed_weight(double a = 1) : alpha(a) {}
+
+    template<typename Samples>
+    auto integral(const Samples& function_samples, const Samples& approximation_samples, 
+            const typename Samples::value_type& approximation) const {
+
+        std::size_t size = 0;
+        typename Samples::value_type sum(0);
+        //We assume the same number of elements in both samples
+        for (const auto& s : function_samples) { sum+=s; ++size; }
+        for (const auto& s : approximation_samples) sum -= alpha*s;
+        return sum/double(size) + alpha*approximation;
     }
 };
 
 
 
-template<typename RR, typename RNG>
+template<typename RR, typename CV, typename RNG>
 class RegionsIntegratorParallelVarianceReduction {
+    RR rr;
+    CV cv;
     mutable RNG rng;
     unsigned long samples;
     std::size_t nmutexes;
 
 public:
-    RegionsIntegratorParallelVarianceReduction(RNG&& r, unsigned long s,std::size_t n = 16) 
-        : rng(r), samples(s), nmutexes(n) {}
+    RegionsIntegratorParallelVarianceReduction(RR&& rr, CV&& cv, RNG&& r, unsigned long s,std::size_t n = 16) 
+        : rr(rr), cv(cv), rng(r), samples(s), nmutexes(n) {}
 	template<typename Bins, std::size_t DIMBINS, typename SeqRegions, typename F, typename Float, std::size_t DIM, typename Logger>
 	void integrate_regions(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
 		const SeqRegions& seq_regions, const F& f, const Range<Float,DIM>& range, Logger& logger) const {
@@ -87,37 +131,49 @@ public:
             } 
         });  
         logger_bins.log_progress(final_progress,final_progress);
-        auto logger_control_variates = logger_step(logger,"control variates");
+        auto logger_control_variates = logger_step(logger,"residual and variance reduction");
         for_each(parallel,multidimensional_range(bin_resolution),
             [&] (const std::array<std::size_t, DIMBINS>& pos) {
+                using Sample = decltype(f(std::declval<std::array<Float,DIM>>()));
+
                 //This is the control variate
+                Sample approximation(0);
                 for (const auto& [r,region_bin_range] : perbin[pos]) {
-                    bins(pos) += double(factor)*r->integral_subrange(region_bin_range);
+                    approximation += double(factor)*r->integral_subrange(region_bin_range);
 	            }
-                //This is the MonteCarlo residual, RR among regions
-                RR rr(perbin[pos]);
+                //These are the samples for the residual
+                std::list<Sample> samples_f, samples_cv;
+                auto roulette = rr.russian_roulette(perbin[pos]);
                 for (unsigned long i=0;i<samples;++i) {
-                    auto [chosen,rrfactor] = rr.choose(rng);
+                    auto [chosen,rrfactor] = roulette.choose(rng);
                     const auto& [r,region_bin_range] = perbin[pos][chosen];
                     std::array<Float,DIM> sample;
 	                for (std::size_t i=0;i<DIM;++i) {
 		                std::uniform_real_distribution<Float> dis(region_bin_range.min(i),region_bin_range.max(i));
 		                sample[i] = dis(rng);
                     }
-                    bins(pos) += (f(sample)-r->approximation_at(sample))*double(factor)*region_bin_range.volume()*rrfactor/double(samples);
+                    samples_f.push_back(f(sample)*double(factor)*rrfactor*region_bin_range.volume());
+                    samples_cv.push_back(r->approximation_at(sample)*double(factor)*rrfactor*region_bin_range.volume());
+                    //This is the MonteCarlo residual, RR among regions
+                    bins(pos) = cv.integral(samples_f,samples_cv,approximation);
                 }
         }   ,logger_control_variates);
     }
 };
 
-template<typename RR, typename RNG>
-auto regions_integrator_parallel_variance_reduction(RNG&& rng, unsigned long samples, std::size_t nmutexes = 16, std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
-    return RegionsIntegratorParallelVarianceReduction<RR,RNG>(std::forward<RNG>(rng),samples,nmutexes);
+template<typename RR, typename CV, typename RNG>
+auto regions_integrator_parallel_variance_reduction(RR&& rr, CV&& cv, RNG&& rng, unsigned long samples, std::size_t nmutexes = 16, std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
+    return RegionsIntegratorParallelVarianceReduction<RR,CV,RNG>(std::forward<RR>(rr), std::forward<CV>(cv), std::forward<RNG>(rng),samples,nmutexes);
+}
+
+template<typename RR, typename CV>
+auto regions_integrator_parallel_variance_reduction(RR&& rr, CV&& cv, unsigned long samples, std::size_t seed = std::random_device()(), std::size_t nmutexes = 16) {
+    return regions_integrator_parallel_variance_reduction(std::forward<RR>(rr), std::forward<CV>(cv), std::mt19937(seed),samples,nmutexes);
 }
 
 template<typename RR>
-auto regions_integrator_parallel_variance_reduction(unsigned long samples, std::size_t seed = std::random_device()(), std::size_t nmutexes = 16) {
-    return regions_integrator_parallel_variance_reduction<RR>(std::mt19937(seed),samples,nmutexes);
+auto regions_integrator_parallel_variance_reduction(RR&& rr, double alpha, unsigned long samples, std::size_t seed = std::random_device()(), std::size_t nmutexes = 16) {
+    return regions_integrator_parallel_variance_reduction(std::forward<RR>(rr), control_variates_fixed_weight(alpha), std::mt19937(seed),samples,nmutexes);
 }
 
 }
