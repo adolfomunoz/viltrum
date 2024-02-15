@@ -42,4 +42,10 @@ auto concat(S1&& seq1, S2&& seq2) {
     return Concat<std::decay_t<S1>,std::decay_t<S2>>(std::forward<S1>(seq1),std::forward<S2>(seq2));
 } 
 
+template<typename S1,typename S2, typename S3>
+auto concat(S1&& seq1, S2&& seq2, S3&& seq3) {
+    return concat(std::forward<S1>(seq1), concat(std::forward<S2>(seq2),std::forward<S3>(seq3))); 
+} 
+
+
 }

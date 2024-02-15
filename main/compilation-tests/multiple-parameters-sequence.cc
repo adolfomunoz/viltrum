@@ -62,5 +62,13 @@ int main() {
         for (float v : sol) std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
         std::cout<<std::endl;
     }
+
+    {
+        LoggerProgress logger("New Fubini");
+        std::vector<float> sol(bins,0.0f); 
+        integrate(integrator_fubini({3,2},integrator_adaptive_variance_reduction_parallel(nested(simpson,trapezoidal),128,rr_integral_region(),cv_optimize_weight(),samples),monte_carlo(10)),sol,f,range_infinite(-1.0,-1.0,1.0,1.0),logger);
+        for (float v : sol) std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
+        std::cout<<std::endl;
+    }
     
 } 

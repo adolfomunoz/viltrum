@@ -1,6 +1,8 @@
 #pragma once
 #include <cstddef>
 #include "concat.h"
+#include "reorder.h"
+#include <tuple>
 
 /* Fubini combines different integration techniques, one of them for the first N dimensions and the other
  * for the rest of the dimensions, even if infinite.
@@ -20,22 +22,26 @@ public:
 	void integrate(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
 		const F& f, const Range<Float,DIM>& range, Logger& logger) const {
 
-        static_assert(N>DIMBINS,"Fubini does not work with that many dimensions on bin resolution");
+        static_assert(N>=DIMBINS,"Fubini does not work with that many dimensions on bin resolution");
 
-        Range<Float,N> range_first;
+        std::array<Float,N> range_first_min, range_first_max;
         for (std::size_t i = 0; i<N; ++i) {
-            range_first.min(i) = range.min(i);
-            range_first.max(i) = range.max(i);
+            range_first_min[i] = range.min(i);
+            range_first_max[i] = range.max(i);
         }
+        Range<Float,N> range_first(range_first_min, range_first_max);
+        
 
-        Range<Float,DIM-N> range_rest;
+        std::array<Float,DIM-N> range_rest_min, range_rest_max;
         for (std::size_t i = N; i<DIM; ++i) {
-            range_rest.min(i-N) = range.min(i);
-            range_rest.max(i-N) = range.max(i);
+            range_rest_min[i-N] = range.min(i);
+            range_rest_max[i-N] = range.max(i);
         }      
+        Range<Float,DIM-N> range_rest(range_rest_min, range_rest_max);
+
         viltrum::integrate(integrator_first,bins,bin_resolution,
             [&] (const std::array<float,N>& x) {
-                return integrate(integrator_rest,[&f,&x] (const std::array<float,DIM-N>& xr) {
+                return viltrum::integrate(integrator_rest,[&f,&x] (const std::array<float,DIM-N>& xr) {
                     return f(x | xr);
                 }, range_rest);
             }, range_first, logger);
@@ -45,7 +51,7 @@ public:
 	void integrate(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
 		const F& f, const RangeInfinite<Float>& range, Logger& logger) const {
 
-        static_assert(N>DIMBINS,"Fubini does not work with that many dimensions on bin resolution");
+        static_assert(N>=DIMBINS,"Fubini does not work with that many dimensions on bin resolution");
 
         std::array<Float,N> first_min, first_max;
         for (std::size_t i = 0; i<N; ++i) {
@@ -74,5 +80,48 @@ IntegratorFubini<IntegratorFirst,IntegratorRest,N> integrator_fubini(IntegratorF
     return IntegratorFubini<std::decay_t<IntegratorFirst>,std::decay_t<IntegratorRest>,N>
         (std::forward<IntegratorFirst>(ifirst),std::forward<IntegratorRest>(irest));
 }
+
+template<typename IntegratorFirst, typename IntegratorRest>
+auto integrator_fubini(const std::tuple<std::size_t>& dims, IntegratorFirst&& ifirst, IntegratorRest&& irest) {
+    std::array<std::size_t,1> reorder{std::get<0>(dims)};
+    return integrator_reorder(integrator_fubini<1>(std::forward<IntegratorFirst>(ifirst), std::forward<IntegratorRest>(irest)),reorder);
+} 
+
+template<typename IntegratorFirst, typename IntegratorRest>
+auto integrator_fubini(const std::tuple<std::size_t,std::size_t>& dims, IntegratorFirst&& ifirst, IntegratorRest&& irest) {
+    std::array<std::size_t,2> reorder{std::get<0>(dims),std::get<1>(dims)};
+    return integrator_reorder(integrator_fubini<2>(std::forward<IntegratorFirst>(ifirst), std::forward<IntegratorRest>(irest)),reorder);
+} 
+
+template<typename IntegratorFirst, typename IntegratorRest>
+auto integrator_fubini(const std::tuple<std::size_t,std::size_t,std::size_t>& dims, IntegratorFirst&& ifirst, IntegratorRest&& irest) {
+    std::array<std::size_t,3> reorder{std::get<0>(dims),std::get<1>(dims),std::get<2>(dims)};
+    return integrator_reorder(integrator_fubini<3>(std::forward<IntegratorFirst>(ifirst), std::forward<IntegratorRest>(irest)),reorder);
+} 
+
+template<typename IntegratorFirst, typename IntegratorRest>
+auto integrator_fubini(const std::tuple<std::size_t,std::size_t,std::size_t,std::size_t>& dims, IntegratorFirst&& ifirst, IntegratorRest&& irest) {
+    std::array<std::size_t,4> reorder{std::get<0>(dims),std::get<1>(dims),std::get<2>(dims),std::get<3>(dims)};
+    return integrator_reorder(integrator_fubini<4>(std::forward<IntegratorFirst>(ifirst), std::forward<IntegratorRest>(irest)),reorder);
+} 
+
+template<typename IntegratorFirst, typename IntegratorRest>
+auto integrator_fubini(const std::tuple<std::size_t,std::size_t,std::size_t,std::size_t,std::size_t>& dims, IntegratorFirst&& ifirst, IntegratorRest&& irest) {
+    std::array<std::size_t,5> reorder{std::get<0>(dims),std::get<1>(dims),std::get<2>(dims),std::get<3>(dims),std::get<4>(dims)};
+    return integrator_reorder(integrator_fubini<5>(std::forward<IntegratorFirst>(ifirst), std::forward<IntegratorRest>(irest)),reorder);
+} 
+
+template<typename IntegratorFirst, typename IntegratorRest>
+auto integrator_fubini(const std::tuple<std::size_t,std::size_t,std::size_t,std::size_t,std::size_t,std::size_t>& dims, IntegratorFirst&& ifirst, IntegratorRest&& irest) {
+    std::array<std::size_t,6> reorder{std::get<0>(dims),std::get<1>(dims),std::get<2>(dims),std::get<3>(dims),std::get<4>(dims),std::get<5>(dims)};
+    return integrator_reorder(integrator_fubini<6>(std::forward<IntegratorFirst>(ifirst), std::forward<IntegratorRest>(irest)),reorder);
+} 
+
+template<typename IntegratorFirst, typename IntegratorRest>
+auto integrator_fubini(const std::tuple<std::size_t,std::size_t,std::size_t,std::size_t,std::size_t,std::size_t,std::size_t>& dims, IntegratorFirst&& ifirst, IntegratorRest&& irest) {
+    std::array<std::size_t,7> reorder{std::get<0>(dims),std::get<1>(dims),std::get<2>(dims),std::get<3>(dims),std::get<4>(dims),std::get<5>(dims),std::get<6>(dims)};
+    return integrator_reorder(integrator_fubini<7>(std::forward<IntegratorFirst>(ifirst), std::forward<IntegratorRest>(irest)),reorder);
+} 
+
 
 };
