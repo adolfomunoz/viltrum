@@ -53,22 +53,23 @@ public:
 
         std::size_t size_reorder = 0; //For checking max size of the reorder vector
         for (std::size_t i : first_dimensions) if (size_reorder<=i) size_reorder = (i+1);
-
+        
         std::vector<Float> reorder_min = range.min(); 
         if (reorder_min.size()<size_reorder) reorder_min.resize(size_reorder,0);
         std::vector<Float> reorder_max = range.max();
         if (reorder_max.size()<size_reorder) reorder_max.resize(size_reorder,1);
+
         for (std::size_t i = 0; i<N; ++i) {
             std::swap(reorder_min[i],reorder_min[first_dimensions[i]]);
             std::swap(reorder_max[i],reorder_max[first_dimensions[i]]);
         } 
-
         RangeInfinite<Float> range_reordered(reorder_min,reorder_max);       
         
         const auto f_reordered = [&] (const auto& x) {
             std::vector<Float> x_reordered(size_reorder);
             auto it = x.begin();
             for (Float& xr : x_reordered) { xr = (*it); ++it; }
+            
             for (std::size_t i = 0; i<N; ++i) {
                 std::swap(x_reordered[i],x_reordered[first_dimensions[i]]);
             }

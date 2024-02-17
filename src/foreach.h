@@ -13,12 +13,12 @@ inline struct _Sequential {} sequential;
 inline struct _Parallel {} parallel;
 
 template<std::size_t DIM, typename F>
-void for_each(const _Sequential& seq, const MultidimensionalRange<DIM>& range) {
+void for_each(const _Sequential& seq, const MultidimensionalRange<DIM>& range, const F& f) {
     for (auto pos : range) f(pos);
 }
 
 template<std::size_t DIM, typename F, typename Logger>
-void for_each(const _Sequential& seq, const MultidimensionalRange<DIM>& range, Logger& logger) {
+void for_each(const _Sequential& seq, const MultidimensionalRange<DIM>& range, const F& f, Logger& logger) {
     std::size_t total = range.size();   
     std::size_t r = 0;
     for (auto pos : range) {

@@ -60,12 +60,12 @@ public:
         }
 
         std::vector<Float> rest_min = range.min();
-        std::vector<Float> rest_max = range.min();
+        std::vector<Float> rest_max = range.max();
         for (std::size_t i = 0; i<N; ++i) {
             if (!rest_min.empty()) rest_min.erase(rest_min.begin());
             if (!rest_max.empty()) rest_max.erase(rest_max.begin());
         }
-   
+
         viltrum::integrate(integrator_first,bins,bin_resolution,
             [&] (const std::array<Float,N>& x) {
                 return viltrum::integrate(integrator_rest,[&f,&x] (const auto& xr) {
