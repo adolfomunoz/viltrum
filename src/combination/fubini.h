@@ -83,45 +83,26 @@ IntegratorFubini<IntegratorFirst,IntegratorRest,N> integrator_fubini(IntegratorF
 
 template<typename IntegratorFirst, typename IntegratorRest>
 auto integrator_fubini(const std::tuple<std::size_t>& dims, IntegratorFirst&& ifirst, IntegratorRest&& irest) {
-    std::array<std::size_t,1> reorder{std::get<0>(dims)};
-    return integrator_reorder(integrator_fubini<1>(std::forward<IntegratorFirst>(ifirst), std::forward<IntegratorRest>(irest)),reorder);
+    std::vector<std::tuple<size_t,size_t>> reorder{ {0, std::get<0>(dims)}};
+    return integrator_reorder(integrator_fubini<1>(std::forward<IntegratorFirst>(ifirst), std::forward<IntegratorRest>(irest)),{0,std::get<0>(dims)});
 } 
 
 template<typename IntegratorFirst, typename IntegratorRest>
 auto integrator_fubini(const std::tuple<std::size_t,std::size_t>& dims, IntegratorFirst&& ifirst, IntegratorRest&& irest) {
-    std::array<std::size_t,2> reorder{std::get<0>(dims),std::get<1>(dims)};
+    std::vector<std::tuple<size_t,size_t>> reorder{ {0, std::get<0>(dims)}, {1, std::get<1>(dims)}};
     return integrator_reorder(integrator_fubini<2>(std::forward<IntegratorFirst>(ifirst), std::forward<IntegratorRest>(irest)),reorder);
 } 
 
 template<typename IntegratorFirst, typename IntegratorRest>
 auto integrator_fubini(const std::tuple<std::size_t,std::size_t,std::size_t>& dims, IntegratorFirst&& ifirst, IntegratorRest&& irest) {
-    std::array<std::size_t,3> reorder{std::get<0>(dims),std::get<1>(dims),std::get<2>(dims)};
+    std::vector<std::tuple<size_t,size_t>> reorder{ {0, std::get<0>(dims)}, {1, std::get<1>(dims)}, {2, std::get<2>(dims)}};
     return integrator_reorder(integrator_fubini<3>(std::forward<IntegratorFirst>(ifirst), std::forward<IntegratorRest>(irest)),reorder);
 } 
 
 template<typename IntegratorFirst, typename IntegratorRest>
 auto integrator_fubini(const std::tuple<std::size_t,std::size_t,std::size_t,std::size_t>& dims, IntegratorFirst&& ifirst, IntegratorRest&& irest) {
-    std::array<std::size_t,4> reorder{std::get<0>(dims),std::get<1>(dims),std::get<2>(dims),std::get<3>(dims)};
+    std::vector<std::tuple<size_t,size_t>> reorder{ {0, std::get<0>(dims)}, {1, std::get<1>(dims)}, {2, std::get<2>(dims)}, {3, std::get<3>(dims)}};
     return integrator_reorder(integrator_fubini<4>(std::forward<IntegratorFirst>(ifirst), std::forward<IntegratorRest>(irest)),reorder);
 } 
-
-template<typename IntegratorFirst, typename IntegratorRest>
-auto integrator_fubini(const std::tuple<std::size_t,std::size_t,std::size_t,std::size_t,std::size_t>& dims, IntegratorFirst&& ifirst, IntegratorRest&& irest) {
-    std::array<std::size_t,5> reorder{std::get<0>(dims),std::get<1>(dims),std::get<2>(dims),std::get<3>(dims),std::get<4>(dims)};
-    return integrator_reorder(integrator_fubini<5>(std::forward<IntegratorFirst>(ifirst), std::forward<IntegratorRest>(irest)),reorder);
-} 
-
-template<typename IntegratorFirst, typename IntegratorRest>
-auto integrator_fubini(const std::tuple<std::size_t,std::size_t,std::size_t,std::size_t,std::size_t,std::size_t>& dims, IntegratorFirst&& ifirst, IntegratorRest&& irest) {
-    std::array<std::size_t,6> reorder{std::get<0>(dims),std::get<1>(dims),std::get<2>(dims),std::get<3>(dims),std::get<4>(dims),std::get<5>(dims)};
-    return integrator_reorder(integrator_fubini<6>(std::forward<IntegratorFirst>(ifirst), std::forward<IntegratorRest>(irest)),reorder);
-} 
-
-template<typename IntegratorFirst, typename IntegratorRest>
-auto integrator_fubini(const std::tuple<std::size_t,std::size_t,std::size_t,std::size_t,std::size_t,std::size_t,std::size_t>& dims, IntegratorFirst&& ifirst, IntegratorRest&& irest) {
-    std::array<std::size_t,7> reorder{std::get<0>(dims),std::get<1>(dims),std::get<2>(dims),std::get<3>(dims),std::get<4>(dims),std::get<5>(dims),std::get<6>(dims)};
-    return integrator_reorder(integrator_fubini<7>(std::forward<IntegratorFirst>(ifirst), std::forward<IntegratorRest>(irest)),reorder);
-} 
-
 
 };

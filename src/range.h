@@ -161,6 +161,18 @@ Range<T,N> range_all(const T& va, const T& vb) {
     return range(a,b);
 }
 
+template<std::size_t N, typename T>
+Range<T,N> range(const std::vector<T>& a, const std::vector<T>& b) {
+    std::array<T,N> ar, br;
+    std::size_t i;
+    for (i = 0; (i<N) && (i<a.size()); ++i) ar[i] = a[i];
+    for (;i<N; ++i) ar[i]=0;   
+    for (i = 0; (i<N) && (i<b.size()); ++i) br[i] = b[i];
+    for (;i<N; ++i) br[i]=1;
+    return range(ar,br); 
+}   
+
+
 template<std::size_t N, typename T = float>
 Range<T,N> range_primary() {
     return range_all<N>(T(0),T(1));
