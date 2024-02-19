@@ -175,18 +175,13 @@ public:
         for (std::size_t i=0;i<DIMBINS;++i) drange[i] = (range.max(i) - range.min(i))/Float(bin_resolution[i]);
         std::size_t factor = 1;
         for (std::size_t i=0;i<DIMBINS;++i) factor*=bin_resolution[i];
+        MutexedTensorVector<const Reg*,DIMBINS> perbin(bin_resolution,nmutexes);
         std::size_t progress = 0; std::size_t final_progress = seq_regions.size();
-        MutexedTensorVector<std::tuple<const Reg*,Range<Float,DIM>>,DIMBINS> perbin(bin_resolution,nmutexes);
         auto logger_bins = logger_step(logger, "region bin stratification");
         logger_bins.log_progress(progress,final_progress);
         std::for_each(std::execution::par_unseq, seq_regions.begin(),seq_regions.end(),[&] (const auto& r) {
             for (auto pos : pixels_in_region(r,bin_resolution,range)) {
-                Range<Float,DIM> binrange = range;
-                for (std::size_t i=0;i<DIMBINS;++i)
-                    binrange = binrange.subrange_dimension(i,range.min(i)+pos[i]*drange[i],range.min(i)+(pos[i]+1)*drange[i]);
-
-                Range<Float,DIM> region_bin_range = binrange.intersection(r.range());
-                if (!region_bin_range.empty()) perbin.push_at(pos,std::tuple(&r,region_bin_range));
+                perbin.push_at(pos,&r);
             } 
         });  
         logger_bins.log_progress(final_progress,final_progress);
@@ -194,18 +189,24 @@ public:
         for_each(parallel,multidimensional_range(bin_resolution),
             [&] (const std::array<std::size_t, DIMBINS>& pos) {
                 using Sample = decltype(f(std::declval<std::array<Float,DIM>>()));
+                Range<Float,DIM> binrange = range;
+                for (std::size_t i=0;i<DIMBINS;++i)
+                    binrange = binrange.subrange_dimension(i,range.min(i)+pos[i]*drange[i],range.min(i)+(pos[i]+1)*drange[i]);
+                std::vector<std::tuple<const Reg*,Range<Float,DIM>>> regions_ranges(perbin[pos].size(),std::tuple((const Reg*)nullptr,range_primary<DIM,Float>()));
 
-                //This is the control variate
+                //This is the control variate and the region_bin_ranges
                 Sample approximation(0);
-                for (const auto& [r,region_bin_range] : perbin[pos]) {
-                    approximation += double(factor)*r->integral_subrange(region_bin_range);
+                for (std::size_t i = 0; i<regions_ranges.size(); ++i) {
+                    regions_ranges[i] = std::tuple(perbin[pos][i],binrange.intersection(perbin[pos][i]->range()));
+                    if (!std::get<1>(regions_ranges[i]).empty())   
+                        approximation += double(factor)*std::get<0>(regions_ranges[i])->integral_subrange(std::get<1>(regions_ranges[i]));
 	            }
                 //These are the samples for the residual, accumulated into accumulator
                 auto accumulator = cv.accumulator(Sample(0));
-                auto roulette = rr.russian_roulette(perbin[pos]);
+                auto roulette = rr.russian_roulette(regions_ranges);
                 for (unsigned long i=0;i<samples;++i) {
                     auto [chosen,rrfactor] = roulette.choose(rng);
-                    const auto& [r,region_bin_range] = perbin[pos][chosen];
+                    const auto& [r, region_bin_range]  = regions_ranges[chosen];
                     std::array<Float,DIM> sample;
 	                for (std::size_t i=0;i<DIM;++i) {
 		                std::uniform_real_distribution<Float> dis(region_bin_range.min(i),region_bin_range.max(i));

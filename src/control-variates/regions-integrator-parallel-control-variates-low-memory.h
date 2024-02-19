@@ -23,8 +23,6 @@ public:
         for (std::size_t i=0;i<DIMBINS;++i) drange[i] = (range.max(i) - range.min(i))/Float(bin_resolution[i]);
         std::size_t factor = 1;
         for (std::size_t i=0;i<DIMBINS;++i) factor*=bin_resolution[i];
-        std::size_t progress = 0; std::size_t final_progress = seq_regions.size();
-
         auto logger_control_variates = logger_step(logger,"control variates");
         for_each(parallel,multidimensional_range(bin_resolution),
             [&] (const std::array<std::size_t, DIMBINS>& pos) {
