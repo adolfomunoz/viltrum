@@ -45,7 +45,7 @@ int main() {
     {
         LoggerProgress logger("Control variates");
         std::vector<std::vector<float>> sol(bins,std::vector<float>(bins,0.0f));
-        integrate(integrator_adaptive_control_variates_parallel(nested(simpson,trapezoidal),128,samples),sol,f,range_primary<3>(),logger);
+        integrate(integrator_adaptive_control_variates_parallel_low_memory(nested(simpson,trapezoidal),128,samples),sol,f,range_primary<3>(),logger);
         for (const auto& vv : sol) {
             for (float v : vv)
                 std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
