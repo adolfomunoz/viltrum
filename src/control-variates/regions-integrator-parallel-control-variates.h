@@ -40,7 +40,7 @@ public:
                 Range<Float,DIM> binrange = range;
                 for (std::size_t i=0;i<DIMBINS;++i)
                     binrange = binrange.subrange_dimension(i,range.min(i)+pos[i]*drange[i],range.min(i)+(pos[i]+1)*drange[i]);
-                std::vector<Range<Float,DIM>> region_bin_ranges(perbin[pos].size(),range_primary<DIM>());
+                std::vector<Range<Float,DIM>> region_bin_ranges(perbin[pos].size(),range_primary<DIM,Float>());
                 //This is for the control variate and for the region_bin_ranges
                 for (std::size_t i = 0; i<region_bin_ranges.size(); ++i) {
                     region_bin_ranges[i] = binrange.intersection(perbin[pos][i]->range());
