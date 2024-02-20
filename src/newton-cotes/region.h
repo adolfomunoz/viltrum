@@ -22,6 +22,7 @@ class Region {
 public:
 	using value_type = VT;
 	static constexpr std::size_t dimensions = DIM;
+	using rule = Q;
 	const Range<Float, DIM>& range() const {
 		return _range;
 	}

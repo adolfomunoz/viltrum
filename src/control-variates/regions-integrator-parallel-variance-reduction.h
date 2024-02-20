@@ -1,7 +1,11 @@
 #pragma once
 #include <random>
+#include <execution>
 #include "../range.h"
 #include "mutexed-tensor-vector.h"
+#include "../foreach.h"
+
+
 
 namespace viltrum {
 
@@ -127,21 +131,31 @@ public:
             }
 
             e_f += (norm(function_sample) - k_f);
-            e_ap += (norm(function_sample) - k_app);
-            e_ap2 += (norm(function_sample) - k_app)*(norm(function_sample) - k_app);
-            e_fap += (norm(function_sample) - k_f)*(norm(function_sample) - k_app);
+            e_ap += (norm(approximation_sample) - k_app);
+            e_ap2 += (norm(approximation_sample) - k_app)*(norm(approximation_sample) - k_app);
+            e_fap += (norm(function_sample) - k_f)*(norm(approximation_sample) - k_app);
 
             sum_f += function_sample; sum_app += approximation_sample; 
             ++size;
         }
 
+        double covariance() const {
+            return (e_fap - (e_f*e_ap)/double(size))/double(size-1);
+        } 
+
+        double variance() const {
+            return (e_ap2 - (e_ap*e_ap)/double(size))/double(size-1);
+        } 
+
+        double alpha() const {
+            auto c = std::max(0.0,covariance());
+            auto v = std::max(c,variance());
+            return c/v;
+        } 
+
         Sample integral(const Sample& approximation) const {
-            double covariance = (e_fap - (e_f*e_ap)/double(size))/double(size-1);
-            double variance = (e_ap2 - (e_ap*e_ap)/double(size))/double(size-1);
-            double alpha;
-            if (variance <= 1.e-10) alpha = 1.0;
-            else alpha = std::max(0.0,std::min(1.0, covariance/variance));
-            return (sum_f - alpha*sum_app)/double(size) + alpha*approximation;
+            auto a = alpha();
+            return (sum_f - a*sum_app)/double(size) + a*approximation;
         }
         friend class cv_optimize_weight;
     };
