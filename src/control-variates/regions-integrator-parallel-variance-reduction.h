@@ -10,8 +10,8 @@
 namespace viltrum {
 
 struct NormDefault {
-    float operator()(float v) const { return v; }
-    double operator()(double v) const { return v; }
+    float operator()(float v) const { return std::abs(v); }
+    double operator()(double v) const { return std::abs(v); }
     template<typename V>
     auto operator()(const V& v, typename std::enable_if_t<std::is_arithmetic_v<typename V::value_type>, int> = 0) const {
         auto i = v.begin(); 
