@@ -58,10 +58,15 @@ public:
 
         template<typename Rs>
         RR(const Rs& regions, const Norm& n) : weights(regions.size()), norm(n) {
-            std::size_t i = 0;
+            std::size_t i = 0; 
             for (const auto& [r,region_bin_range] : regions) {
                 weights[i++] = norm(r->integral_subrange(region_bin_range));
             }
+            //This is to avoid zeroes and negative numbers: put a minimum relative weight
+            double sum = 0.0;
+            for (double w : weights) sum += w;
+            if (sum<=0.0) for(double& w : weights) w = 1.0;
+            else for (double& w : weights) w = std::max(w,0.01*sum/double(weights.size()));
             rr = std::discrete_distribution<std::size_t>(weights.begin(),weights.end());
         }
         
@@ -148,13 +153,16 @@ public:
         } 
 
         double alpha() const {
+            if (size < 2) return 1;
             auto c = std::max(0.0,covariance());
+            if (c<=0.0) return 0.0;
             auto v = std::max(c,variance());
             return c/v;
         } 
 
         Sample integral(const Sample& approximation) const {
             auto a = alpha();
+//            std::cerr<<"Alpha = "<<a<<std::endl;
             return (sum_f - a*sum_app)/double(size) + a*approximation;
         }
         friend class cv_optimize_weight;
@@ -200,7 +208,7 @@ public:
         });  
         logger_bins.log_progress(final_progress,final_progress);
         auto logger_control_variates = logger_step(logger,"residual and variance reduction");
-        for_each(parallel,multidimensional_range(bin_resolution),
+        for_each(sequential,multidimensional_range(bin_resolution),
             [&] (const std::array<std::size_t, DIMBINS>& pos) {
                 using Sample = decltype(f(std::declval<std::array<Float,DIM>>()));
                 Range<Float,DIM> binrange = range;

@@ -46,7 +46,7 @@ int main() {
     {
         LoggerProgress logger("Parallel"); //I'm suprised this works with a RNG shared among threads
         std::vector<float> sol(bins,0.0f); 
-        integrate(integrator_per_bin_parallel(monte_carlo(samples)),sol,f,range_infinite(-1.0,-1.0,1.0,1.0),logger);
+        integrate(integrator_per_bin_parallel(monte_carlo(100*samples)),sol,f,range_infinite(-1.0,-1.0,1.0,1.0),logger);
         for (float v : sol) std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
         std::cout<<std::endl;
     }
@@ -59,7 +59,7 @@ int main() {
         for (float v : sol) std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
         std::cout<<std::endl;
     }
-*/
+
     {
         LoggerProgress logger("Fubini adaptive"); 
         std::vector<float> sol(bins,0.0f); 
@@ -67,11 +67,20 @@ int main() {
         for (float v : sol) std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
         std::cout<<std::endl;
     }
+*/
 
     {
-        LoggerProgress logger("New Fubini");
+        LoggerProgress logger("PPA IS");
         std::vector<float> sol(bins,0.0f); 
-        integrate(integrator_fubini({0,1,4,5},integrator_adaptive_variance_reduction_parallel(nested(simpson,trapezoidal),128,rr_integral_region(),cv_optimize_weight(),samples),monte_carlo(10)),sol,f,range_infinite(-1.0,-1.0,1.0,1.0),logger);
+        integrate(integrator_fubini({0,1,4,5},integrator_adaptive_variance_reduction_parallel(nested(simpson,trapezoidal),128,rr_integral_region(),cv_fixed_weight(0.0),samples),monte_carlo(10)),sol,f,range_infinite(-1.0,-1.0,1.0,1.0),logger);
+        for (float v : sol) std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
+        std::cout<<std::endl;
+    }
+
+    {
+        LoggerProgress logger("PPA CV");
+        std::vector<float> sol(bins,0.0f); 
+        integrate(integrator_fubini({0,1,4,5},integrator_adaptive_variance_reduction_parallel(nested(simpson,trapezoidal),128,rr_uniform_region(),cv_fixed_weight(1.0),samples),monte_carlo(10)),sol,f,range_infinite(-1.0,-1.0,1.0,1.0),logger);
         for (float v : sol) std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
         std::cout<<std::endl;
     }
