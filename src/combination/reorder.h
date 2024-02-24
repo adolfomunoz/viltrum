@@ -57,7 +57,7 @@ public:
         auto range_reordered = viltrum::range<DIM>(reorder(range.min(),Float(0)),reorder(range.max(),Float(1)));
         const auto f_reordered = [&] (const std::array<Float,DIM>& x) {
             auto re = reorder(x);
-            std::array<Float,DIM> x_re;
+            std::array<Float,DIM> x_re; x_re.fill(0);
             for (std::size_t i = 0; (i<DIM) && (i<re.size()); ++i) x_re[i] = re[i];  
             return (f(x_re));
         };

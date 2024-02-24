@@ -4,177 +4,12 @@
 #include "../range.h"
 #include "mutexed-tensor-vector.h"
 #include "../foreach.h"
+#include "region-russian-roulette.h"
+#include "weight-strategy.h"
 
 
 
 namespace viltrum {
-
-struct NormDefault {
-    float operator()(float v) const { return std::abs(v); }
-    double operator()(double v) const { return std::abs(v); }
-    template<typename V>
-    auto operator()(const V& v, typename std::enable_if_t<std::is_arithmetic_v<typename V::value_type>, int> = 0) const {
-        auto i = v.begin(); 
-        using S = decltype(norm(*i));
-        S s; bool first = true;
-        if (i != v.end()) { s = norm(*i); ++i; }
-        while (i != v.end()) { s += norm(*i); ++i; }
-        return s;
-    }     
-};
-
-class rr_uniform_region {
-public:
-    class RR {
-    private:
-        //This is the MonteCarlo residual, RR among regions
-        std::uniform_int_distribution<std::size_t> rr;
-        template<typename Rs>
-        RR(const Rs& regions) : rr(0,regions.size()-1) {}
-    public:
-        template<typename RNG>
-        std::tuple<std::size_t,double> choose(RNG& rng) { 
-            return std::tuple(rr(rng),rr.max()+1); 
-        }
-        friend class rr_uniform_region;
-    };
-    template<typename Regions>
-    RR russian_roulette(const Regions& regions) const {
-        return RR(regions);
-    }
-};
-
-template<typename Norm = NormDefault>
-class rr_integral_region {
-    Norm norm;
-public:
-    rr_integral_region(const Norm& n = Norm()) : norm(n) {}
-    class RR {
-    private:
-        //This is the MonteCarlo residual, RR among regions
-        std::discrete_distribution<std::size_t> rr;
-        std::vector<double> weights;
-        Norm norm;
-
-        template<typename Rs>
-        RR(const Rs& regions, const Norm& n) : weights(regions.size()), norm(n) {
-            std::size_t i = 0; 
-            for (const auto& [r,region_bin_range] : regions) {
-                weights[i++] = norm(r->integral_subrange(region_bin_range));
-            }
-            //This is to avoid zeroes and negative numbers: put a minimum relative weight
-            double sum = 0.0;
-            for (double w : weights) sum += w;
-            if (sum<=0.0) for(double& w : weights) w = 1.0;
-            else for (double& w : weights) w = std::max(w,0.01*sum/double(weights.size()));
-            rr = std::discrete_distribution<std::size_t>(weights.begin(),weights.end());
-        }
-        
-    public:
-        template<typename RNG>
-        std::tuple<std::size_t,double> choose(RNG& rng) { 
-            std::size_t choice = rr(rng);
-            return std::tuple(choice,1.0/rr.probabilities()[choice]); 
-        }
-        friend class rr_integral_region;
-    };
-    template<typename Regions>
-    RR russian_roulette(const Regions& regions) const {
-        return RR(regions,norm);
-    }
-};
-
-class cv_fixed_weight {
-    double alpha; //This should go from zero (full importance sampling) to 1 (full control variates)
-public:
-    cv_fixed_weight(double a = 1) : alpha(a) {}
-
-    template<typename Sample>
-    class Accumulator {
-    private:
-        Sample sum; std::size_t size; double alpha;
-        Accumulator(double alpha, const Sample& ini = Sample(0)) : 
-            sum(ini), size(0), alpha(alpha) {}
-    public:
-        void push(const Sample& function_sample, const Sample& approximation_sample) {
-            sum += function_sample - alpha*approximation_sample;
-            ++size;
-        }
-
-        Sample integral(const Sample& approximation) const {
-            return sum/double(size) + alpha*approximation;
-        }
-        friend class cv_fixed_weight;
-    };
-
-    template<typename Sample>
-    Accumulator<Sample> accumulator(const Sample& ini = Sample(0)) const {
-        return Accumulator(alpha,ini);
-    }
-};
-
-template<typename Norm = NormDefault>
-class cv_optimize_weight {
-    Norm norm;
-public:
-    cv_optimize_weight(const Norm& n = Norm()) : norm(n) {}
-    template<typename Sample>
-    class Accumulator {
-    private:
-        Norm norm;
-        Sample sum_f, sum_app; std::size_t size;
-        //These are for online calculation of variance and covariance
-        double k_f, k_app, e_f, e_ap, e_ap2, e_fap;
-        Accumulator(const Norm& n, const Sample& ini = Sample(0)) : 
-            norm(n),sum_f(ini),sum_app(ini),size(0),
-            k_f(0), k_app(0), e_f(0), e_ap(0), e_ap2(0), e_fap(0) {}
-    public:
-        void push(const Sample& function_sample, const Sample& approximation_sample) {
-            //For online variance and covariance (and alpha)
-            if (size==0) {
-                k_f = norm(function_sample); k_app = norm(approximation_sample);
-            }
-
-            e_f += (norm(function_sample) - k_f);
-            e_ap += (norm(approximation_sample) - k_app);
-            e_ap2 += (norm(approximation_sample) - k_app)*(norm(approximation_sample) - k_app);
-            e_fap += (norm(function_sample) - k_f)*(norm(approximation_sample) - k_app);
-
-            sum_f += function_sample; sum_app += approximation_sample; 
-            ++size;
-        }
-
-        double covariance() const {
-            return (e_fap - (e_f*e_ap)/double(size))/double(size-1);
-        } 
-
-        double variance() const {
-            return (e_ap2 - (e_ap*e_ap)/double(size))/double(size-1);
-        } 
-
-        double alpha() const {
-            if (size < 2) return 1;
-            auto c = std::max(0.0,covariance());
-            if (c<=0.0) return 0.0;
-            auto v = std::max(c,variance());
-            return c/v;
-        } 
-
-        Sample integral(const Sample& approximation) const {
-            auto a = alpha();
-//            std::cerr<<"Alpha = "<<a<<std::endl;
-            return (sum_f - a*sum_app)/double(size) + a*approximation;
-        }
-        friend class cv_optimize_weight;
-    };
-
-    template<typename Sample>
-    Accumulator<Sample> accumulator(const Sample& ini = Sample(0)) const {
-        return Accumulator<Sample>(norm,ini);
-    }
-};
-
-
 
 template<typename RR, typename CV, typename RNG>
 class RegionsIntegratorParallelVarianceReduction {
@@ -208,7 +43,7 @@ public:
         });  
         logger_bins.log_progress(final_progress,final_progress);
         auto logger_control_variates = logger_step(logger,"residual and variance reduction");
-        for_each(sequential,multidimensional_range(bin_resolution),
+        for_each(parallel,multidimensional_range(bin_resolution),
             [&] (const std::array<std::size_t, DIMBINS>& pos) {
                 using Sample = decltype(f(std::declval<std::array<Float,DIM>>()));
                 Range<Float,DIM> binrange = range;
