@@ -1,4 +1,4 @@
-#include "../../src/control-variates/regions-integrator-parallel-variance-reduction.h"
+#include "../../src/control-variates/weight-strategy.h"
 #include <random>
 #include <list>
 #include <string>

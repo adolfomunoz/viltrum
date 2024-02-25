@@ -3,12 +3,74 @@
 #include "concat.h"
 #include "reorder.h"
 #include <tuple>
+#include "../range.h"
+#include "../range-infinite.h"
+#include "../array.h"
+
+
 
 /* Fubini combines different integration techniques, one of them for the first N dimensions and the other
  * for the rest of the dimensions, even if infinite.
  */
 
 namespace viltrum {
+
+template<std::size_t N, typename Float, std::size_t DIM>
+std::tuple<Range<Float,N>, Range<Float,DIM-N>> range_split_at(const Range<Float,DIM>& range) {
+    std::array<Float,N> range_first_min, range_first_max;
+    for (std::size_t i = 0; i<N; ++i) {
+        range_first_min[i] = range.min(i);
+        range_first_max[i] = range.max(i);
+    }
+    std::array<Float,DIM-N> range_rest_min, range_rest_max;
+    for (std::size_t i = N; i<DIM; ++i) {
+        range_rest_min[i-N] = range.min(i);
+        range_rest_max[i-N] = range.max(i);
+    }      
+    return std::tuple(Range<Float,N>(range_first_min, range_first_max),
+                      Range<Float,DIM-N>(range_rest_min, range_rest_max));
+}
+
+template<std::size_t N, typename Float>
+std::tuple<Range<Float,N>, RangeInfinite<Float>> range_split_at(const RangeInfinite<Float>& range) {
+    std::array<Float,N> range_first_min, range_first_max;
+    for (std::size_t i = 0; i<N; ++i) {
+        range_first_min[i] = range.min(i);
+        range_first_max[i] = range.max(i);
+    }
+        std::vector<Float> range_rest_min = range.min();
+        std::vector<Float> range_rest_max = range.max();
+        for (std::size_t i = 0; i<N; ++i) {
+            if (!range_rest_min.empty()) range_rest_min.erase(range_rest_min.begin());
+            if (!range_rest_max.empty()) range_rest_max.erase(range_rest_max.begin());
+        }    
+        return std::tuple(Range<Float,N>(range_first_min, range_first_max),
+                     RangeInfinite<Float>(range_rest_min, range_rest_max));
+}
+
+template<std::size_t N, typename F, typename Integrator, typename Float>
+auto function_split_and_integrate_at(const F& f, const Integrator& integrator, const Range<Float,0>& range) {
+    return f; 
+} 
+
+template<std::size_t N, typename F, typename Integrator, typename Float, std::size_t DIM>
+auto function_split_and_integrate_at(const F& f, const Integrator& integrator, const Range<Float,DIM>& range) {
+    return [=] (const std::array<Float,N>& x) {
+        return viltrum::integrate(integrator,[&f,&x] (const std::array<float,DIM>& xr) {
+            return f( (x | xr) );
+        }, range);
+    };  
+}
+
+template<std::size_t N, typename F, typename Integrator, typename Float>
+auto function_split_and_integrate_at(const F& f, const Integrator& integrator, const RangeInfinite<Float>& range) {
+    return [=] (const std::array<Float,N>& x) {
+        return viltrum::integrate(integrator,[&f,&x] (const auto& xr) {
+            return f(concat(x,xr));
+        }, range);
+    }; 
+} 
+
 
 template<typename IntegratorFirst, typename IntegratorRest, std::size_t N>
 class IntegratorFubini {
@@ -18,61 +80,18 @@ public:
     IntegratorFubini(const IntegratorFirst& i_f, const IntegratorRest& i_r) :
         integrator_first(i_f), integrator_rest(i_r) {}
 
-	template<typename Bins, std::size_t DIMBINS, typename F, typename Float, std::size_t DIM, typename Logger>
+	template<typename Bins, std::size_t DIMBINS, typename F, typename Range, typename Logger>
 	void integrate(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
-		const F& f, const Range<Float,DIM>& range, Logger& logger) const {
+		const F& f, const Range& range, Logger& logger) const {
 
         static_assert(N>=DIMBINS,"Fubini does not work with that many dimensions on bin resolution");
 
-        std::array<Float,N> range_first_min, range_first_max;
-        for (std::size_t i = 0; i<N; ++i) {
-            range_first_min[i] = range.min(i);
-            range_first_max[i] = range.max(i);
-        }
-        Range<Float,N> range_first(range_first_min, range_first_max);
-        
-
-        std::array<Float,DIM-N> range_rest_min, range_rest_max;
-        for (std::size_t i = N; i<DIM; ++i) {
-            range_rest_min[i-N] = range.min(i);
-            range_rest_max[i-N] = range.max(i);
-        }      
-        Range<Float,DIM-N> range_rest(range_rest_min, range_rest_max);
+        auto [range_first, range_rest] = range_split_at<N>(range);
 
         viltrum::integrate(integrator_first,bins,bin_resolution,
-            [&] (const std::array<float,N>& x) {
-                return viltrum::integrate(integrator_rest,[&f,&x] (const std::array<float,DIM-N>& xr) {
-                    return f(x | xr);
-                }, range_rest);
-            }, range_first, logger);
+            function_split_and_integrate_at<N>(f,integrator_rest,range_rest),
+            range_first, logger);
 	}
-
-	template<typename Bins, std::size_t DIMBINS, typename F, typename Float, typename Logger>
-	void integrate(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
-		const F& f, const RangeInfinite<Float>& range, Logger& logger) const {
-
-        static_assert(N>=DIMBINS,"Fubini does not work with that many dimensions on bin resolution");
-
-        std::array<Float,N> first_min, first_max;
-        for (std::size_t i = 0; i<N; ++i) {
-            first_min[i] = range.min(i);
-            first_max[i] = range.max(i);
-        }
-
-        std::vector<Float> rest_min = range.min();
-        std::vector<Float> rest_max = range.max();
-        for (std::size_t i = 0; i<N; ++i) {
-            if (!rest_min.empty()) rest_min.erase(rest_min.begin());
-            if (!rest_max.empty()) rest_max.erase(rest_max.begin());
-        }
-
-        viltrum::integrate(integrator_first,bins,bin_resolution,
-            [&] (const std::array<Float,N>& x) {
-                return viltrum::integrate(integrator_rest,[&f,&x] (const auto& xr) {
-                    return f(concat(x,xr));
-                }, range_infinite(rest_min,rest_max));
-            }, Range<Float,N>(first_min,first_max), logger);
-    }
 };
 
 template<std::size_t N, typename IntegratorFirst, typename IntegratorRest>

@@ -10,9 +10,9 @@ public:
     IntegratorRegionBased(const RegionsGenerator& rg, const RegionsIntegrator& ri) :
         regions_generator(rg), regions_integrator(ri) {}
 
-	template<typename Bins, std::size_t DIMBINS, typename F, typename Float, std::size_t DIM, typename Logger>
+	template<typename Bins, std::size_t DIMBINS, typename F, typename Range, typename Logger>
 	void integrate(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
-		const F& f, const Range<Float,DIM>& range, Logger& logger) const {
+		const F& f, const Range& range, Logger& logger) const {
 
         auto logger_generator = logger_step(logger,"region generation");
         auto seq_regions = regions_generator.generate(bin_resolution,f,range,logger_generator);

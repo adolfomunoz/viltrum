@@ -6,27 +6,34 @@
 #include "../foreach.h"
 #include "region-russian-roulette.h"
 #include "weight-strategy.h"
-
-
+#include "region-sampling.h"
+#include "../combination/fubini.h"
+#include "../monte-carlo/monte-carlo.h"
 
 namespace viltrum {
 
-template<typename RR, typename CV, typename RNG>
+template<typename RR, typename CV, typename RS, typename RNG>
 class RegionsIntegratorParallelVarianceReduction {
     RR rr;
     CV cv;
+    RS region_sampler;
     mutable RNG rng;
     unsigned long samples;
     std::size_t nmutexes;
 
 public:
-    RegionsIntegratorParallelVarianceReduction(RR&& rr, CV&& cv, RNG&& r, unsigned long s,std::size_t n = 16) 
-        : rr(rr), cv(cv), rng(r), samples(s), nmutexes(n) {}
-	template<typename Bins, std::size_t DIMBINS, typename SeqRegions, typename F, typename Float, std::size_t DIM, typename Logger>
+    RegionsIntegratorParallelVarianceReduction(RR&& rr, CV&& cv, RS&& rs, RNG&& r, unsigned long s,std::size_t n = 16) 
+        : rr(rr), cv(cv), region_sampler(rs), rng(r), samples(s), nmutexes(n) {}
+	template<typename Bins, std::size_t DIMBINS, typename SeqRegions, typename F, typename IntegrationRange, typename Logger>
 	void integrate_regions(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
-		const SeqRegions& seq_regions, const F& f, const Range<Float,DIM>& range, Logger& logger) const {
+		const SeqRegions& seq_regions, const F& f, const IntegrationRange& range, Logger& logger) const {
         
         using Reg = typename SeqRegions::value_type;
+        using RegRange = std::decay_t<decltype(std::declval<Reg>().range())>;
+        constexpr std::size_t DIM = RegRange::size;
+        using Float = typename RegRange::value_type;
+        auto [range_first,range_rest] = range_split_at<DIM>(range); 
+        auto f_regdim = function_split_and_integrate_at<DIM>(f,monte_carlo(rng,1),range_rest);
 
         std::array<Float,DIMBINS> drange;
         for (std::size_t i=0;i<DIMBINS;++i) drange[i] = (range.max(i) - range.min(i))/Float(bin_resolution[i]);
@@ -37,7 +44,7 @@ public:
         auto logger_bins = logger_step(logger, "region bin stratification");
         logger_bins.log_progress(progress,final_progress);
         std::for_each(std::execution::par_unseq, seq_regions.begin(),seq_regions.end(),[&] (const auto& r) {
-            for (auto pos : pixels_in_region(r,bin_resolution,range)) {
+            for (auto pos : pixels_in_region(r,bin_resolution,range_first)) {
                 perbin.push_at(pos,&r);
             } 
         });  
@@ -45,8 +52,8 @@ public:
         auto logger_control_variates = logger_step(logger,"residual and variance reduction");
         for_each(parallel,multidimensional_range(bin_resolution),
             [&] (const std::array<std::size_t, DIMBINS>& pos) {
-                using Sample = decltype(f(std::declval<std::array<Float,DIM>>()));
-                Range<Float,DIM> binrange = range;
+                using Sample = std::decay_t<decltype(f_regdim(std::declval<std::array<Float,DIM>>()))>;
+                Range<Float,DIM> binrange = range_first;
                 for (std::size_t i=0;i<DIMBINS;++i)
                     binrange = binrange.subrange_dimension(i,range.min(i)+pos[i]*drange[i],range.min(i)+(pos[i]+1)*drange[i]);
                 std::vector<std::tuple<const Reg*,Range<Float,DIM>>> regions_ranges(perbin[pos].size(),std::tuple((const Reg*)nullptr,range_primary<DIM,Float>()));
@@ -64,14 +71,10 @@ public:
                 for (unsigned long i=0;i<samples;++i) {
                     auto [chosen,rrfactor] = roulette.choose(rng);
                     const auto& [r, region_bin_range]  = regions_ranges[chosen];
-                    std::array<Float,DIM> sample;
-	                for (std::size_t i=0;i<DIM;++i) {
-		                std::uniform_real_distribution<Float> dis(region_bin_range.min(i),region_bin_range.max(i));
-		                sample[i] = dis(rng);
-                    }
+                    const auto& [sample, sfactor] = region_sampler.sample(r,region_bin_range,rng); 
                     accumulator.push(
-                        f(sample)*double(factor)*rrfactor*region_bin_range.volume(),
-                        r->approximation_at(sample)*double(factor)*rrfactor*region_bin_range.volume()
+                        f_regdim(sample)*double(factor)*rrfactor*sfactor,
+                        r->approximation_at(sample)*double(factor)*rrfactor*sfactor
                     );
                 }
                 bins(pos) = accumulator.integral(approximation);    
@@ -79,9 +82,14 @@ public:
     }
 };
 
+template<typename RR, typename CV, typename RS, typename RNG>
+auto regions_integrator_parallel_variance_reduction(RR&& rr, CV&& cv, RS&& rs, RNG&& rng, unsigned long samples, std::size_t nmutexes = 16, std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
+    return RegionsIntegratorParallelVarianceReduction<RR,CV,RS,RNG>(std::forward<RR>(rr), std::forward<CV>(cv), std::forward<RS>(rs), std::forward<RNG>(rng),samples,nmutexes);
+}
+
 template<typename RR, typename CV, typename RNG>
 auto regions_integrator_parallel_variance_reduction(RR&& rr, CV&& cv, RNG&& rng, unsigned long samples, std::size_t nmutexes = 16, std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
-    return RegionsIntegratorParallelVarianceReduction<RR,CV,RNG>(std::forward<RR>(rr), std::forward<CV>(cv), std::forward<RNG>(rng),samples,nmutexes);
+    return regions_integrator_parallel_variance_reduction(std::forward<RR>(rr), std::forward<CV>(cv), region_sampling_uniform(), std::forward<RNG>(rng),samples,nmutexes);
 }
 
 template<typename RR, typename CV>

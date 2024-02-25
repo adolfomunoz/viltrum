@@ -30,7 +30,9 @@ class MonteCarlo {
     unsigned long samples;
 
 public:
-    MonteCarlo(RNG&& r, unsigned long s) : rng(std::move(r)), samples(s) {} 
+    MonteCarlo(RNG&& r, unsigned long s) : rng(std::move(r)), samples(s) {}
+    //If reference (and not moved) we get a random seed
+    MonteCarlo(RNG& r, unsigned long s) : rng(std::size_t(r())), samples(s) {} 
 
 	template<typename Bins, std::size_t DIMBINS, typename F, typename Float, std::size_t DIM, typename Logger>
 	void integrate(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
@@ -83,7 +85,7 @@ public:
 
 template<typename RNG>
 auto monte_carlo(RNG&& rng, unsigned long samples, std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
-    return MonteCarlo<RNG>(std::forward<RNG>(rng),samples);
+    return MonteCarlo<std::decay_t<RNG>>(std::forward<RNG>(rng),samples);
 }
 
 auto monte_carlo(unsigned long samples, std::size_t seed = std::random_device()()) {
