@@ -44,6 +44,26 @@ namespace detail {
     };
 
     template<typename P, typename F>
+    struct Integrand<P,F,typename  std::enable_if_t<std::is_invocable_v<F,P,P,P,P,P>> > {
+        static auto adapt(const F& f) { 
+            return [&f] (const std::array<P,5>& x) { return f(x[0],x[1],x[2],x[3],x[4]);};   
+        } 
+    };
+
+    template<typename P, typename F>
+    struct Integrand<P,F,typename  std::enable_if_t<std::is_invocable_v<F,P,P,P,P,P,P>> > {
+        static auto adapt(const F& f) { 
+            return [&f] (const std::array<P,6>& x) { return f(x[0],x[1],x[2],x[3],x[4],x[5]);};   
+        } 
+    };
+
+    template<typename P, typename F>
+    struct Integrand<P,F,typename  std::enable_if_t<std::is_invocable_v<F,P,P,P,P,P,P,P>> > {
+        static auto adapt(const F& f) { 
+            return [&f] (const std::array<P,7>& x) { return f(x[0],x[1],x[2],x[3],x[4],x[5],x[6]);};   
+        } 
+    };
+    template<typename P, typename F>
     auto adapt(const F& f) {
         return Integrand<P,std::decay_t<F>>::adapt(f);
     }   
