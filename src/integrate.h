@@ -143,8 +143,8 @@ template<typename Integrator, typename T, typename F, typename R, typename Logge
 void integrate(const Integrator& integrator, std::vector<std::vector<std::vector<T>>>& bins, const F& function, const R& range, Logger& logger) {
     auto b = [&bins] (const std::array<std::size_t,3>& i) -> T& { return bins[i[0]][i[1]][i[2]]; };
     std::size_t max1 = 0;
-    for (const std::vector<T>& v : bins) if (v.size()>max1) max1 = v.size();
-    for (std::vector<T>& v : bins) v.resize(max1);
+    for (const std::vector<std::vector<T>>& v : bins) if (v.size()>max1) max1 = v.size();
+    for (std::vector<std::vector<T>>& v : bins) v.resize(max1);
     std::size_t max2 = 0;
     for (const std::vector<std::vector<T>>& vv : bins) 
         for (const std::vector<T>& v : vv)
