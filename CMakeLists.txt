@@ -24,6 +24,7 @@ target_link_libraries(test-multiple-parameters-sequence PRIVATE TBB::tbb)
 add_executable(test-random-sequence main/compilation-tests/random-sequence.cc)
 add_executable(test-concat main/compilation-tests/concat.cc)
 add_executable(test-covariance main/compilation-tests/covariance.cc)
+add_executable(test-inverse main/compilation-tests/inverse.cc)
 
 ##########
 # FOR DOCUMENTATION

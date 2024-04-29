@@ -91,6 +91,88 @@ struct Simpson {
 		return ((c[2]*b/3.0 + c[1]/2.0)*b + c[0])*b - ((c[2]*a/3.0 + c[1]/2.0)*a + c[0])*a;	
 	}
 
+	//My functions are below this line
+
+	//I had to create this function, otherwise c++ returns -nans for a cube root of a negative number, even though 
+	//it's a cube root
+	float cuberoot(float x){ 
+		float cube_root;
+		if(x < 0)
+		{ 
+			x = abs(x);
+			cube_root = pow(x,1./3.)*(-1);
+		}
+		else{
+			cube_root = pow(x,1./3.);
+		}
+		return cube_root;
+	}
+
+	//Name cdf, inv_cdf and sample_normalized as you wish
+	template<typename Float, typename T>
+	constexpr T cdf(Float t, const std::array<T,samples>& p) const {
+    	auto c = coefficients(p);
+		return ((c[2]*t/3.0 + c[1]/2.0)*t + c[0])*t;
+	}
+
+	template<typename Float, typename T>
+	constexpr std::vector<T> inv_cdf(Float x, const std::array<T,samples>& points)
+	{
+		std::vector<T> solutions;
+
+		auto coeff = coefficients(points);
+		auto a = coeff[2]/3.;	//Term multiplying x³ in the cdf
+		auto b = coeff[1]/2.;	//Term multiplying x² in the cdf
+		auto c = coeff[0];		//Term multiplying x in the cdf
+		auto d = -x;			//-x because we are solving the roots for cdf = x (cdf - x = 0) to compute the inverse
+
+		//In case you are curious, this is Cardano's method for one solution:
+		auto p = c/a - pow(b,2.)/(3.*pow(a,2.));
+		auto q = 2*pow(b,3.)/(27.*pow(a,3.)) - b*c/(3.*pow(a,2.)) + d/a;
+
+		auto sqr = pow(q/2.,2.) + pow(p/3.,3.);
+		if(sqr >= 0.){ 
+			//One solution
+			solutions.push_back(cuberoot(-q/2. - sqrt(sqr)) + cuberoot(-q/2. + sqrt(sqr))-b/(3*a));
+		}
+		else{ 
+			//3 solutions (Viète's trigonometric expression of the roots)
+			for(int i=0; i<3; i++)
+				solutions.push_back(2.*sqrt(-p/3.) * cos(1./3. * acos(3.*q/(2.*p) * sqrt(-3./p)) - 2.*M_PI * i/3.)-b/(3.*a));
+		}
+		return solutions;
+	}
+
+
+	/*Returns a sample from the inverted CDF normalized
+    s -> Random uniform sample between 0-1
+    a -> Minimus range value
+    b -> Maximum range value
+    p -> Polynomial sample points
+	*/
+	template<typename Float, typename T>
+	constexpr T sample_normalized(Float s, Float a, Float b, const std::array<T,samples>& p){ 
+		auto cdf_a = cdf(a,p);	//Just to save time (I don't know if compilers does this already)
+
+		//Point where we are computing the inverse (s*(^F(b) - ^F(a)) + ^F(a))
+		auto x = s*(cdf(b,p) - cdf_a) + cdf_a;
+		auto res = inv_cdf(x,p);
+
+		//There are some warnings in two strange scenarious, hope we don't have to see them printed
+		bool solved = false; 
+		T solution = s;
+		for(auto r : res){
+			if(r > a && r < b){ 
+				if(solved) std::cout<<"Warning, more than one solutions for range "<<a<<" - "<<b<<std::endl;
+				solved = true;
+				solution = r;
+			}
+		}
+		if(!solved) std::cout<<"Warning, no solutions for range "<<a<<" - "<<b<<std::endl;
+		return solution;
+	}
+
+
 /*    
 	template<typename Float, typename T>	
 	auto at(Float t, const std::array<T,samples>& p) const -> T {
