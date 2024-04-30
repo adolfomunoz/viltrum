@@ -47,7 +47,16 @@ public:
 			prange[i] = (pos[i]-min(i))/(max(i) - min(i));
 		return prange;
 	}
-	
+
+	template<std::size_t DIMSUB>
+	std::array<T,DIMSUB> pos_from_range(const std::array<T,DIMSUB>& pos) const {
+		static_assert(DIMSUB<=DIM,"pos_in_range with too big dimensionsal index");
+		std::array<T,DIMSUB> prange;
+		for (std::size_t i = 0; i<DIMSUB; ++i) 
+			prange[i] = pos[i]*(max(i)-min(i))+min(i);
+		return prange;
+	}
+
 	Range<T,DIM> subrange_dimension(std::size_t dim, T a, T b) const {
 		std::array<T,DIM> new_a = min(); new_a[dim]=a;
 		std::array<T,DIM> new_b = max(); new_b[dim]=b;

@@ -172,6 +172,57 @@ public:
 	value_type integral_subrange(Float a, Float b) const {
 		return integral_subrange(std::array<Float,1>{a},std::array<Float,1>{b});
 	}
+
+private:
+	template<typename MA, std::size_t DIMSUB>
+	Float sample_sub(const MA& ma, 
+			const Float& s, const std::array<Float,DIMSUB>& a, const std::array<Float,DIMSUB>& b) const {
+        if constexpr (MA::dimensions > DIMSUB)
+            return sample_sub(ma.fold(quadrature,DIMSUB),s,a,b);
+        else if constexpr (MA::dimensions > 1)
+			return sample_sub(ma.fold([&] (const auto& v) {
+				return quadrature.subrange(a[MA::dimensions-1],b[MA::dimensions-1],v);
+			},MA::dimensions-1),s,a,b);
+		else
+            return ma.fold([&] (const auto& v) { 
+				return quadrature.sample_normalized(s,a[0],b[0],v); }).value();
+	}
+
+	template<typename MA, std::size_t DIMSUB>
+	std::array<Float,DIMSUB> sample_subrange_i(const MA& ma, 
+			const std::array<Float,DIMSUB>& sol_i,
+			const std::array<Float,DIMSUB>& s, const std::array<Float,DIMSUB>& a, 
+			const std::array<Float,DIMSUB>& b) const {
+        if constexpr (MA::dimensions > DIMSUB)
+            return sample_subrange_i(ma.fold(quadrature,DIMSUB),sol_i,s,a,b);
+		else { 
+			std::array<Float,DIMSUB> sol = sol_i;
+			sol[MA::dimensions-1] = sample_sub(ma,s[MA::dimensions-1],a,b); 
+			if constexpr (MA::dimensions == 1)
+				return sol;
+			else 
+				sample_subrange_i(
+					ma.fold([&] (const auto& v) {
+						quadrature.at(sol[MA::dimensions-1],v);	
+					},MA::dimensions-1),sol,s,a,b);
+		}	
+	} 
+public:
+	template<std::size_t DIMSUB>
+	std::array<Float,DIMSUB> sample_subrange(const std::array<Float,DIMSUB>& s, const std::array<Float,DIMSUB>& a, 
+						const std::array<Float,DIMSUB>& b) const {
+		static_assert(DIM>=DIMSUB,"Cannot calculate the subrange sample for that many dimensions, as the region has less dimensions");
+		std::array<Float,DIMSUB> sol;
+		return range().pos_from_range(
+			sample_subrabge_i(data,sol,s,range().pos_in_range(a),range().pos_in_range(b)));
+	} 
+
+	template<std::size_t DIMSUB>
+	std::array<Float,DIMSUB> pdf_subrange(const std::array<Float,DIMSUB>& pos, const std::array<Float,DIMSUB>& a, 
+						const std::array<Float,DIMSUB>& b) const {
+		static_assert(DIM>=DIMSUB,"Cannot calculate the subrange pdf for that many dimensions, as the region has less dimensions");
+		return this->approximation_at(pos)/this->integral_subrange(a,b);
+	} 
 	
 	template<typename F>
 	std::vector<Region<Float,Q,DIM,value_type>> split(const F& f, std::size_t dimension = 0, std::size_t parts = 2) const {
