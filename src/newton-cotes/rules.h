@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include "../control-variates/norm.h"
 
 namespace viltrum {
 
@@ -95,17 +96,8 @@ struct Simpson {
 
 	//I had to create this function, otherwise c++ returns -nans for a cube root of a negative number, even though 
 	//it's a cube root
-	float cuberoot(float x){ 
-		float cube_root;
-		if(x < 0)
-		{ 
-			x = abs(x);
-			cube_root = pow(x,1./3.)*(-1);
-		}
-		else{
-			cube_root = pow(x,1./3.);
-		}
-		return cube_root;
+	constexpr static float cuberoot(float x) { 
+		return (x<0)?(-1*pow(-x,1./3.)):pow(x,1./3.);
 	}
 
 	//Name cdf, inv_cdf and sample_normalized as you wish
@@ -116,8 +108,7 @@ struct Simpson {
 	}
 
 	template<typename Float, typename T>
-	constexpr std::vector<T> inv_cdf(Float x, const std::array<T,samples>& points)
-	{
+	constexpr std::vector<T> inv_cdf(Float x, const std::array<T,samples>& points) const {
 		std::vector<T> solutions;
 
 		auto coeff = coefficients(points);
@@ -150,12 +141,13 @@ struct Simpson {
     b -> Maximum range value
     p -> Polynomial sample points
 	*/
-	template<typename Float, typename T>
-	constexpr T sample_normalized(Float s, Float a, Float b, const std::array<T,samples>& p){ 
+	template<typename Float, typename T, typename Norm = NormDefault>
+	constexpr T sample_normalized(Float s, Float a, Float b, const std::array<T,samples>& p,
+			const Norm& norm = Norm()) const { 
 		auto cdf_a = cdf(a,p);	//Just to save time (I don't know if compilers does this already)
 
 		//Point where we are computing the inverse (s*(^F(b) - ^F(a)) + ^F(a))
-		auto x = s*(cdf(b,p) - cdf_a) + cdf_a;
+		auto x = norm(s*(cdf(b,p) - cdf_a) + cdf_a);
 		auto res = inv_cdf(x,p);
 
 		//There are some warnings in two strange scenarious, hope we don't have to see them printed

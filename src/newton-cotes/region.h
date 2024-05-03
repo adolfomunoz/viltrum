@@ -174,9 +174,10 @@ public:
 	}
 
 private:
-	template<typename MA, std::size_t DIMSUB>
+	template<typename MA, std::size_t DIMSUB, typename Norm = NormDefault>
 	Float sample_sub(const MA& ma, 
-			const Float& s, const std::array<Float,DIMSUB>& a, const std::array<Float,DIMSUB>& b) const {
+			const Float& s, const std::array<Float,DIMSUB>& a, const std::array<Float,DIMSUB>& b,
+			const Norm& norm = Norm()) const {
         if constexpr (MA::dimensions > DIMSUB)
             return sample_sub(ma.fold(quadrature,DIMSUB),s,a,b);
         else if constexpr (MA::dimensions > 1)
@@ -185,43 +186,54 @@ private:
 			},MA::dimensions-1),s,a,b);
 		else
             return ma.fold([&] (const auto& v) { 
-				return quadrature.sample_normalized(s,a[0],b[0],v); }).value();
+				return quadrature.sample_normalized(s,a[0],b[0],v,norm); }).value();
 	}
 
-	template<typename MA, std::size_t DIMSUB>
+	template<typename MA, std::size_t DIMSUB, typename Norm = NormDefault>
 	std::array<Float,DIMSUB> sample_subrange_i(const MA& ma, 
 			const std::array<Float,DIMSUB>& sol_i,
 			const std::array<Float,DIMSUB>& s, const std::array<Float,DIMSUB>& a, 
-			const std::array<Float,DIMSUB>& b) const {
+			const std::array<Float,DIMSUB>& b,
+			const Norm& norm = Norm()) const {
         if constexpr (MA::dimensions > DIMSUB)
-            return sample_subrange_i(ma.fold(quadrature,DIMSUB),sol_i,s,a,b);
+            return sample_subrange_i(ma.fold(quadrature,DIMSUB),sol_i,s,a,b,norm);
 		else { 
 			std::array<Float,DIMSUB> sol = sol_i;
-			sol[MA::dimensions-1] = sample_sub(ma,s[MA::dimensions-1],a,b); 
+			sol[MA::dimensions-1] = sample_sub(ma,s[MA::dimensions-1],a,b,norm); 
 			if constexpr (MA::dimensions == 1)
 				return sol;
 			else 
-				sample_subrange_i(
+				return sample_subrange_i(
 					ma.fold([&] (const auto& v) {
-						quadrature.at(sol[MA::dimensions-1],v);	
-					},MA::dimensions-1),sol,s,a,b);
+						return quadrature.at(sol[MA::dimensions-1],v);	
+					},MA::dimensions-1),sol,s,a,b,norm);
 		}	
 	} 
 public:
-	template<std::size_t DIMSUB>
+	template<std::size_t DIMSUB,typename Norm = NormDefault>
 	std::array<Float,DIMSUB> sample_subrange(const std::array<Float,DIMSUB>& s, const std::array<Float,DIMSUB>& a, 
-						const std::array<Float,DIMSUB>& b) const {
+						const std::array<Float,DIMSUB>& b, const Norm& norm = Norm()) const {
 		static_assert(DIM>=DIMSUB,"Cannot calculate the subrange sample for that many dimensions, as the region has less dimensions");
 		std::array<Float,DIMSUB> sol;
 		return range().pos_from_range(
-			sample_subrabge_i(data,sol,s,range().pos_in_range(a),range().pos_in_range(b)));
+			sample_subrange_i(data,sol,s,range().pos_in_range(a),range().pos_in_range(b),norm));
 	} 
 
-	template<std::size_t DIMSUB>
-	std::array<Float,DIMSUB> pdf_subrange(const std::array<Float,DIMSUB>& pos, const std::array<Float,DIMSUB>& a, 
-						const std::array<Float,DIMSUB>& b) const {
+	template<std::size_t DIMSUB,typename Norm = NormDefault>
+	std::array<Float,DIMSUB> sample_subrange(const std::array<Float,DIMSUB>& s, const Range<Float,DIMSUB>& range, const Norm& norm = Norm()) const {
+		return this->sample_subrange(s,range.min(),range.max(),norm);
+	} 
+
+	template<std::size_t DIMSUB,typename Norm = NormDefault>
+	Float pdf_subrange(const std::array<Float,DIMSUB>& pos, const std::array<Float,DIMSUB>& a, 
+						const std::array<Float,DIMSUB>& b,const Norm& norm = Norm()) const {
 		static_assert(DIM>=DIMSUB,"Cannot calculate the subrange pdf for that many dimensions, as the region has less dimensions");
-		return this->approximation_at(pos)/this->integral_subrange(a,b);
+		return Range(a,b).volume()*norm(this->approximation_at(pos))/(norm(this->integral_subrange(a,b)));
+	}
+
+	template<std::size_t DIMSUB,typename Norm = NormDefault>
+	Float pdf_subrange(const std::array<Float,DIMSUB>& pos, const Range<Float,DIMSUB>& range, const Norm& norm = Norm()) const {
+		return this->pdf_subrange(pos,range.min(),range.max(),norm);
 	} 
 	
 	template<typename F>
@@ -314,7 +326,7 @@ auto region(const F& f, const Q& q,
 }
 
 template<typename Float, typename F, typename Q, std::size_t DIM>
-auto region(const F& f, const Q& q, const Range<Float,DIM> range) {
+auto region(const F& f, const Q& q, const Range<Float,DIM>& range) {
 	return Region<Float,Q,DIM,std::decay_t<decltype(f(range.min()))>>(f,q,range);
 }
 
