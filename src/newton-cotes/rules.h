@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <vector>
 #include "../control-variates/norm.h"
 
 namespace viltrum {
@@ -108,7 +109,7 @@ struct Simpson {
 	}
 
 	template<typename Float, typename T>
-	constexpr std::vector<T> inv_cdf(Float x, const std::array<T,samples>& points) const {
+	std::vector<T> inv_cdf(Float x, const std::array<T,samples>& points) const {
 		std::vector<T> solutions;
 
 		auto coeff = coefficients(points);
@@ -117,20 +118,32 @@ struct Simpson {
 		auto c = coeff[0];		//Term multiplying x in the cdf
 		auto d = -x;			//-x because we are solving the roots for cdf = x (cdf - x = 0) to compute the inverse
 
-		//In case you are curious, this is Cardano's method for one solution:
-		auto p = c/a - pow(b,2.)/(3.*pow(a,2.));
-		auto q = 2*pow(b,3.)/(27.*pow(a,3.)) - b*c/(3.*pow(a,2.)) + d/a;
-
-		auto sqr = pow(q/2.,2.) + pow(p/3.,3.);
-		if(sqr >= 0.){ 
-			//One solution
-			solutions.push_back(cuberoot(-q/2. - sqrt(sqr)) + cuberoot(-q/2. + sqrt(sqr))-b/(3*a));
-		}
-		else{ 
-			//3 solutions (Viète's trigonometric expression of the roots)
-			for(int i=0; i<3; i++)
-				solutions.push_back(2.*sqrt(-p/3.) * cos(1./3. * acos(3.*q/(2.*p) * sqrt(-3./p)) - 2.*M_PI * i/3.)-b/(3.*a));
-		}
+		if (a==0) { //Second degree equation	
+			if (b==0) { //Degree one equation
+				solutions.push_back(-d/c);
+			} else {
+				auto disc = c*c - 4*b*d;
+				if (disc>=0) {
+					solutions.push_back((-c + std::sqrt(disc))/(2*b));
+					solutions.push_back((-c - std::sqrt(disc))/(2*b));
+				}  
+			} 
+		} else { 
+			//In case you are curious, this is Cardano's method for one solution:
+			auto p = c/a - pow(b,2.)/(3.*pow(a,2.));
+			auto q = 2*pow(b,3.)/(27.*pow(a,3.)) - b*c/(3.*pow(a,2.)) + d/a;
+//			std::cerr<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<p<<" "<<q<<std::endl; 
+			auto sqr = pow(q/2.,2.) + pow(p/3.,3.);
+			if(sqr >= 0.){ 
+				//One solution
+				solutions.push_back(cuberoot(-q/2. - sqrt(sqr)) + cuberoot(-q/2. + sqrt(sqr))-b/(3*a));
+			}
+			else{ 
+				//3 solutions (Viète's trigonometric expression of the roots)
+				for(int i=0; i<3; i++)
+					solutions.push_back(2.*sqrt(-p/3.) * cos(1./3. * acos(3.*q/(2.*p) * sqrt(-3./p)) - 2.*M_PI * i/3.)-b/(3.*a));
+			}
+		}	
 		return solutions;
 	}
 
@@ -142,7 +155,7 @@ struct Simpson {
     p -> Polynomial sample points
 	*/
 	template<typename Float, typename T, typename Norm = NormDefault>
-	constexpr T sample_normalized(Float s, Float a, Float b, const std::array<T,samples>& p,
+	constexpr Float sample_normalized(Float s, Float a, Float b, const std::array<T,samples>& p,
 			const Norm& norm = Norm()) const { 
 		auto cdf_a = cdf(a,p);	//Just to save time (I don't know if compilers does this already)
 
@@ -152,16 +165,25 @@ struct Simpson {
 
 		//There are some warnings in two strange scenarious, hope we don't have to see them printed
 		bool solved = false; 
-		T solution = s;
+		Float solution = s;
 		for(auto r : res){
-			if(r > a && r < b){ 
+			if(r >= a && r <= b){ 
 				if(solved) std::cout<<"Warning, more than one solutions for range "<<a<<" - "<<b<<std::endl;
 				solved = true;
 				solution = r;
 			}
 		}
-		if(!solved) std::cout<<"Warning, no solutions for range "<<a<<" - "<<b<<std::endl;
+		if(!solved) { 
+			std::cout<<"Warning, no solutions for range "<<a<<" - "<<b;
+			for (Float r : res) std::cout<<" "<<r;
+			std::cout<<std::endl;
+		}	
 		return solution;
+	}
+
+	template<typename Float, typename T>	
+	constexpr T pdf(Float t, const std::array<T,samples>& p, Float a, Float b) const {
+		return at(t,p)/subrange(a,b,p);
 	}
 
 

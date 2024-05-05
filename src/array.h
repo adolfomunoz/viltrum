@@ -44,4 +44,12 @@ std::array<float,NNEW> resize(const std::array<float,N>& a) {
     return s;
 } 
 
+template<std::size_t N>
+std::array<float,N-1> pop(const std::array<float,N>& a) {
+    std::array<float,N-1> s;
+	std::copy(a.begin()+1,a.end(),s.begin());
+    return s;
+} 
+
+
 }

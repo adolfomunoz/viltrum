@@ -48,14 +48,27 @@ int main(int argc, char** argv) {
         for (std::size_t c = 0; c<3; ++c) smp[c]=dist(rng);
         auto x = r.sample_subrange(smp,viltrum::range(xmin,xmax));
         std::array<std::size_t,3> p;
-        for (std::size_t c = 0; c<3; ++c) p[c] = bins*(x[c]-xmin[c])/(xmax[c]-xmin[c]);
+        for (std::size_t c = 0; c<3; ++c) p[c] = std::min(bins-1,std::size_t(bins*(x[c]-xmin[c])/(xmax[c]-xmin[c])));
         hist[p[0]+bins*p[1]+bins*bins*p[2]] += float(bins*bins*bins)/float(samples);
     }
 
-    float tot = 0;
-    for (float x : probs) { tot+=x; std::cout<<std::setw(6)<<std::setprecision(3)<<x<<" "; }
+    float tot = 0; std::size_t i = 0;
+
+    for (float x : probs) { 
+        tot+=x; 
+        std::cout<<std::setw(6)<<std::setprecision(3)<<x<<" ";
+        i++;
+        if ((i%(bins*bins)) == 0) std::cout<<std::endl;
+        else if ((i%bins) == 0) std::cout<<"| ";
+    }
     std::cout<<" [ "<<std::setw(6)<<std::setprecision(3)<<tot<< " ] "<<std::endl;
-    tot = 0;
-    for (float x : hist) { tot+=x; std::cout<<std::setw(6)<<std::setprecision(3)<<x<<" "; }
+    tot = 0; i = 0;
+    for (float x : hist) { 
+        tot+=x; 
+        std::cout<<std::setw(6)<<std::setprecision(3)<<x<<" "; 
+        i++;
+        if ((i%(bins*bins)) == 0) std::cout<<std::endl;
+        else if ((i%bins) == 0) std::cout<<"| ";
+    }
     std::cout<<" [ "<<std::setw(6)<<std::setprecision(3)<<tot<< " ] "<<std::endl;
 }

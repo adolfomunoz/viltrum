@@ -182,11 +182,11 @@ private:
             return sample_sub(ma.fold(quadrature,DIMSUB),s,a,b);
         else if constexpr (MA::dimensions > 1)
 			return sample_sub(ma.fold([&] (const auto& v) {
-				return quadrature.subrange(a[MA::dimensions-1],b[MA::dimensions-1],v);
-			},MA::dimensions-1),s,a,b);
+				return quadrature.subrange(a[0],b[0],v);
+			},0),s,pop(a),pop(b));
 		else
             return ma.fold([&] (const auto& v) { 
-				return quadrature.sample_normalized(s,a[0],b[0],v,norm); }).value();
+				return quadrature.sample_normalized(s,a[0],b[0],v,norm); },0).value();
 	}
 
 	template<typename MA, std::size_t DIMSUB, typename Norm = NormDefault>
@@ -206,6 +206,7 @@ private:
 				return sample_subrange_i(
 					ma.fold([&] (const auto& v) {
 						return quadrature.at(sol[MA::dimensions-1],v);	
+//						return quadrature.pdf(sol[MA::dimensions-1],v,a[MA::dimensions-1],b[MA::dimensions-1]);	
 					},MA::dimensions-1),sol,s,a,b,norm);
 		}	
 	} 

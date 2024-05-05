@@ -26,6 +26,7 @@ add_executable(test-concat main/compilation-tests/concat.cc)
 add_executable(test-covariance main/compilation-tests/covariance.cc)
 add_executable(test-inverse main/compilation-tests/inverse.cc)
 add_executable(test-region-sample main/compilation-tests/region-sample.cc)
+add_executable(test-region-sample-2d main/compilation-tests/region-sample-2d.cc)
 add_executable(test-region-sample-3d main/compilation-tests/region-sample-3d.cc)
 
 ##########
