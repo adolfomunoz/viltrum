@@ -1,3 +1,4 @@
+#pragma once
 #include <random>
 #include "norm.h"
 #include <vector>

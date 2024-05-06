@@ -5,6 +5,7 @@
 #include "../nested/nested.h"
 #include "../nested/error-heuristic.h"
 #include "regions-integrator-parallel-variance-reduction.h"
+#include "regions-integrator-variance-reduction.h"
 
 namespace viltrum {
 

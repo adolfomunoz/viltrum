@@ -12,7 +12,9 @@ int main(int argc, char** argv) {
     for (int i = 0;i<(argc-1);++i) {
         if (std::string(argv[i])=="-bins") bins = std::atoi(argv[++i]);
         else if (std::string(argv[i])=="-samples") samples = std::atoi(argv[++i]);
-        else if (std::string(argv[i])=="-xmin") { 
+    }
+    for (int i = 0;i<(argc-3);++i) {
+        if (std::string(argv[i])=="-xmin") { 
             xmin[0] = std::atof(argv[++i]);
             xmin[1] = std::atof(argv[++i]);
             xmin[2] = std::atof(argv[++i]);

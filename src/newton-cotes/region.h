@@ -8,6 +8,7 @@
 #include "../multiarray/io.h"
 #include "../multiarray/split.h"
 #include "../range.h"
+#include "../control-variates/norm.h"
 #include "../nested/nested.h"
 #include <cmath>
 

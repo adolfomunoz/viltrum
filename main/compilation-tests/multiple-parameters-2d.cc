@@ -30,6 +30,8 @@ int main() {
         }
         std::cout<<std::endl;
     }
+
+/*
     {
         LoggerProgress logger("Monte-Carlo per-bin parallel");
         std::vector<std::vector<float>> sol(bins,std::vector<float>(bins,0.0f));
@@ -84,6 +86,21 @@ int main() {
         integrate(integrator_adaptive_fubini_variance_reduction_parallel<2>(
                     nested(simpson,trapezoidal),error_heuristic_default(error_metric_absolute()),128,10,
                     rr_integral_region(),cv_optimize_weight(),region_sampling_uniform(),samples),
+                sol,f,range_primary<3>(),logger);
+        for (const auto& vv : sol) {
+            for (float v : vv)
+                std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
+            std::cout<<std::endl;
+        }
+        std::cout<<std::endl;
+    }
+*/
+    {
+        LoggerProgress logger("New Fubini Importance");
+        std::vector<std::vector<float>> sol(bins,std::vector<float>(bins,0.0f));
+        integrate(integrator_adaptive_fubini_variance_reduction<2>(
+                    nested(simpson,trapezoidal),error_heuristic_default(error_metric_absolute()),128,10,
+                    rr_integral_region(),cv_optimize_weight(),region_sampling_importance(),samples),
                 sol,f,range_primary<3>(),logger);
         for (const auto& vv : sol) {
             for (float v : vv)

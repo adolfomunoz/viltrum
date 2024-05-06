@@ -118,8 +118,9 @@ struct Simpson {
 		auto c = coeff[0];		//Term multiplying x in the cdf
 		auto d = -x;			//-x because we are solving the roots for cdf = x (cdf - x = 0) to compute the inverse
 
-		if (a==0) { //Second degree equation	
-			if (b==0) { //Degree one equation
+		std::cerr<<a<<" "<<b<<" "<<c<<" "<<d<<std::endl;
+		if (std::abs(a)<1.e-10) { //Second degree equation	
+			if (std::abs(b)<1.e-10) { //Degree one equation
 				solutions.push_back(-d/c);
 			} else {
 				auto disc = c*c - 4*b*d;
