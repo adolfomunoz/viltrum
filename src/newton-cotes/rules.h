@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <vector>
+#include <list>
 #include "../control-variates/norm.h"
 
 namespace viltrum {
@@ -142,7 +143,8 @@ struct Simpson {
 
 	template<typename Float, typename T,typename Norm = NormDefault>	
 	constexpr Float pdf(Float t, const std::array<T,samples>& p, Float a, Float b, const Norm& norm = Norm()) const {
-		return norm(at(t,p))/pdf_integral_subrange(a,b,p,norm);
+		Float num = norm(at(t,p));
+		return (num<1.e-10)?Float(0):(num/pdf_integral_subrange(a,b,p,norm));
 	}
 
 	//My functions are below this line
@@ -172,7 +174,6 @@ struct Simpson {
 		auto c = norm.sign(coeff[0]);		//Term multiplying x in the cdf
 		auto d = -x;			//-x because we are solving the roots for cdf = x (cdf - x = 0) to compute the inverse
 
-		//std::cerr<<a<<" "<<b<<" "<<c<<" "<<d<<std::endl;
 		if (std::abs(a)<1.e-10) { //Second degree equation	
 			if (std::abs(b)<1.e-10) { //Degree one equation
 				if (std::abs(c)>=1.e-10) //If all zeroes no solution   
@@ -188,7 +189,7 @@ struct Simpson {
 			//In case you are curious, this is Cardano's method for one solution:
 			auto p = c/a - pow(b,2.)/(3.*pow(a,2.));
 			auto q = 2*pow(b,3.)/(27.*pow(a,3.)) - b*c/(3.*pow(a,2.)) + d/a;
-//			std::cerr<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<p<<" "<<q<<std::endl; 
+			std::cerr<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<p<<" "<<q<<std::endl; 
 			auto sqr = pow(q/2.,2.) + pow(p/3.,3.);
 			if(sqr >= 0.){ 
 				//One solution
@@ -210,12 +211,12 @@ struct Simpson {
 		auto res = inv_cdf(x,p,norm);
 		for (Float rs : res) {
 			Float r = std::abs(rs); //So it accounts for both the possitive and the negative part 
-			if ((r>=t0) && (r<=t1)) return r; 
+			if ((r>=t0) && (r<=t1) && (!std::isnan(r))) return r; 
 		} 
 		//Uniform sampling if not found a solution before
-		//std::cout<<"Warning, no solutions for range "<<t0<<" - "<<t1;
-		//for (Float r : res) std::cout<<" "<<r;
-		//std::cout<<std::endl;		
+		std::cout<<"Warning, no solutions for range "<<t0<<" - "<<t1;
+		for (Float r : res) std::cout<<" "<<r;
+		std::cout<<std::endl;		
 		return s*(t1-t0) + t0;
 	}	
 
