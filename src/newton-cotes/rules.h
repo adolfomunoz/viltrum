@@ -213,9 +213,9 @@ struct Simpson {
 			if ((r>=t0) && (r<=t1)) return r; 
 		} 
 		//Uniform sampling if not found a solution before
-		std::cout<<"Warning, no solutions for range "<<t0<<" - "<<t1;
-		for (Float r : res) std::cout<<" "<<r;
-		std::cout<<std::endl;		
+		//std::cout<<"Warning, no solutions for range "<<t0<<" - "<<t1;
+		//for (Float r : res) std::cout<<" "<<r;
+		//std::cout<<std::endl;		
 		return s*(t1-t0) + t0;
 	}	
 

@@ -32,7 +32,7 @@ public:
             sample[i] = dis(rng);
         }
         auto pos = reg->sample_subrange(sample,range,norm);
-        return std::tuple<std::array<Float,DIM>,Float>(pos,1.0/reg->pdf_subrange(pos,range,norm));
+        return std::tuple<std::array<Float,DIM>,Float>(pos,range.volume()/reg->pdf_subrange(pos,range,norm));
     } 
 };
 
