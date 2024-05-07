@@ -227,29 +227,34 @@ public:
 	} 
 
 private:
-	template<typename MA, std::size_t DIMSUB>
-	value_type pdf_sub_last(const MA& ma, 
-			const std::array<Float,DIMSUB>& a, const std::array<Float,DIMSUB>& b) const {
+	template<typename MA, std::size_t DIMSUB, typename Norm = NormDefault>
+	Float pdf_sub_last(const MA& ma, 
+			const std::array<Float,DIMSUB>& a, const std::array<Float,DIMSUB>& b,
+			const Norm& norm = Norm()) const {
         if constexpr (MA::dimensions > DIMSUB)
             return pdf_sub_last(ma.fold(quadrature,DIMSUB),a,b);
         else if constexpr (MA::dimensions > 1)
-            return pdf_sub_last(ma.fold([&] (const auto& v) { return quadrature.pdf_integral_subrange(a[MA::dimensions-1],b[MA::dimensions-1],v); },MA::dimensions-1),a,b);
+            return pdf_sub_last(ma.fold([&] (const auto& v) { 
+				return quadrature.pdf_integral_subrange(a[MA::dimensions-1],b[MA::dimensions-1],v,norm); 
+			},MA::dimensions-1),a,b);
         else
-            return ma.fold([&] (const auto& v) { return quadrature.pdf_integral_subrange(a[0],b[0],v); }).value();
+            return ma.fold([&] (const auto& v) { 	
+				return quadrature.pdf_integral_subrange(a[0],b[0],v,norm); 
+			}).value();
 	}
 
-	template<std::size_t DIMSUB>
-	value_type pdf_integral_subrange_last(const std::array<Float,DIMSUB>& a, 
-						const std::array<Float,DIMSUB>& b) const {
+	template<std::size_t DIMSUB,typename Norm = NormDefault>
+	Float pdf_integral_subrange_last(const std::array<Float,DIMSUB>& a, 
+						const std::array<Float,DIMSUB>& b, const Norm& norm = Norm()) const {
 		static_assert(DIM>=DIMSUB,"Cannot calculate the subrange integral for that many dimensions, as the region has less dimensions");
-		return range().volume()*pdf_sub_last(data,range().pos_in_range(a),range().pos_in_range(b));
+		return range().volume()*pdf_sub_last(data,range().pos_in_range(a),range().pos_in_range(b),norm);
     }
 
    
-	template<std::size_t DIMSUB>
+	template<std::size_t DIMSUB, typename Norm = NormDefault>
 	value_type pdf_integral_subrange(const std::array<Float,DIMSUB>& a, 
-						const std::array<Float,DIMSUB>& b) const {
-        return pdf_integral_subrange_last(a,b);
+						const std::array<Float,DIMSUB>& b, const Norm& norm = Norm()) const {
+        return pdf_integral_subrange_last(a,b,norm);
 	}
 
 public:
@@ -257,7 +262,9 @@ public:
 	Float pdf_subrange(const std::array<Float,DIMSUB>& pos, const std::array<Float,DIMSUB>& a, 
 						const std::array<Float,DIMSUB>& b,const Norm& norm = Norm()) const {
 		static_assert(DIM>=DIMSUB,"Cannot calculate the subrange pdf for that many dimensions, as the region has less dimensions");
-		return Range(a,b).volume()*norm(this->approximation_at(pos))/(norm(this->pdf_integral_subrange(a,b)));
+		Float den = this->pdf_integral_subrange(a,b,norm);
+		if (den < 1.e-10) return Float(0);
+		else return Range(a,b).volume()*norm(this->approximation_at(pos))/den;
 	}
 
 	template<std::size_t DIMSUB,typename Norm = NormDefault>

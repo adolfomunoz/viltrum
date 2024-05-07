@@ -189,7 +189,7 @@ struct Simpson {
 			//In case you are curious, this is Cardano's method for one solution:
 			auto p = c/a - pow(b,2.)/(3.*pow(a,2.));
 			auto q = 2*pow(b,3.)/(27.*pow(a,3.)) - b*c/(3.*pow(a,2.)) + d/a;
-			std::cerr<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<p<<" "<<q<<std::endl; 
+//			std::cerr<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<p<<" "<<q<<std::endl; 
 			auto sqr = pow(q/2.,2.) + pow(p/3.,3.);
 			if(sqr >= 0.){ 
 				//One solution
@@ -214,9 +214,9 @@ struct Simpson {
 			if ((r>=t0) && (r<=t1) && (!std::isnan(r))) return r; 
 		} 
 		//Uniform sampling if not found a solution before
-		std::cout<<"Warning, no solutions for range "<<t0<<" - "<<t1;
-		for (Float r : res) std::cout<<" "<<r;
-		std::cout<<std::endl;		
+//		std::cout<<"Warning, no solutions for range "<<t0<<" - "<<t1;
+//		for (Float r : res) std::cout<<" "<<r;
+//		std::cout<<std::endl;		
 		return s*(t1-t0) + t0;
 	}	
 

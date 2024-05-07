@@ -76,8 +76,10 @@ public:
                         f_regdim(sample)*double(factor)*rrfactor*sfactor,
                         r->approximation_at(sample)*double(factor)*rrfactor*sfactor
                     );
+//                    std::cerr<<"Usage : "<<f_regdim(sample)<<" "<<r->approximation_at(sample)<<std::endl;
                 }
-                bins(pos) = accumulator.integral(approximation);    
+                bins(pos) = accumulator.integral(approximation);
+//                std::cerr<<"Integral : "<<accumulator.integral(approximation);    
         }   ,logger_control_variates);
     }
 };
