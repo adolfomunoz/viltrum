@@ -93,35 +93,90 @@ struct Simpson {
 		return ((c[2]*b/3.0 + c[1]/2.0)*b + c[0])*b - ((c[2]*a/3.0 + c[1]/2.0)*a + c[0])*a;	
 	}
 
+	//This finds the bounds (roots) for the pdf so it is always positive
+	template<typename Float, typename T, typename Norm = NormDefault>
+	constexpr std::list<Float> bounds(Float t0, Float t1, 
+		const std::array<T,samples>& p, const Norm& norm = Norm()) const {
+			std::array<Float,samples> pp;
+			for (std::size_t i = 0; i<samples; ++i) pp[i] = norm.sign(p[i]); 
+			auto [a,b,c] = coefficients(pp);
+			auto disc = b*b - 4*a*c;
+
+			std::list<Float> bnds; bnds.push_back(t0);
+			if (std::abs(a)<1.e-10) {
+				if (std::abs(b)>1.e-10) { 
+					Float s = -c/b;
+					if ((s>t0) && (s<t1)) bnds.push_back(s);
+				}
+			} else if (std::abs(disc) <= 1.e-10) {
+				Float s = -b/(2*a);
+				if ((s>t0) && (s<t1)) bnds.push_back(s);
+			} else if (disc > 0.0) {
+				Float s1 = (-b - std::sqrt(disc))/(2*a);
+				Float s2 = (-b + std::sqrt(disc))/(2*a);
+				if ((s1>t0) && (s1<t1)) bnds.push_back(s1);
+				if ((s2>t0) && (s2<t1)) bnds.push_back(s2);
+			}
+			bnds.push_back(t1);
+			return bnds;
+		}		
+
+
+	//This is the same than above but for the pdf so it integrates the absolute norm of the polynomial
+	template<typename Float, typename T, typename Norm = NormDefault>
+	constexpr Float pdf_integral_subrange(Float t0, Float t1, 
+		const std::array<T,samples>& p, const Norm& norm = Norm()) const {
+			std::list<Float> limits = bounds(t0,t1,p,norm);
+			bool first = true; Float l_prev;
+			Float sol(0);
+			for (Float l : limits) {
+				if (first) first = false;
+				else {  
+					sol += norm(subrange(l_prev,l,p));
+				} 
+				l_prev = l;
+			} 
+			return sol;
+		}
+
+
+	template<typename Float, typename T,typename Norm = NormDefault>	
+	constexpr Float pdf(Float t, const std::array<T,samples>& p, Float a, Float b, const Norm& norm = Norm()) const {
+		return norm(at(t,p))/pdf_integral_subrange(a,b,p,norm);
+	}
+
 	//My functions are below this line
 
 	//I had to create this function, otherwise c++ returns -nans for a cube root of a negative number, even though 
 	//it's a cube root
-	constexpr static float cuberoot(float x) { 
+	template<typename Float>
+	constexpr static Float cuberoot(Float x) { 
 		return (x<0)?(-1*pow(-x,1./3.)):pow(x,1./3.);
 	}
 
 	//Name cdf, inv_cdf and sample_normalized as you wish
+	//cdf, inv_cdf and sample_normalize do not work unless there is no roots in the order two polynomial
 	template<typename Float, typename T>
 	constexpr T cdf(Float t, const std::array<T,samples>& p) const {
     	auto c = coefficients(p);
 		return ((c[2]*t/3.0 + c[1]/2.0)*t + c[0])*t;
 	}
 
-	template<typename Float, typename T>
-	std::vector<T> inv_cdf(Float x, const std::array<T,samples>& points) const {
-		std::vector<T> solutions;
+	template<typename Float, typename T, typename Norm>
+	std::vector<Float> inv_cdf(Float x, const std::array<T,samples>& points, const Norm& norm = Norm()) const {
+		std::vector<Float> solutions;
 
 		auto coeff = coefficients(points);
-		auto a = coeff[2]/3.;	//Term multiplying x³ in the cdf
-		auto b = coeff[1]/2.;	//Term multiplying x² in the cdf
-		auto c = coeff[0];		//Term multiplying x in the cdf
+		auto a = norm.sign(coeff[2])/3.;	//Term multiplying x³ in the cdf
+		auto b = norm.sign(coeff[1])/2.;	//Term multiplying x² in the cdf
+		auto c = norm.sign(coeff[0]);		//Term multiplying x in the cdf
 		auto d = -x;			//-x because we are solving the roots for cdf = x (cdf - x = 0) to compute the inverse
 
-		std::cerr<<a<<" "<<b<<" "<<c<<" "<<d<<std::endl;
+		//std::cerr<<a<<" "<<b<<" "<<c<<" "<<d<<std::endl;
 		if (std::abs(a)<1.e-10) { //Second degree equation	
 			if (std::abs(b)<1.e-10) { //Degree one equation
-				solutions.push_back(-d/c);
+				if (std::abs(c)>=1.e-10) //If all zeroes no solution   
+					solutions.push_back(-d/c);
 			} else {
 				auto disc = c*c - 4*b*d;
 				if (disc>=0) {
@@ -148,8 +203,24 @@ struct Simpson {
 		return solutions;
 	}
 
+	template<typename Float, typename T, typename Norm = NormDefault>
+	constexpr Float sample(Float s, Float t0, Float t1, const std::array<T,samples>& p,
+			const Norm& norm = Norm()) const {
+		auto x = s*pdf_integral_subrange(t0,t1,p,norm) + norm(cdf(t0,p));
+		auto res = inv_cdf(x,p,norm);
+		for (Float rs : res) {
+			Float r = std::abs(rs); //So it accounts for both the possitive and the negative part 
+			if ((r>=t0) && (r<=t1)) return r; 
+		} 
+		//Uniform sampling if not found a solution before
+		std::cout<<"Warning, no solutions for range "<<t0<<" - "<<t1;
+		for (Float r : res) std::cout<<" "<<r;
+		std::cout<<std::endl;		
+		return s*(t1-t0) + t0;
+	}	
 
-	/*Returns a sample from the inverted CDF normalized
+	/*Returns a sample from the inverted CDF normalized. This shall not be directly used, use "sample"
+	  instead because it accounts for negative values 
     s -> Random uniform sample between 0-1
     a -> Minimus range value
     b -> Maximum range value
@@ -161,12 +232,12 @@ struct Simpson {
 		auto cdf_a = cdf(a,p);	//Just to save time (I don't know if compilers does this already)
 
 		//Point where we are computing the inverse (s*(^F(b) - ^F(a)) + ^F(a))
-		auto x = norm(s*(cdf(b,p) - cdf_a) + cdf_a);
+		auto x = s*(cdf(b,p) - cdf_a) + cdf_a;
 		auto res = inv_cdf(x,p);
 
 		//There are some warnings in two strange scenarious, hope we don't have to see them printed
 		bool solved = false; 
-		Float solution = s;
+		Float solution = s*(b-a) + a;
 		for(auto r : res){
 			if(r >= a && r <= b){ 
 				if(solved) std::cout<<"Warning, more than one solutions for range "<<a<<" - "<<b<<std::endl;
@@ -182,10 +253,7 @@ struct Simpson {
 		return solution;
 	}
 
-	template<typename Float, typename T>	
-	constexpr T pdf(Float t, const std::array<T,samples>& p, Float a, Float b) const {
-		return at(t,p)/subrange(a,b,p);
-	}
+
 
 
 /*    

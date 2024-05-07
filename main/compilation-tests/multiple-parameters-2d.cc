@@ -100,7 +100,7 @@ int main() {
         std::vector<std::vector<float>> sol(bins,std::vector<float>(bins,0.0f));
         integrate(integrator_adaptive_fubini_variance_reduction<2>(
                     nested(simpson,trapezoidal),error_heuristic_default(error_metric_absolute()),128,10,
-                    rr_integral_region(),cv_optimize_weight(),region_sampling_importance(),samples),
+                    rr_integral_region(),cv_fixed_weight(0),region_sampling_importance(),samples),
                 sol,f,range_primary<3>(),logger);
         for (const auto& vv : sol) {
             for (float v : vv)
