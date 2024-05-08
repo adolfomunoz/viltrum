@@ -252,7 +252,7 @@ private:
 
    
 	template<std::size_t DIMSUB, typename Norm = NormDefault>
-	value_type pdf_integral_subrange(const std::array<Float,DIMSUB>& a, 
+	Float pdf_integral_subrange(const std::array<Float,DIMSUB>& a, 
 						const std::array<Float,DIMSUB>& b, const Norm& norm = Norm()) const {
         return pdf_integral_subrange_last(a,b,norm);
 	}
