@@ -250,21 +250,25 @@ private:
 		return range().volume()*pdf_sub_last(data,range().pos_in_range(a),range().pos_in_range(b),norm);
     }
 
-   
+public:
 	template<std::size_t DIMSUB, typename Norm = NormDefault>
 	Float pdf_integral_subrange(const std::array<Float,DIMSUB>& a, 
 						const std::array<Float,DIMSUB>& b, const Norm& norm = Norm()) const {
         return pdf_integral_subrange_last(a,b,norm);
 	}
 
+	template<std::size_t DIMSUB,typename Norm = NormDefault>
+	Float pdf_integral_subrange(const Range<Float,DIMSUB>& range, const Norm& norm = Norm()) const {
+		return this->pdf_integral_subrange(range.min(),range.max(),norm);
+	} 
 public:
 	template<std::size_t DIMSUB,typename Norm = NormDefault>
 	Float pdf_subrange(const std::array<Float,DIMSUB>& pos, const std::array<Float,DIMSUB>& a, 
 						const std::array<Float,DIMSUB>& b,const Norm& norm = Norm()) const {
 		static_assert(DIM>=DIMSUB,"Cannot calculate the subrange pdf for that many dimensions, as the region has less dimensions");
 		Float den = this->pdf_integral_subrange(a,b,norm);
-		if (den < 1.e-10) return Float(0);
-		else return Range(a,b).volume()*norm(this->approximation_at(pos))/den;
+		if (den < 1.e-10) den=1;
+		return Range(a,b).volume()*norm(this->approximation_at(pos))/den;
 	}
 
 	template<std::size_t DIMSUB,typename Norm = NormDefault>
