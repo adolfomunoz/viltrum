@@ -267,7 +267,7 @@ public:
 						const std::array<Float,DIMSUB>& b,const Norm& norm = Norm()) const {
 		static_assert(DIM>=DIMSUB,"Cannot calculate the subrange pdf for that many dimensions, as the region has less dimensions");
 		Float den = this->pdf_integral_subrange(a,b,norm);
-		if (den < 1.e-10) den=1;
+		if (den<1.e-10) den=1;
 		return Range(a,b).volume()*norm(this->approximation_at(pos))/den;
 	}
 
