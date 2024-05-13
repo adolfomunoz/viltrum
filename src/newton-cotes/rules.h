@@ -85,8 +85,13 @@ struct Simpson {
 	template<typename Float, typename T>	
 	constexpr T at(Float t, const std::array<T,samples>& p) const {
 	    auto c = coefficients(p);
-		return (c[2]*t + c[1])*t + c[0];	
+		return (c[2]*t + c[1])*t + c[0];
 	}
+
+	static constexpr bool isnan(double d) { return std::isnan(d); }
+	static constexpr bool isnan(float d) { return std::isnan(d); }
+	template<typename V>
+	static constexpr bool isnan(const V& v) { return isnan(v[0]); }
 
 	template<typename Float, typename T>	
 	constexpr T subrange(Float a, Float b, const std::array<T,samples>& p) const {

@@ -27,9 +27,16 @@ public:
 };
 
 class error_metric_relative {
+    double min_val;
 public:
-    float operator()(float a, float b) const { return std::abs(b-a)/(std::max(std::abs(a),std::abs(b))); }
-    double operator()(double a, double b) const { return std::abs(b-a)/(std::max(std::abs(a),std::abs(b))); }
+    error_metric_relative(double mv = 1.e-10) : 
+        min_val(mv) {}
+    float operator()(float a, float b) const { 
+        return std::abs(b-a)/(std::max(std::max(std::abs(a),std::abs(b)),float(min_val))); 
+    }
+    double operator()(double a, double b) const { 
+        return std::abs(b-a)/(std::max(std::max(std::abs(a),std::abs(b)),min_val)); 
+    }
     template<typename V>
     auto operator()(const V& v1, const V& v2, typename std::enable_if_t<std::is_arithmetic_v<typename V::value_type>, int> = 0) const {
         auto i1 = v1.begin(); auto i2 = v2.begin();

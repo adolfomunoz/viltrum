@@ -43,8 +43,10 @@ public:
 	std::array<T,DIMSUB> pos_in_range(const std::array<T,DIMSUB>& pos) const {
 		static_assert(DIMSUB<=DIM,"pos_in_range with too big dimensionsal index");
 		std::array<T,DIMSUB> prange;
-		for (std::size_t i = 0; i<DIMSUB; ++i) 
-			prange[i] = (pos[i]-min(i))/(max(i) - min(i));
+		for (std::size_t i = 0; i<DIMSUB; ++i) {
+            if (min(i)>=max(i)) prange[i]=min(i);
+            else prange[i] = (pos[i]-min(i))/(max(i) - min(i));
+        }
 		return prange;
 	}
 
@@ -62,6 +64,13 @@ public:
 		std::array<T,DIM> new_b = max(); new_b[dim]=b;
 		return Range<T,DIM>(new_a, new_b);
 	}
+
+    bool empty() const {
+        bool e = false;
+        for (std::size_t i = 0; (i<DIM) && (!e); ++i)
+           e = (min(i)>=max(i));
+        return e;    
+    }
 
 /*
     Range<T,DIM> intersection(const Range<T,DIM>& that) const {
