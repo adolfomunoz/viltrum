@@ -30,7 +30,7 @@ public:
     auto operator()(const R& region) const {
         auto max_err = region.error(0,error_metric);
         if ((region.range().max(0)-region.range().min(0))<min_size) max_err=0;
-        max_err += size_weight*std::abs(region.range().max(0) - region.range().min(0)); 
+        else max_err += size_weight*std::abs(region.range().max(0) - region.range().min(0)); 
         std::size_t max_dim = 0; 
         auto err = max_err;
 		for (std::size_t d = 1; d<R::dimensions; ++d) {
