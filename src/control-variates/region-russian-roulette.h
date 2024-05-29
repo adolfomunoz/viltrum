@@ -110,8 +110,9 @@ public:
 template<typename Norm = NormDefault>
 class rr_pdf_region {
     Norm norm;
+    float factor_prob;
 public:
-    rr_pdf_region(const Norm& n = Norm()) : norm(n) {}
+    rr_pdf_region(float factor_prob_ = 0.01, const Norm& n = Norm()) : norm(n), factor_prob(factor_prob_) {}
     class RR {
     private:
         //This is the MonteCarlo residual, RR among regions
@@ -120,7 +121,7 @@ public:
         Norm norm;
 
         template<typename Rs>
-        RR(const Rs& regions, const Norm& n) : weights(regions.size()), norm(n) {
+        RR(const Rs& regions, const Norm& n, const float factor_prob = 0.01) : weights(regions.size()), norm(n) {
             std::size_t i = 0; 
             for (const auto& [r,region_bin_range] : regions) {
                 weights[i++] = r->pdf_integral_subrange(region_bin_range,norm);
@@ -129,7 +130,7 @@ public:
             double sum = 0.0;
             for (double w : weights) sum += w;
             if (sum<=0.0) for(double& w : weights) w = 1.0;
-            else for (double& w : weights) w = std::max(w,0.01*sum/double(weights.size()));
+            else for (double& w : weights) w = std::max(w,factor_prob*sum/double(weights.size()));
             rr = std::discrete_distribution<std::size_t>(weights.begin(),weights.end());
         }
         
@@ -143,7 +144,7 @@ public:
     };
     template<typename Regions>
     RR russian_roulette(const Regions& regions) const {
-        return RR(regions,norm);
+        return RR(regions,norm,factor_prob);
     }
 };
 
