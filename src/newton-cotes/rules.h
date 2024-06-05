@@ -149,7 +149,9 @@ struct Simpson {
 	template<typename Float, typename T,typename Norm = NormDefault>	
 	constexpr Float pdf(Float t, const std::array<T,samples>& p, Float a, Float b, const Norm& norm = Norm()) const {
 		Float num = norm(at(t,p));
-		return (num<1.e-10)?Float(0):(num/pdf_integral_subrange(a,b,p,norm));
+		Float den = pdf_integral_subrange(a,b,p,norm);
+		if (den<1.e-10) return 1.0/(b-a);	
+		else return num/den;
 	}
 
 	//My functions are below this line
