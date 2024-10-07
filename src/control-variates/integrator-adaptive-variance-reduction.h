@@ -10,12 +10,12 @@
 namespace viltrum {
 
 template<typename RR, typename CV, typename RS, typename R, typename EH, typename RNG>
-auto integrator_adaptive_variance_reduction_parallel(const R& rule, const EH& error_heuristic, std::size_t iterations, RR& rr, CV&& cv, RS&& region_sampler, RNG&& rng, unsigned long spp, std::size_t nmutexes = 16) {
+auto integrator_adaptive_variance_reduction_parallel(const R& rule, const EH& error_heuristic, std::size_t iterations, RR&& rr, CV&& cv, RS&& region_sampler, RNG&& rng, unsigned long spp, std::size_t nmutexes = 16) {
     return integrator_region_based(regions_generator_adaptive_heap(rule,error_heuristic,iterations),regions_integrator_parallel_variance_reduction(std::forward<RR>(rr),std::forward<CV>(cv), std::forward<RS>(region_sampler), std::forward<RNG>(rng),spp,nmutexes));
 }
 
 template<typename RR, typename CV, typename R, typename EH, typename RNG>
-auto integrator_adaptive_variance_reduction_parallel(const R& rule, const EH& error_heuristic, std::size_t iterations, RR& rr, CV&& cv, RNG&& rng, unsigned long spp, std::size_t nmutexes = 16) {
+auto integrator_adaptive_variance_reduction_parallel(const R& rule, const EH& error_heuristic, std::size_t iterations, RR&& rr, CV&& cv, RNG&& rng, unsigned long spp, std::size_t nmutexes = 16) {
     return integrator_region_based(regions_generator_adaptive_heap(rule,error_heuristic,iterations),regions_integrator_parallel_variance_reduction(std::forward<RR>(rr),std::forward<CV>(cv), std::forward<RNG>(rng),spp,nmutexes));
 }
 
