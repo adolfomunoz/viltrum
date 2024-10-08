@@ -23,7 +23,11 @@ class RegionsIntegratorParallelVarianceReduction {
 
 public:
     RegionsIntegratorParallelVarianceReduction(RR&& rr, CV&& cv, RS&& rs, RNG&& r, unsigned long s,std::size_t n = 16) 
-        : rr(rr), cv(cv), region_sampler(rs), rng(r), samples(s), nmutexes(n) {}
+        : rr(rr), cv(cv), region_sampler(rs), rng(std::move(r)), samples(s), nmutexes(n) {}
+    RegionsIntegratorParallelVarianceReduction(RR&& rr, CV&& cv, RS&& rs, RNG& r, unsigned long s,std::size_t n = 16) 
+        : rr(rr), cv(cv), region_sampler(rs), rng(std::size_t(r())), samples(s), nmutexes(n) {}
+
+
 	template<typename Bins, std::size_t DIMBINS, typename SeqRegions, typename F, typename IntegrationRange, typename Logger>
 	void integrate_regions(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
 		const SeqRegions& seq_regions, const F& f, const IntegrationRange& range, Logger& logger) const {
@@ -84,7 +88,7 @@ public:
 
 template<typename RR, typename CV, typename RS, typename RNG>
 auto regions_integrator_parallel_variance_reduction(RR&& rr, CV&& cv, RS&& rs, RNG&& rng, unsigned long samples, std::size_t nmutexes = 16, std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
-    return RegionsIntegratorParallelVarianceReduction<RR,CV,RS,RNG>(std::forward<RR>(rr), std::forward<CV>(cv), std::forward<RS>(rs), std::forward<RNG>(rng),samples,nmutexes);
+    return RegionsIntegratorParallelVarianceReduction<std::decay_t<RR>,std::decay_t<CV>,std::decay_t<RS>,std::decay_t<RNG>>(std::forward<RR>(rr), std::forward<CV>(cv), std::forward<RS>(rs), std::forward<RNG>(rng),samples,nmutexes);
 }
 
 template<typename RR, typename CV, typename RNG>
