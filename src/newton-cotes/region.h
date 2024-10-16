@@ -267,8 +267,8 @@ public:
 						const std::array<Float,DIMSUB>& b,const Norm& norm = Norm()) const {
 		static_assert(DIM>=DIMSUB,"Cannot calculate the subrange pdf for that many dimensions, as the region has less dimensions");
 		Float den = this->pdf_integral_subrange(a,b,norm);
-		if (den<1.e-10) return Float(0);
-		else return Range(a,b).volume()*norm(this->approximation_at(pos))/den;
+		if (den<1.e-30) return Float(0);
+		else return norm(this->approximation_at(pos))/den;
 	}
 
 	template<std::size_t DIMSUB,typename Norm = NormDefault>

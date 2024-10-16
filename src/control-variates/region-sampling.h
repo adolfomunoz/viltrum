@@ -27,14 +27,13 @@ public:
     template<typename R, typename Float, std::size_t DIM, typename RNG>
     std::tuple<std::array<Float,DIM>,Float> sample(const R& reg, const Range<Float,DIM>& range, RNG& rng) const {
         std::array<Float,DIM> sample;
+        std::uniform_real_distribution<Float> dis(0,1);
         for (std::size_t i=0;i<DIM;++i) {
-            std::uniform_real_distribution<Float> dis(range.min(i),range.max(i));
             sample[i] = dis(rng);
         }
         auto pos = reg->sample_subrange(sample,range,norm);
         Float den = reg->pdf_subrange(pos,range,norm);
-        if (den<1.e-10) den = 1.0;
-        return std::tuple<std::array<Float,DIM>,Float>(pos,range.volume()/den);
+        return std::tuple<std::array<Float,DIM>,Float>(pos,(den<1.e-20)?0.0:(1.0/den));
     } 
 };
 

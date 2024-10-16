@@ -11,6 +11,7 @@ class LoggerNull {
 public:
     LoggerNull(const std::string& n = "") {}
     std::string name() const { return ""; }
+    void set_name(const std::string& str){} 
     template<typename Number>
     void log_progress(const Number& number, const Number& last = Number(1)) {}
     template<typename Data>
@@ -23,6 +24,7 @@ class LoggerProgress {
 public:
     LoggerProgress(const std::string& n) : name_(n) {}
     const std::string& name() const { return name_; }
+    void set_name(const std::string& name) { name_=name; } 
     template<typename Number>
     void log_progress(const Number& number, const Number& last = Number(1)) {
         static Number prev_number(0);
@@ -44,7 +46,9 @@ public:
 
 template<typename Logger>
 Logger logger_step(const Logger& logger, std::string step_name) {
-    return Logger(logger.name()+" | "+step_name);
+    Logger sol = logger; 
+    sol.set_name(logger.name()+" | "+step_name);
+    return sol;
 }
 
 };
