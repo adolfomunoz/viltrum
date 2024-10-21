@@ -37,7 +37,6 @@ public:
         constexpr std::size_t DIM = RegRange::size;
         using Float = typename RegRange::value_type;
         auto [range_first,range_rest] = range_split_at<DIM>(range); 
-        auto f_regdim = function_split_and_integrate_at<DIM>(f,monte_carlo(rng,1),range_rest);
 
         std::array<Float,DIMBINS> drange;
         for (std::size_t i=0;i<DIMBINS;++i) drange[i] = (range.max(i) - range.min(i))/Float(bin_resolution[i]);
@@ -63,6 +62,7 @@ public:
         for_each(parallel,multidimensional_range(bin_resolution),
             [&] (const std::array<std::size_t, DIMBINS>& pos) {
                 RNG& rng = rngs[pos]; 
+                auto f_regdim = function_split_and_integrate_at<DIM>(f,monte_carlo(rng,1),range_rest);
                 using Sample = std::decay_t<decltype(f_regdim(std::declval<std::array<Float,DIM>>()))>;
                 Range<Float,DIM> binrange = range_first;
                 for (std::size_t i=0;i<DIMBINS;++i)
