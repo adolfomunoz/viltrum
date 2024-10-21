@@ -34,6 +34,15 @@ public:
     //If reference (and not moved) we get a random seed
     MonteCarlo(RNG& r, unsigned long s) : rng(std::size_t(r())), samples(s) {} 
 
+    //If copy constructor, we regenerate a random seed, but this is predictable in 
+    // parallel cases.
+    MonteCarlo(const MonteCarlo& mc) :
+        rng(std::size_t(mc.rng())), samples(mc.samples) {} 
+
+    void seed(std::size_t s) { rng.seed(s); }
+    RNG& random_number_generator() { return rng; }
+    const RNG& random_number_generator() const { return rng; }
+
 	template<typename Bins, std::size_t DIMBINS, typename F, typename Float, std::size_t DIM, typename Logger>
 	void integrate(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
 		const F& f, const Range<Float,DIM>& range, Logger& logger) const {

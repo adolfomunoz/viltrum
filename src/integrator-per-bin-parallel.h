@@ -3,6 +3,7 @@
 #include "multidimensional-range.h"
 #include "foreach.h"
 #include "integrate.h"
+#include "tensor.h"
 
 
 namespace viltrum {
@@ -20,12 +21,16 @@ public:
         std::array<typename R::value_type,DIMBINS> drange;
         for (std::size_t i=0;i<DIMBINS;++i) drange[i] = (range.max(i) - range.min(i))/((typename R::value_type)(bin_resolution[i]));
 
+        tensor<Integrator,DIMBINS> perbin_integrator(bin_resolution,bin_integrator); 
+        //The integrator is copied once per bin so it becomes predictable. Now, on integrators that require to change the seed,
+        // (such as Monte-Carlo) it is important that the copy constructor reseeds the random number generator. 
+
         for_each(parallel,multidimensional_range(bin_resolution),
             [&] (const std::array<std::size_t,DIMBINS>& pos) {
                 R subrange = range;
                 for (std::size_t i=0;i<DIMBINS;++i)
                     subrange = subrange.subrange_dimension(i,range.min(i)+pos[i]*drange[i],range.min(i)+(pos[i]+1)*drange[i]);
-                bins(pos) = double(factor)*viltrum::integrate(bin_integrator,f,subrange);
+                bins(pos) = double(factor)*viltrum::integrate(perbin_integrator[pos],f,subrange);
             },logger);
 	}
 

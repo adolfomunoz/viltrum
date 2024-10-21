@@ -14,16 +14,16 @@ class RegionsIntegratorSequential {
     //parallelization
     template<typename SeqRegions>
     class IntegratorWrapper {
-        const RegionsIntegratorSequential& ir;
-        const SeqRegions& seq_regions;
+        const RegionsIntegratorSequential* ir;
+        const SeqRegions* seq_regions;
     public:
-        IntegratorWrapper(const RegionsIntegratorSequential& i, const SeqRegions& seq) :
+        IntegratorWrapper(const RegionsIntegratorSequential* i, const SeqRegions* seq) :
             ir(i), seq_regions(seq) {}
         
         template<typename Bins, std::size_t DIMBINS, typename F, typename Float, std::size_t DIM, typename Logger>
         void integrate(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
             const F& f, const Range<Float,DIM>& range, Logger& logger) const {
-                return ir.integrate_regions(bins,bin_resolution,seq_regions,f,range,logger);
+                return ir->integrate_regions(bins,bin_resolution,*seq_regions,f,range,logger);
         }
 
     };
@@ -31,7 +31,7 @@ class RegionsIntegratorSequential {
 public:
     template<typename SeqRegions>
     auto integrator_wrapper(const SeqRegions& seq) const {
-        return IntegratorWrapper<SeqRegions>(*this,seq);
+        return IntegratorWrapper<SeqRegions>(this,&seq);
     }
 
 	template<typename Bins, std::size_t DIMBINS, typename SeqRegions, typename F, typename Float, std::size_t DIM, typename Logger>
