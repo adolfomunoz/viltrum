@@ -51,11 +51,18 @@ public:
             for (auto pos : pixels_in_region(r,bin_resolution,range_first)) {
                 perbin.push_at(pos,&r);
             } 
-        });  
+        });
+        //A different random number generator for each bin, so the seed makes this predictable.
+        tensor<RNG,DIMBINS> rngs(bin_resolution);
+        for_each(sequential, multidimensional_range(bin_resolution),
+            [&] (const std::array<std::size_t, DIMBINS>& pos) {
+                rngs[pos].seed(std::size_t(rng()));
+            });  
         logger_bins.log_progress(final_progress,final_progress);
         auto logger_control_variates = logger_step(logger,"residual and variance reduction");
         for_each(parallel,multidimensional_range(bin_resolution),
             [&] (const std::array<std::size_t, DIMBINS>& pos) {
+                RNG& rng = rngs[pos]; 
                 using Sample = std::decay_t<decltype(f_regdim(std::declval<std::array<Float,DIM>>()))>;
                 Range<Float,DIM> binrange = range_first;
                 for (std::size_t i=0;i<DIMBINS;++i)
