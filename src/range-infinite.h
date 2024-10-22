@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "range.h"
+#include <limits>
 
 #if (__cplusplus < 201703L)
 namespace std {
@@ -16,6 +17,7 @@ template<typename T>
 class RangeInfinite : public std::array<std::vector<T>,2> {
 	T _volume;
 public:
+    static constexpr std::size_t dimensions = std::numeric_limits<std::size_t>::max();
 	RangeInfinite(const std::vector<T>& a = std::vector<T>(), const std::vector<T>& b = std::vector<T>()) :
 		std::array<std::vector<T>,2>{a,b}  {
 		_volume = T(1);

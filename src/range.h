@@ -17,6 +17,7 @@ template<typename T, std::size_t DIM>
 class Range : public std::array<std::array<T,DIM>,2> {
 	T _volume;
 public:
+    static constexpr std::size_t dimensions = DIM;
 	Range(const std::array<T,DIM>& a, const std::array<T,DIM>& b) :
 		std::array<std::array<T,DIM>,2>{a,b}  {
 		_volume = T(1);

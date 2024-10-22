@@ -180,10 +180,12 @@ private:
 			const Float& s, const std::array<Float,DIMSUB>& a, const std::array<Float,DIMSUB>& b,
 			const Norm& norm = Norm()) const {
         if constexpr (MA::dimensions > DIMSUB)
-            return sample_sub(ma.fold(quadrature,DIMSUB),s,a,b);
+            return sample_sub(ma.fold(
+				[&] (const auto& v) { return quadrature.pdf_integral_subrange(a[DIMSUB],b[DIMSUB],v,norm); },DIMSUB),
+				s,a,b);
         else if constexpr (MA::dimensions > 1)
 			return sample_sub(ma.fold([&] (const auto& v) {
-				return quadrature.subrange(a[0],b[0],v);
+				return quadrature.pdf_integral_subrange(a[0],b[0],v);
 			},0),s,pop(a),pop(b));
 		else
             return ma.fold([&] (const auto& v) { 
@@ -197,7 +199,9 @@ private:
 			const std::array<Float,DIMSUB>& b,
 			const Norm& norm = Norm()) const {
         if constexpr (MA::dimensions > DIMSUB)
-            return sample_subrange_i(ma.fold(quadrature,DIMSUB),sol_i,s,a,b,norm);
+            return sample_subrange_i(ma.fold(
+				[&] (const auto& v) { return quadrature.pdf_integral_subrange(a[DIMSUB],b[DIMSUB],v,norm); },DIMSUB),
+				sol_i,s,a,b,norm);
 		else { 
 			std::array<Float,DIMSUB> sol = sol_i;
 			sol[MA::dimensions-1] = sample_sub(ma,s[MA::dimensions-1],a,b,norm); 
@@ -206,7 +210,7 @@ private:
 			else 
 				return sample_subrange_i(
 					ma.fold([&] (const auto& v) {
-						return quadrature.at(sol[MA::dimensions-1],v);	
+						return norm(quadrature.at(sol[MA::dimensions-1],v));
 //						return quadrature.pdf(sol[MA::dimensions-1],v,a[MA::dimensions-1],b[MA::dimensions-1]);	
 					},MA::dimensions-1),sol,s,a,b,norm);
 		}	
