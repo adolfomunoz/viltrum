@@ -181,11 +181,11 @@ private:
 			const Norm& norm = Norm()) const {
         if constexpr (MA::dimensions > DIMSUB)
             return sample_sub(ma.fold(
-				[&] (const auto& v) { return quadrature.pdf_integral_subrange(a[DIMSUB],b[DIMSUB],v,norm); },DIMSUB),
+				[&] (const auto& v) { return std::max(Float(1.e-20),quadrature.pdf_integral_subrange(a[DIMSUB],b[DIMSUB],v,norm)); },DIMSUB),
 				s,a,b);
         else if constexpr (MA::dimensions > 1)
 			return sample_sub(ma.fold([&] (const auto& v) {
-				return quadrature.pdf_integral_subrange(a[0],b[0],v);
+				return std::max(Float(1.e-20),quadrature.pdf_integral_subrange(a[0],b[0],v));
 			},0),s,pop(a),pop(b));
 		else
             return ma.fold([&] (const auto& v) { 
@@ -200,7 +200,7 @@ private:
 			const Norm& norm = Norm()) const {
         if constexpr (MA::dimensions > DIMSUB)
             return sample_subrange_i(ma.fold(
-				[&] (const auto& v) { return quadrature.pdf_integral_subrange(a[DIMSUB],b[DIMSUB],v,norm); },DIMSUB),
+				[&] (const auto& v) { return std::max(Float(1.e-20),quadrature.pdf_integral_subrange(a[DIMSUB],b[DIMSUB],v,norm)); },DIMSUB),
 				sol_i,s,a,b,norm);
 		else { 
 			std::array<Float,DIMSUB> sol = sol_i;
@@ -210,7 +210,7 @@ private:
 			else 
 				return sample_subrange_i(
 					ma.fold([&] (const auto& v) {
-						return norm(quadrature.at(sol[MA::dimensions-1],v));
+						return std::max(Float(1.e-20),norm(quadrature.at(sol[MA::dimensions-1],v)));
 //						return quadrature.pdf(sol[MA::dimensions-1],v,a[MA::dimensions-1],b[MA::dimensions-1]);	
 					},MA::dimensions-1),sol,s,a,b,norm);
 		}	
@@ -271,8 +271,8 @@ public:
 						const std::array<Float,DIMSUB>& b,const Norm& norm = Norm()) const {
 		static_assert(DIM>=DIMSUB,"Cannot calculate the subrange pdf for that many dimensions, as the region has less dimensions");
 		Float den = this->pdf_integral_subrange(a,b,norm);
-		if (den<1.e-30) return Float(0);
-		else return norm(this->approximation_at(pos))/den;
+		if (den<1.e-10) return Float(0);
+		else return std::max(Float(0),norm(this->approximation_at(pos))/den);
 	}
 
 	template<std::size_t DIMSUB,typename Norm = NormDefault>

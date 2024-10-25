@@ -59,6 +59,7 @@ public:
             });  
         logger_bins.log_progress(final_progress,final_progress);
         auto logger_control_variates = logger_step(logger,"residual and variance reduction");
+        //TODO: remember to change it back
         for_each(parallel,multidimensional_range(bin_resolution),
             [&] (const std::array<std::size_t, DIMBINS>& pos) {
                 RNG& rng = rngs[pos]; 
@@ -83,6 +84,7 @@ public:
                     auto [chosen,rrfactor] = roulette.choose(rng);
                     const auto& [r, region_bin_range]  = regions_ranges[chosen];
                     const auto& [sample, sfactor] = region_sampler.sample(r,region_bin_range,rng); 
+                    
                     accumulator.push(
                         f_regdim(sample)*double(factor)*rrfactor*sfactor,
                         r->approximation_at(sample)*double(factor)*rrfactor*sfactor
