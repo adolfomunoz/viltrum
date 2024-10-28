@@ -59,7 +59,7 @@ public:
             });  
         logger_bins.log_progress(final_progress,final_progress);
         auto logger_control_variates = logger_step(logger,"residual and variance reduction");
-        //TODO: remember to change it back
+        //TODO: remember to change it back to parallel
         for_each(parallel,multidimensional_range(bin_resolution),
             [&] (const std::array<std::size_t, DIMBINS>& pos) {
                 RNG& rng = rngs[pos]; 
