@@ -120,6 +120,7 @@ struct Simpson {
 			} else if (disc > 0.0) {
 				Float s1 = (-b - std::sqrt(disc))/(2*a);
 				Float s2 = (-b + std::sqrt(disc))/(2*a);
+				if (s2<s1) std::swap(s1,s2);
 				if ((s1>t0) && (s1<t1)) bnds.push_back(s1);
 				if ((s2>t0) && (s2<t1)) bnds.push_back(s2);
 			}
@@ -216,47 +217,33 @@ struct Simpson {
 			const Norm& norm = Norm()) const {
 
 		Float total_integral = pdf_integral_subrange(t0,t1,p,norm);
-		Float real_t0 = t0, real_t1 = t1;
+		Float real_t0 = t0, real_t1 = t1, resampled_s = s;
 		std::list<Float> limits = bounds(t0,t1,p,norm);
 		bool first = true; Float l_prev;
-		Float sum(0);
+		Float sum(0), sum_prev(0);
 		for (Float l : limits) {
 			if (first) first = false;
 			else {
 				sum += norm(subrange(l_prev,l,p))/total_integral;
 				if (s < sum) { //This is the selected subrange
-					real_t0 = l_prev; real_t1 = l; break;
+					real_t0 = l_prev; real_t1 = l; 
+					resampled_s = (s - sum_prev)/(sum-sum_prev);
+					break;
 				} 
 			} 
 			l_prev = l;
+			sum_prev = sum;
 		} 
+		
+		auto x = resampled_s*(norm.sign(cdf(real_t1,p)) - norm.sign(cdf(real_t0,p))) + norm.sign(cdf(real_t0,p));
 
-		Float resampled_s = (s*(t1-t0) + t0 - real_t0)/(real_t1 - real_t0);
-
-		std::cerr<<"sample "<<s<<" in ["<<t0<<", "<<t1<<"] -> resample ";
-		std::cerr<<resampled_s<<" in ["<<real_t0<<", "<<real_t1<<"] "<<std::endl;
-		
-		auto x = resampled_s*pdf_integral_subrange(real_t0,real_t1,p,norm) + norm(cdf(real_t0,p));
-		bool negative = norm.sign(at(0.5*(real_t0+real_t1),p))<0;
-		
-		std::vector<Float> res;
-		
-		if (negative) {
-			res = inv_cdf(-x,p,norm);
-			std::cerr<<"Negative"<<std::endl;
-		} else { 
-			res = inv_cdf(x,p,norm);
-			std::cerr<<"Positive"<<std::endl;
-		}	
+		auto res = inv_cdf(x,p,norm);
 		
 		for (Float r : res) {
-			std::cerr<<r<<" ";
 			if ((r>=real_t0) && (r<=real_t1) && (!std::isnan(r)))	{ 
-				std::cerr<<std::endl;
 				return r; 
 			}	
 		}
-		std::cerr<<"[NO SOLUTION]"<<std::endl;
 		
 		return resampled_s*(real_t1-real_t0) + real_t0;
 	}	
