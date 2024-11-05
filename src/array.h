@@ -1,6 +1,8 @@
 #pragma once
 #include <array>
 #include <algorithm>
+#include <iostream>
+
 
 namespace viltrum {
 
@@ -49,6 +51,14 @@ std::array<float,N-1> pop(const std::array<float,N>& a) {
     std::array<float,N-1> s;
 	std::copy(a.begin()+1,a.end(),s.begin());
     return s;
+} 
+
+template<typename T, std::size_t N>
+std::ostream& operator<<(std::ostream& os, const std::array<T,N>& a) {
+	os<<"[ ";
+	for(std::size_t i=0;i<N;++i) os<<a[i]<<" ";
+	os<<" ]";
+	return os; 
 } 
 
 

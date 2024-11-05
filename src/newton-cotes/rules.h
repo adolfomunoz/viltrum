@@ -128,10 +128,12 @@ struct Simpson {
 			return bnds;
 		}		
 
+	static constexpr double pdf_epsilon = 1.e-2;
 
-	//This is the same than above but for the pdf so it integrates the absolute norm of the polynomial
+private:
+	//This integrates the pdf of the polynomial but does not account from pdf_epsilon (it is private)
 	template<typename Float, typename T, typename Norm = NormDefault>
-	constexpr Float pdf_integral_subrange(Float t0, Float t1, 
+	constexpr Float _pdf_integral_subrange(Float t0, Float t1, 
 		const std::array<T,samples>& p, const Norm& norm = Norm()) const {
 			std::list<Float> limits = bounds(t0,t1,p,norm);
 			bool first = true; Float l_prev;
@@ -142,20 +144,27 @@ struct Simpson {
 					sol += norm(subrange(l_prev,l,p));
 				} 
 				l_prev = l;
-			} 
+			}
 			return sol;
+		}
+public:
+	//This is the same than above but for the pdf so it integrates the absolute norm of the polynomial
+	template<typename Float, typename T, typename Norm = NormDefault>
+	constexpr Float pdf_integral_subrange(Float t0, Float t1, 
+		const std::array<T,samples>& p, const Norm& norm = Norm()) const {
+			auto sol = _pdf_integral_subrange(t0,t1,p,norm);
+			if (sol < pdf_epsilon) return std::abs(t1-t0); //In this case we default to uniform sampling
+			else return sol;
 		}
 
 
 	template<typename Float, typename T,typename Norm = NormDefault>	
 	constexpr Float pdf(Float t, const std::array<T,samples>& p, Float a, Float b, const Norm& norm = Norm()) const {
 		Float num = norm(at(t,p));
-		Float den = pdf_integral_subrange(a,b,p,norm);
-		if (den<1.e-10) return 1.0/(b-a);	
+		Float den = _pdf_integral_subrange(a,b,p,norm);
+		if (den<pdf_epsilon) return Float(1)/std::abs(b-a);	
 		else return num/den;
 	}
-
-	//My functions are below this line
 
 	//I had to create this function, otherwise c++ returns -nans for a cube root of a negative number, even though 
 	//it's a cube root
@@ -182,9 +191,11 @@ struct Simpson {
 		auto c = norm.sign(coeff[0]);		//Term multiplying x in the cdf
 		auto d = -x;			//-x because we are solving the roots for cdf = x (cdf - x = 0) to compute the inverse
 
-		if (std::abs(a)<1.e-10) { //Second degree equation	
-			if (std::abs(b)<1.e-10) { //Degree one equation
-				if (std::abs(c)>=1.e-10) //If all zeroes no solution   
+		//Maybe we can renormalize a, b, c and d... 
+
+		if (std::abs(a)<1.e-7) { //Second degree equation	
+			if (std::abs(b)<1.e-7) { //Degree one equation
+				if (std::abs(c)>=1.e-7) //If all zeroes no solution   
 					solutions.push_back(-d/c);
 			} else {
 				auto disc = c*c - 4*b*d;
@@ -216,7 +227,10 @@ struct Simpson {
 	constexpr Float sample(Float s, Float t0, Float t1, const std::array<T,samples>& p,
 			const Norm& norm = Norm()) const {
 
-		Float total_integral = pdf_integral_subrange(t0,t1,p,norm);
+		Float total_integral = _pdf_integral_subrange(t0,t1,p,norm);
+		if (total_integral < pdf_epsilon) { //Uniform sampling if we are working with very low probabilities
+			return s*(t1-t0) + t0;
+		}
 		Float real_t0 = t0, real_t1 = t1, resampled_s = s;
 		std::list<Float> limits = bounds(t0,t1,p,norm);
 		bool first = true; Float l_prev;
@@ -240,11 +254,22 @@ struct Simpson {
 		auto res = inv_cdf(x,p,norm);
 		
 		for (Float r : res) {
+			//In some corner cases we are getting a value which is extremelly close to the boundaries so we 
+			// have added an "epsilon" to the range check
+			if ((r<real_t0) && (std::abs(real_t0 - r)<1.e-5)) r = real_t0;
+			if ((r>real_t1) && (std::abs(r - real_t1)<1.e-5)) r = real_t1;
 			if ((r>=real_t0) && (r<=real_t1) && (!std::isnan(r)))	{ 
 				return r; 
 			}	
 		}
-		
+
+/*		std::cerr<<"No sample in [ "<<real_t0<<", "<<real_t1<<"] -> ";
+		for (Float r : res)	std::cerr<<r<<" ";
+		std::cerr<<std::endl;
+		std::cerr<<"  value "<<x<<" in [ "<<norm.sign(cdf(real_t0,p))<<", "<<norm.sign(cdf(real_t1,p))<<"] "<<std::endl;
+		auto cs = coefficients(p);
+		std::cerr<<"  polynomial "<<cs[2]<<"x^2 "<<((cs[1]>=0)?"+":"")<<cs[1]<<"x "<<((cs[0]>=0)?"+":"")<<cs[0]<<std::endl; 
+*/		
 		return resampled_s*(real_t1-real_t0) + real_t0;
 	}	
 
@@ -255,6 +280,8 @@ struct Simpson {
     b -> Maximum range value
     p -> Polynomial sample points
 	*/
+
+/*
 	template<typename Float, typename T, typename Norm = NormDefault>
 	constexpr Float sample_normalized(Float s, Float a, Float b, const std::array<T,samples>& p,
 			const Norm& norm = Norm()) const { 
@@ -281,27 +308,8 @@ struct Simpson {
 		}	
 		return solution;
 	}
-
-
-
-
-/*    
-	template<typename Float, typename T>	
-	auto at(Float t, const std::array<T,samples>& p) const -> T {
-		T c2 = 2*p[0]-4*p[1]+2*p[2];
-		T c1 = -3*p[0]+4*p[1]-p[2];
-		T c0 = p[0];
-		return (c2*t + c1)*t + c0;	
-	}
-
-	template<typename Float, typename T>	
-	auto subrange(Float a, Float b, const std::array<T,samples>& p) const -> T {
-		T c2 = 2*p[0]-4*p[1]+2*p[2];
-		T c1 = -3*p[0]+4*p[1]-p[2];
-		T c0 = p[0];
-		return ((c2*b/3.0 + c1/2.0)*b + c0)*b - ((c2*a/3.0 + c1/2.0)*a + c0)*a;	
-	}
 */
+
 
 } simpson;
 

@@ -34,7 +34,7 @@ public:
         
         auto pos = reg->sample_subrange(sample,range,norm);                       
         Float pdf = reg->pdf_subrange(pos,range,norm);
-        return std::tuple<std::array<Float,DIM>,Float>(pos,(pdf<1.e-10)?0.0:(1.0/pdf));
+        return std::tuple<std::array<Float,DIM>,Float>(pos,(pdf<1.e-5)?0.0:(1.0/pdf));
     } 
 };
 

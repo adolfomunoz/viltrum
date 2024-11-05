@@ -200,7 +200,7 @@ private:
 			const Norm& norm = Norm()) const {
         if constexpr (MA::dimensions > DIMSUB)
             return sample_subrange_i(ma.fold(
-				[&] (const auto& v) { return std::max(Float(1.e-20),quadrature.pdf_integral_subrange(a[DIMSUB],b[DIMSUB],v,norm)); },DIMSUB),
+				[&] (const auto& v) { return quadrature.pdf_integral_subrange(a[DIMSUB],b[DIMSUB],v,norm); },DIMSUB),
 				sol_i,s,a,b,norm);
 		else { 
 			std::array<Float,DIMSUB> sol = sol_i;
@@ -210,7 +210,8 @@ private:
 			else 
 				return sample_subrange_i(
 					ma.fold([&] (const auto& v) {
-						return std::max(Float(1.e-20),norm(quadrature.at(sol[MA::dimensions-1],v)));
+						return quadrature.pdf(sol[MA::dimensions-1],v,a[MA::dimensions-1],b[MA::dimensions-1],norm);
+//						return std::max(Float(1.e-20),norm(quadrature.at(sol[MA::dimensions-1],v)));
 //						return quadrature.pdf(sol[MA::dimensions-1],v,a[MA::dimensions-1],b[MA::dimensions-1]);	
 					},MA::dimensions-1),sol,s,a,b,norm);
 		}	
@@ -221,6 +222,13 @@ public:
 						const std::array<Float,DIMSUB>& b, const Norm& norm = Norm()) const {
 		static_assert(DIM>=DIMSUB,"Cannot calculate the subrange sample for that many dimensions, as the region has less dimensions");
 		std::array<Float,DIMSUB> sol;
+//		std::array<Float,DIMSUB> xl = sample_subrange_i(data,sol,s,range().pos_in_range(a),range().pos_in_range(b),norm);
+//		std::array<Float,DIMSUB> pos = range().pos_from_range(xl);
+
+//		std::cerr<<"WARPING"<<std::endl;
+//		std::cerr<<"   Random numbers = "<<s<<std::endl; 
+//		std::cerr<<"   Local sample   = "<<xl<<std::endl;
+//		std::cerr<<"   Global sample  = "<<pos<<std::endl; 
 		return range().pos_from_range(
 			sample_subrange_i(data,sol,s,range().pos_in_range(a),range().pos_in_range(b),norm));
 	} 
@@ -236,7 +244,8 @@ private:
 			const std::array<Float,DIMSUB>& a, const std::array<Float,DIMSUB>& b,
 			const Norm& norm = Norm()) const {
         if constexpr (MA::dimensions > DIMSUB)
-            return pdf_sub_last(ma.fold(quadrature,DIMSUB),a,b);
+            return pdf_sub_last(ma.fold([&] (const auto& v) {
+				return quadrature.pdf_integral_subrange(a[DIMSUB],b[DIMSUB],v,norm); },DIMSUB),a,b);
         else if constexpr (MA::dimensions > 1)
             return pdf_sub_last(ma.fold([&] (const auto& v) { 
 				return quadrature.pdf_integral_subrange(a[MA::dimensions-1],b[MA::dimensions-1],v,norm); 
@@ -265,7 +274,45 @@ public:
 	Float pdf_integral_subrange(const Range<Float,DIMSUB>& range, const Norm& norm = Norm()) const {
 		return this->pdf_integral_subrange(range.min(),range.max(),norm);
 	} 
+
+private:
+	template<typename MA, std::size_t DIMSUB, typename Norm = NormDefault>
+	Float pdf_last(const MA& ma, const std::array<Float,DIMSUB>& pos, 
+			const std::array<Float,DIMSUB>& a, const std::array<Float,DIMSUB>& b,
+			const Norm& norm = Norm()) const {
+        if constexpr (MA::dimensions > DIMSUB)
+            return Float(1);
+        else if constexpr (MA::dimensions > 1)
+            return pdf_last(ma.fold([&] (const auto& v) { 
+				return quadrature.pdf(pos[MA::dimensions-1],v,a[MA::dimensions-1],b[MA::dimensions-1],norm); 
+			},MA::dimensions-1),pos,a,b);
+        else
+            return ma.fold([&] (const auto& v) { 	
+				return quadrature.pdf(pos[0],v,a[0],b[0],norm); 
+			}).value();
+	}
+
+
+
+	template<std::size_t DIMSUB,typename Norm = NormDefault>
+	Float pdf_subrange_last(const std::array<Float,DIMSUB>& pos, const std::array<Float,DIMSUB>& a, 
+						const std::array<Float,DIMSUB>& b, const Norm& norm = Norm()) const {
+		static_assert(DIM>=DIMSUB,"Cannot calculate the pdf for that many dimensions, as the region has less dimensions");
+/*		std::cerr<<"PDF SUBRANGE"<<std::endl;
+		std::cerr<<"   Range    = "<<range().min()<<" -> "<<range().max()<<std::endl;
+		std::cerr<<"   Subrange = "<<a<<" -> "<<b<<std::endl;
+		auto pa = range().pos_in_range(a);
+		auto pb = range().pos_in_range(b);    
+		std::cerr<<"   Local r  = "<<pa<<" -> "<<pb<<std::endl;
+		std::cerr<<"   Position = "<<pos<<std::endl;
+		auto p = range().pos_in_range(pos);  
+		std::cerr<<"   Localpos = "<<p<<std::endl; */
+		
+		return pdf_last(data,range().pos_in_range(pos),range().pos_in_range(a),range().pos_in_range(b),norm)/range().volume();
+    }
+
 public:
+/*
 	template<std::size_t DIMSUB,typename Norm = NormDefault>
 	Float pdf_subrange(const std::array<Float,DIMSUB>& pos, const std::array<Float,DIMSUB>& a, 
 						const std::array<Float,DIMSUB>& b,const Norm& norm = Norm()) const {
@@ -274,6 +321,14 @@ public:
 		if (den<1.e-10) return Float(0);
 		else return std::max(Float(0),norm(this->approximation_at(pos))/den);
 	}
+*/
+	template<std::size_t DIMSUB,typename Norm = NormDefault>
+	Float pdf_subrange(const std::array<Float,DIMSUB>& pos, const std::array<Float,DIMSUB>& a, 
+						const std::array<Float,DIMSUB>& b,const Norm& norm = Norm()) const {
+		static_assert(DIM>=DIMSUB,"Cannot calculate the subrange pdf for that many dimensions, as the region has less dimensions");
+		return pdf_subrange_last(pos,a,b,norm);
+	}
+
 
 	template<std::size_t DIMSUB,typename Norm = NormDefault>
 	Float pdf_subrange(const std::array<Float,DIMSUB>& pos, const Range<Float,DIMSUB>& range, const Norm& norm = Norm()) const {
