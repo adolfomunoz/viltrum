@@ -99,68 +99,72 @@ struct Simpson {
 		return ((c[2]*b/3.0 + c[1]/2.0)*b + c[0])*b - ((c[2]*a/3.0 + c[1]/2.0)*a + c[0])*a;	
 	}
 
+	//This finds the bounds (roots) for the pdf so it is always positive
+	template<typename Float, typename T, typename Norm = NormDefault>
+	constexpr std::list<Float> bounds(Float t0, Float t1, 
+		const std::array<T,samples>& p, const Norm& norm = Norm()) const {
+			std::array<Float,samples> pp;
+			for (std::size_t i = 0; i<samples; ++i) pp[i] = norm.sign(p[i]);
+			auto cs = coefficients(pp); Float a = cs[2]; Float b = cs[1]; Float c = cs[0];
+			auto disc = b*b - 4*a*c;
+
+			std::list<Float> bnds; bnds.push_back(t0);
+			if (std::abs(a)<1.e-10) {
+				if (std::abs(b)>1.e-10) { 
+					Float s = -c/b;
+					if ((s>t0) && (s<t1)) bnds.push_back(s);
+				}
+			} else if (std::abs(disc) <= 1.e-10) {
+				Float s = -b/(2*a);
+				if ((s>t0) && (s<t1)) bnds.push_back(s);
+			} else if (disc > 0.0) {
+				Float s1 = (-b - std::sqrt(disc))/(2*a);
+				Float s2 = (-b + std::sqrt(disc))/(2*a);
+				if (s2<s1) std::swap(s1,s2);
+				if ((s1>t0) && (s1<t1)) bnds.push_back(s1);
+				if ((s2>t0) && (s2<t1)) bnds.push_back(s2);
+			}
+			bnds.push_back(t1);
+			return bnds;
+		}		
+
 	static constexpr double pdf_epsilon = 1.e-5;
 
 private:
-	template<typename Float, typename T, typename Norm>
-	std::array<Float,samples> pdf_points(Float t0, Float t1, const std::array<T,samples>& p, const Norm& norm = Norm()) const {
-		std::array<Float,samples> p_pdf; 
-		for (std::size_t i = 0; i<samples; ++i) p_pdf[i] = norm.sign(p[i]);
-		if (subrange(t0,t1,p_pdf)<0) { //If the integral is mostly negative, the pdf tries to take care of the negative side
-			for (std::size_t i = 0; i<samples; ++i) p_pdf[i] *= -1;
-		} 
-		std::array<Float,samples> cs = coefficients(p_pdf);
-
-		Float ymin = 0;
-
-		if (cs[2] > 0) { //The minimum might in the middle of the polynomial 
-			//We look at the division
-			Float tmin = -cs[1]/(2.0*cs[2]);
-			if ((tmin > t0) && (tmin < t1)) {
-				Float ytmin = (cs[2]*tmin + cs[1])*tmin + cs[0];
-				if (ytmin < ymin) ymin = ytmin;
-			} 
+	//This integrates the pdf of the polynomial but does not account from pdf_epsilon (it is private)
+	template<typename Float, typename T, typename Norm = NormDefault>
+	constexpr Float _pdf_integral_subrange(Float t0, Float t1, 
+		const std::array<T,samples>& p, const Norm& norm = Norm()) const {
+			std::list<Float> limits = bounds(t0,t1,p,norm);
+			bool first = true; Float l_prev;
+			Float sol(0);
+			for (Float l : limits) {
+				if (first) first = false;
+				else {
+					sol += norm(subrange(l_prev,l,p));
+				} 
+				l_prev = l;
+			}
+			return sol;
 		}
-
-		//We check all the points as well
-		for (Float p : p_pdf) if (p<ymin) ymin=p;
-
-/*
-		//Particular case: if coefficients and points are really really small we increase ymin to avoid
-		//  pdfs that are completelly zero
-		Float sum_all = 0;
-		for (std::size_t i = 0; i<samples; ++i) sum_all += std::abs(p_pdf[i]-ymin);
-		if (sum_all<pdf_epsilon) ymin -= 0.01; //It is already uniform sampling so we just make sure that it is not zero but not big
-*/
-		//We instead always give a margin so there are never probability 0 which would be problematic
-		ymin-=0.01;
-
-		for (std::size_t i = 0; i<samples; ++i) p_pdf[i] -= ymin;
-
-		return p_pdf;	
-	}
-	
 public:
 	//This is the same than above but for the pdf so it integrates the absolute norm of the polynomial
 	template<typename Float, typename T, typename Norm = NormDefault>
 	constexpr Float pdf_integral_subrange(Float t0, Float t1, 
 		const std::array<T,samples>& p, const Norm& norm = Norm()) const {
-			return subrange(t0,t1,pdf_points(t0,t1,p,norm));
+			auto sol = _pdf_integral_subrange(t0,t1,p,norm);
+			if (sol < pdf_epsilon) return std::abs(t1-t0); //In this case we default to uniform sampling
+			else return sol;
 		}
 
-	//Unnormalized pdf...
-	template<typename Float, typename T,typename Norm = NormDefault>	
-	constexpr Float pdf_unnormalized(Float t, const std::array<T,samples>& p, Float a, Float b, const Norm& norm = Norm()) const {
-		auto ps = pdf_points(a,b,p,norm);
-		return at(t,ps);
-	}
 
-	//Normalized pdf
 	template<typename Float, typename T,typename Norm = NormDefault>	
 	constexpr Float pdf(Float t, const std::array<T,samples>& p, Float a, Float b, const Norm& norm = Norm()) const {
-		auto ps = pdf_points(a,b,p,norm);
-		return at(t,ps)/subrange(a,b,ps);
+		Float den = _pdf_integral_subrange(a,b,p,norm);
+		if (den<pdf_epsilon*(b-a)) { return Float(1)/std::abs(b-a); }	
+		else return norm(at(t,p))/den;
 	}
+
 	//I had to create this function, otherwise c++ returns -nans for a cube root of a negative number, even though 
 	//it's a cube root
 	template<typename Float>
@@ -222,24 +226,91 @@ public:
 	constexpr Float sample(Float s, Float t0, Float t1, const std::array<T,samples>& p,
 			const Norm& norm = Norm()) const {
 
-		auto ps = pdf_points(t0,t1,p,norm);
-		Float x = s*cdf(t1,ps) + (Float(1)-s)*cdf(t0,ps);
+		Float total_integral = _pdf_integral_subrange(t0,t1,p,norm);
+		if (total_integral < pdf_epsilon*(t1-t0)) { //Uniform sampling if we are working with very low probabilities
+			std::cerr<<"BELOW "<<total_integral<<" - "<<(t1-t0)<<std::endl;
+			return s*(t1-t0) + t0;
+		} 
+		//else { std::cerr<<"ABOVE "<<total_integral<<" - "<<(t1-t0)<<std::endl;}  
+		Float real_t0 = t0, real_t1 = t1, resampled_s = s;
+		std::list<Float> limits = bounds(t0,t1,p,norm);
+		bool first = true; Float l_prev;
+		Float sum(0), sum_prev(0);
+		for (Float l : limits) {
+			if (first) first = false;
+			else {
+				sum += norm(subrange(l_prev,l,p))/total_integral;
+				if (s < sum) { //This is the selected subrange
+					real_t0 = l_prev; real_t1 = l; 
+					resampled_s = (s - sum_prev)/(sum-sum_prev);
+					break;
+				} 
+			} 
+			l_prev = l;
+			sum_prev = sum;
+		} 
+		
+		auto x = resampled_s*(norm.sign(cdf(real_t1,p)) - norm.sign(cdf(real_t0,p))) + norm.sign(cdf(real_t0,p));
 
-		auto res = inv_cdf(x,ps,norm);
+		auto res = inv_cdf(x,p,norm);
 		
 		for (Float r : res) {
 			//In some corner cases we are getting a value which is extremelly close to the boundaries so we 
 			// have added an "epsilon" to the range check
-			if ((r<t0) && (std::abs(t0 - r)<1.e-5)) r = t0;
-			if ((r>t1) && (std::abs(r - t1)<1.e-5)) r = t1;
-			if ((r>=t0) && (r<=t1) && (!std::isnan(r)))	{ 
+			if ((r<real_t0) && (std::abs(real_t0 - r)<1.e-5)) r = real_t0;
+			if ((r>real_t1) && (std::abs(r - real_t1)<1.e-5)) r = real_t1;
+			if ((r>=real_t0) && (r<=real_t1) && (!std::isnan(r)))	{ 
 				return r; 
 			}	
 		}
 
-		//In weird cases that should not happen we default to uniform sampling
-		return s*(t1-t0) + t0;
+/*		std::cerr<<"No sample in [ "<<real_t0<<", "<<real_t1<<"] -> ";
+		for (Float r : res)	std::cerr<<r<<" ";
+		std::cerr<<std::endl;
+		std::cerr<<"  value "<<x<<" in [ "<<norm.sign(cdf(real_t0,p))<<", "<<norm.sign(cdf(real_t1,p))<<"] "<<std::endl;
+		auto cs = coefficients(p);
+		std::cerr<<"  polynomial "<<cs[2]<<"x^2 "<<((cs[1]>=0)?"+":"")<<cs[1]<<"x "<<((cs[0]>=0)?"+":"")<<cs[0]<<std::endl; 
+*/		
+		return resampled_s*(real_t1-real_t0) + real_t0;
 	}	
+
+	/*Returns a sample from the inverted CDF normalized. This shall not be directly used, use "sample"
+	  instead because it accounts for negative values 
+    s -> Random uniform sample between 0-1
+    a -> Minimus range value
+    b -> Maximum range value
+    p -> Polynomial sample points
+	*/
+
+/*
+	template<typename Float, typename T, typename Norm = NormDefault>
+	constexpr Float sample_normalized(Float s, Float a, Float b, const std::array<T,samples>& p,
+			const Norm& norm = Norm()) const { 
+		auto cdf_a = cdf(a,p);	//Just to save time (I don't know if compilers does this already)
+
+		//Point where we are computing the inverse (s*(^F(b) - ^F(a)) + ^F(a))
+		auto x = s*(cdf(b,p) - cdf_a) + cdf_a;
+		auto res = inv_cdf(x,p);
+
+		//There are some warnings in two strange scenarious, hope we don't have to see them printed
+		bool solved = false; 
+		Float solution = s*(b-a) + a;
+		for(auto r : res){
+			if(r >= a && r <= b){ 
+				if(solved) std::cout<<"Warning, more than one solutions for range "<<a<<" - "<<b<<std::endl;
+				solved = true;
+				solution = r;
+			}
+		}
+		if(!solved) { 
+			std::cout<<"Warning, no solutions for range "<<a<<" - "<<b;
+			for (Float r : res) std::cout<<" "<<r;
+			std::cout<<std::endl;
+		}	
+		return solution;
+	}
+*/
+
 
 } simpson;
 
