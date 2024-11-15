@@ -105,10 +105,14 @@ private:
 	template<typename Float, typename T, typename Norm>
 	std::array<Float,samples> pdf_points(Float t0, Float t1, const std::array<T,samples>& p, const Norm& norm = Norm()) const {
 		std::array<Float,samples> p_pdf; 
-		for (std::size_t i = 0; i<samples; ++i) p_pdf[i] = norm.sign(p[i]);
+//		for (std::size_t i = 0; i<samples; ++i) p_pdf[i] = norm.sign(p[i]);
+		for (std::size_t i = 0; i<samples; ++i) p_pdf[i] = norm(p[i]); //Only possitive side
+/*
+		Not anymore, we only take care of the possitive side
 		if (subrange(t0,t1,p_pdf)<0) { //If the integral is mostly negative, the pdf tries to take care of the negative side
 			for (std::size_t i = 0; i<samples; ++i) p_pdf[i] *= -1;
-		} 
+		}
+*/
 		std::array<Float,samples> cs = coefficients(p_pdf);
 
 		Float ymin = 0;
@@ -116,14 +120,15 @@ private:
 		if (cs[2] > 0) { //The minimum might in the middle of the polynomial 
 			//We look at the division
 			Float tmin = -cs[1]/(2.0*cs[2]);
-			if ((tmin > t0) && (tmin < t1)) {
+			if ((tmin > 0) && (tmin < 1)) {
 				Float ytmin = (cs[2]*tmin + cs[1])*tmin + cs[0];
 				if (ytmin < ymin) ymin = ytmin;
 			} 
 		}
 
 		//We check all the points as well
-		for (Float p : p_pdf) if (p<ymin) ymin=p;
+		//  for (Float p : p_pdf) if (p<ymin) ymin=p;
+		// No need, we are on the possitive side only
 
 /*
 		//Particular case: if coefficients and points are really really small we increase ymin to avoid
@@ -133,7 +138,7 @@ private:
 		if (sum_all<pdf_epsilon) ymin -= 0.01; //It is already uniform sampling so we just make sure that it is not zero but not big
 */
 		//We instead always give a margin so there are never probability 0 which would be problematic
-		ymin-=0.01;
+		//ymin-=0.01;
 
 		for (std::size_t i = 0; i<samples; ++i) p_pdf[i] -= ymin;
 
@@ -186,11 +191,12 @@ public:
 		auto c = norm.sign(coeff[0]);		//Term multiplying x in the cdf
 		auto d = -x;			//-x because we are solving the roots for cdf = x (cdf - x = 0) to compute the inverse
 
-		//Maybe we can renormalize a, b, c and d... 
+		//We renormalize a, b, c and d for stability and boundary checking
+		auto sum = a+b+c+d; a/=sum; b/=sum; c/=sum; d/=sum;
 
-		if (std::abs(a)<1.e-7) { //Second degree equation	
-			if (std::abs(b)<1.e-7) { //Degree one equation
-				if (std::abs(c)>=1.e-7) //If all zeroes no solution   
+		if (std::abs(a)<1.e-3) { //Second degree equation	
+			if (std::abs(b)<1.e-3) { //Degree one equation
+				if (std::abs(c)>=1.e-3) //If all zeroes no solution   
 					solutions.push_back(-d/c);
 			} else {
 				auto disc = c*c - 4*b*d;
@@ -226,7 +232,6 @@ public:
 		Float x = s*cdf(t1,ps) + (Float(1)-s)*cdf(t0,ps);
 
 		auto res = inv_cdf(x,ps,norm);
-		
 		for (Float r : res) {
 			//In some corner cases we are getting a value which is extremelly close to the boundaries so we 
 			// have added an "epsilon" to the range check

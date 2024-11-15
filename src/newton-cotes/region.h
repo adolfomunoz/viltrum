@@ -220,6 +220,8 @@ private:
 
 		if constexpr (MA::dimensions == 1) {
 			return ma.fold([&] (const auto& v) { 
+//				std::cerr<<DIMSUB<<"   ->    "<<v[0]<<" "<<v[1]<<" "<<v[2]<<std::endl; 
+//				std::cerr<<"   Sample "<<s[0]<<" -> "<<quadrature.sample(s[0],a[0],b[0],v,norm)<<std::endl;
 				return quadrature.sample(s[0],a[0],b[0],v,norm); }).value();
 		} else if constexpr (DIMSUB < MA::dimensions) {
 			return sample_marginal(ma.fold([&] (const auto& v) {
