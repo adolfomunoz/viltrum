@@ -84,7 +84,7 @@ public:
                     auto [chosen,rrfactor] = roulette.choose(rng);
                     const auto& [r, region_bin_range]  = regions_ranges[chosen];
                     const auto& [sample, sfactor] = region_sampler.sample(r,region_bin_range,rng); 
-                    
+
                     accumulator.push(
                         f_regdim(sample)*double(factor)*rrfactor*sfactor,
                         r->approximation_at(sample)*double(factor)*rrfactor*sfactor

@@ -229,7 +229,7 @@ private:
 				}, MA::dimensions-1),s,a,b,norm);
 		} else {
 			return sample_marginal(ma.fold([&] (const auto& v) {
-				return quadrature.pdf_integral_subrange(a[1],b[1],v,norm);
+				return quadrature.pdf_integral_subrange(a[MA::dimensions-1],b[MA::dimensions-1],v,norm);
 				}, MA::dimensions-1),s,a,b,norm);
 		} 
 	}

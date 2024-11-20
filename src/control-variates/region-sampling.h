@@ -9,7 +9,7 @@ namespace viltrum {
 class region_sampling_uniform {
 public:
     template<typename R, typename Float, std::size_t DIM, typename RNG>
-    std::tuple<std::array<Float,DIM>,Float> sample(const R& reg, const Range<Float,DIM>& range, RNG& rng) const {
+    std::tuple<std::array<Float,DIM>,Float> sample(const R* reg, const Range<Float,DIM>& range, RNG& rng) const {
         std::array<Float,DIM> sample;
         for (std::size_t i=0;i<DIM;++i) {
             std::uniform_real_distribution<Float> dis(range.min(i),range.max(i));
@@ -25,7 +25,12 @@ class region_sampling_importance {
 public:
     region_sampling_importance(const Norm& n = NormDefault()) : norm(n) {}
     template<typename R, typename Float, std::size_t DIM, typename RNG>
-    std::tuple<std::array<Float,DIM>,Float> sample(const R& reg, const Range<Float,DIM>& range, RNG& rng) const {
+    std::tuple<std::array<Float,DIM>,Float> sample(const R* reg, const Range<Float,DIM>& range, RNG& rng) const {
+        //If the subrange is much smaller than the region range, it is better to avoid importance sampling
+        // because it is useless (the polynomial won't give new information) and gives weird probabilities
+        if (range.volume() < 1.e-5)
+            return region_sampling_uniform().sample(reg,range,rng);
+        
         std::array<Float,DIM> sample;
         std::uniform_real_distribution<Float> dis(0,1);
         for (std::size_t i=0;i<DIM;++i) {
@@ -44,7 +49,7 @@ class region_sampling_russian_roulette {
 public:
     region_sampling_russian_roulette(const Norm& n = NormDefault()) : norm(n) {}
     template<typename R, typename Float, std::size_t DIM, typename RNG>
-    std::tuple<std::array<Float,DIM>,Float> sample(const R& reg, const Range<Float,DIM>& range, RNG& rng) const {
+    std::tuple<std::array<Float,DIM>,Float> sample(const R* reg, const Range<Float,DIM>& range, RNG& rng) const {
         std::array<Float,DIM> sample;
         std::uniform_real_distribution<Float> dis(0,1);
         for (std::size_t i=0;i<DIM;++i) {
@@ -85,7 +90,7 @@ public:
     region_sampling_mis(double power = 1, double cutoff = 0, const Norm& n = NormDefault()) 
         : power(power), cutoff(cutoff), norm(n) {}
     template<typename R, typename Float, std::size_t DIM, typename RNG>
-    std::tuple<std::array<Float,DIM>,Float> sample(const R& reg, const Range<Float,DIM>& range, RNG& rng) const {
+    std::tuple<std::array<Float,DIM>,Float> sample(const R* reg, const Range<Float,DIM>& range, RNG& rng) const {
         std::array<Float,DIM> sample;
         std::uniform_real_distribution<Float> dis(0,1);
         for (std::size_t i=0;i<DIM;++i) {
