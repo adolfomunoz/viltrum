@@ -22,7 +22,8 @@ public:
         }
 
         Sample integral(const Sample& approximation) const {
-            return sum/double(size) + alpha*approximation;
+            if (size == 0) return approximation;
+            else return sum/double(size) + alpha*approximation;
         }
         friend class cv_fixed_weight;
     };
@@ -81,9 +82,12 @@ public:
         } 
 
         Sample integral(const Sample& approximation) const {
-            auto a = alpha();
-//            std::cerr<<"Alpha = "<<a<<std::endl;
-            return (sum_f - a*sum_app)/double(size) + a*approximation;
+            if (size < 2) return approximation;
+            else {
+                auto a = alpha();
+    //            std::cerr<<"Alpha = "<<a<<std::endl;
+                return (sum_f - a*sum_app)/double(size) + a*approximation;
+            }
         }
         friend class cv_optimize_weight;
     };
