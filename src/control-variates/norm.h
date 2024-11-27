@@ -19,7 +19,7 @@ struct NormDefault {
     auto operator()(const V& v) const {
         auto i = v.begin(); 
         using S = decltype((*this)(*i));
-        S s; bool first = true;
+        S s; 
         if (i != v.end()) { s = (*this)(*i); ++i; }
         while (i != v.end()) { s += (*this)(*i); ++i; }
         return s;
@@ -35,7 +35,7 @@ struct NormDefault {
     auto sign(const V& v) const {
         auto i = v.begin(); 
         using S = decltype(sign(*i));
-        S s; bool first = true;
+        S s; 
         if (i != v.end()) { s = sign(*i); ++i; }
         while (i != v.end()) { s += sign(*i); ++i; }
         return s;

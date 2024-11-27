@@ -36,7 +36,10 @@ public:
         using RegRange = std::decay_t<decltype(std::declval<Reg>().range())>;
         constexpr std::size_t DIM = RegRange::size;
         using Float = typename RegRange::value_type;
-        auto [range_first,range_rest] = range_split_at<DIM>(range); 
+        auto ranges = range_split_at<DIM>(range);
+        auto range_first = std::get<0>(ranges); auto range_rest = std::get<1>(ranges);
+        // vv This is C++20 so we do the thing up here
+        //auto [range_first,range_rest] = range_split_at<DIM>(range); 
 
         std::array<Float,DIMBINS> drange;
         for (std::size_t i=0;i<DIMBINS;++i) drange[i] = (range.max(i) - range.min(i))/Float(bin_resolution[i]);

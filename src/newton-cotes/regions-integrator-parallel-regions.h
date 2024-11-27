@@ -41,7 +41,8 @@ public:
         for (std::size_t i=0;i<DIMBINS;++i) drange[i] = (range.max(i) - range.min(i))/Float(bin_resolution[i]);
         std::size_t factor = 1;
         for (std::size_t i=0;i<DIMBINS;++i) factor*=bin_resolution[i];
-        std::atomic<std::size_t> progress = 0; std::size_t final_progress = seq_regions.size();
+        //std::atomic<std::size_t> progress = 0; 
+        std::size_t final_progress = seq_regions.size();
         MutexedBins<Bins,DIMBINS> mutexedbins(bins,bin_resolution,nmutexes);
 /*        std::thread for_log([&logger,&progress,final_progress] () {
              while (std::size_t(progress)<final_progress) {

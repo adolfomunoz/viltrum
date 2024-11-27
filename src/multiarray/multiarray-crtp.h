@@ -50,11 +50,33 @@ split(const F& f, const MA& ma, std::size_t dim, std::size_t parts);
 }
 
 
+template<typename MA>
+class multiarray_const;
+template<typename MA>
+class multiarray_mutable;
+
 namespace {
 template<typename MA>
-bool constexpr range_check(const MA* ma, const typename MA::index_type& indices) {
+struct traits {
+	using index_type = typename MA::index_type;
+	static constexpr std::size_t size = MA::size;
+};
+template<typename MA>
+struct traits<multiarray_const<MA>> {
+	using index_type = typename MA::index_type;
+	static constexpr std::size_t size = MA::size;
+};
+template<typename MA>
+struct traits<multiarray_mutable<MA>> {
+	using index_type = typename MA::index_type;
+	static constexpr std::size_t size = MA::size;
+};
+
+
+template<typename MA>
+bool constexpr range_check(const MA* ma, const typename traits<MA>::index_type& indices) {
 	bool r = true;
-	for (auto i : indices) r = (r && (i<MA::size));
+	for (auto i : indices) r = (r && (i<traits<MA>::size));
 	return r;
 }
 }
@@ -132,7 +154,7 @@ MThis& operator=(const multiarray_const<MThat>& that) { \
 	static_assert(size == MThat::size, "Assignment of multiarrays with different sizes"); \
 	if constexpr(dimensions == 1) { \
 		for (std::size_t i = 0; i < size; ++i) \
-			(*this)[{i}] = static_cast<const MThat&>(that)[{i}]; \
+			(*this)[{i}] =  static_cast<const MThat&>(that)[{i}]; \
 	} else { \
 		for (std::size_t i = 0; i < size; ++i) \
 			this->slice(i) = that.slice(i); \
@@ -142,7 +164,7 @@ MThis& operator=(const multiarray_const<MThat>& that) { \
 MThis& operator=(const MThis& that) { \
 	if constexpr(dimensions == 1) { \
 		for (std::size_t i = 0; i < size; ++i) \
-			(*this)[{i}] = that[{i}]; \
+			(*this)[{i}] =  that[{i}]; \
 	} else { \
 		for (std::size_t i = 0; i < size; ++i) \
 			this->slice(i) = that.slice(i); \

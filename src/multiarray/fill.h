@@ -10,7 +10,7 @@ namespace detail {
 template<typename F, typename MA>
 typename std::enable_if<!std::is_convertible<F,typename MA::value_type>::value,void>::type fill(const F& f, MA& ma) {
 	for (std::size_t i = 0; i<MA::size; ++i)
-		if constexpr (MA::dimensions == 1) 
+		if constexpr (MA::dimensions == 1)
 			ma[{i}] = f(std::array<double,1>{{double(i)/double(MA::size-1)}});
 		else {
 			auto s = ma.slice(i);
