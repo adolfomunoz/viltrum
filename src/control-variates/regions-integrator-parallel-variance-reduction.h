@@ -63,8 +63,7 @@ public:
         logger_bins.log_progress(final_progress,final_progress);
         auto logger_control_variates = logger_step(logger,"residual and variance reduction");
         //TODO: remember to change it back to parallel
-        for_each(parallel,multidimensional_range(bin_resolution),
-            [&] (const std::array<std::size_t, DIMBINS>& pos) {
+        auto variance_reduction =             [&] (const std::array<std::size_t, DIMBINS>& pos) {
                 RNG& rng = rngs[pos]; 
                 auto f_regdim = function_split_and_integrate_at<DIM>(f,monte_carlo(rng,1),range_rest);
                 using Sample = std::decay_t<decltype(f_regdim(std::declval<std::array<Float,DIM>>()))>;
@@ -94,7 +93,11 @@ public:
                     );
                 }
                 bins(pos) = accumulator.integral(approximation);    
-        }   ,logger_control_variates);
+        };
+        if (bin_resolution[0]<4)
+            for_each(sequential,multidimensional_range(bin_resolution),variance_reduction,logger_control_variates);
+        else
+            for_each(parallel,multidimensional_range(bin_resolution),variance_reduction,logger_control_variates);
     }
 };
 
