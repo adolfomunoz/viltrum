@@ -2,6 +2,7 @@
 #include "nested.h"
 #include "error-heuristic.h"
 
+
 namespace viltrum {
 
 template<typename Rule, typename ErrorHeuristic, typename = std::enable_if_t<is_nested<Rule>::value>>
@@ -20,6 +21,7 @@ public:
             auto heap_ordering = [] (const auto& a, const auto& b) {
                 return std::get<0>(a.extra()) < std::get<0>(b.extra());
             };
+
 
             logger.log_progress(std::size_t(0),subdivisions);
             auto r = region(f,rule,range.min(),range.max());

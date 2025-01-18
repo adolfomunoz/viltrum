@@ -12,6 +12,11 @@
 #include "../nested/nested.h"
 #include <cmath>
 
+
+#ifndef VILTRUM_MAX_DIMENSIONS_REGION
+#define VILTRUM_MAX_DIMENSIONS_REGION 6
+#endif
+
 namespace viltrum {
 
 
@@ -423,11 +428,14 @@ template<typename Float, typename F, typename Q, std::size_t DIM>
 auto region(const F& f, const Q& q, 
 			const std::array<Float, DIM>& range_min, 
 			const std::array<Float, DIM>& range_max) {
+	
+	static_assert(DIM<=VILTRUM_MAX_DIMENSIONS_REGION,"Too many dimensions for region construction");
 	return Region<Float,Q,DIM,std::decay_t<decltype(f(range_min))>>(f,q,range_min, range_max);
 }
 
 template<typename Float, typename F, typename Q, std::size_t DIM>
 auto region(const F& f, const Q& q, const Range<Float,DIM>& range) {
+	static_assert(DIM<=VILTRUM_MAX_DIMENSIONS_REGION,"Too many dimensions for region construction");
 	return Region<Float,Q,DIM,std::decay_t<decltype(f(range.min()))>>(f,q,range);
 }
 
