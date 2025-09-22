@@ -9,6 +9,7 @@
 #include "region-sampling.h"
 #include "../combination/fubini.h"
 #include "../monte-carlo/monte-carlo.h"
+#include "../monte-carlo/monte-carlo-per-bin.h"
 
 namespace viltrum {
 
@@ -65,7 +66,7 @@ public:
         //TODO: remember to change it back to parallel
         auto variance_reduction =             [&] (const std::array<std::size_t, DIMBINS>& pos) {
                 RNG& rng = rngs[pos]; 
-                auto f_regdim = function_split_and_integrate_at<DIM>(f,monte_carlo(rng,1),range_rest);
+                auto f_regdim = function_split_and_integrate_at<DIM>(f,monte_carlo_per_bin(rng,1),range_rest);
                 using Sample = std::decay_t<decltype(f_regdim(std::declval<std::array<Float,DIM>>()))>;
                 Range<Float,DIM> binrange = range_first;
                 for (std::size_t i=0;i<DIMBINS;++i)

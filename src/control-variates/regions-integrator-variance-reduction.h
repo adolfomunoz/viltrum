@@ -9,6 +9,7 @@
 #include "region-sampling.h"
 #include "../combination/fubini.h"
 #include "../monte-carlo/monte-carlo.h"
+#include "../monte-carlo/monte-carlo-per-bin.h"
 
 namespace viltrum {
 
@@ -33,7 +34,7 @@ public:
         constexpr std::size_t DIM = RegRange::size;
         using Float = typename RegRange::value_type;
         auto [range_first,range_rest] = range_split_at<DIM>(range); 
-        auto f_regdim = function_split_and_integrate_at<DIM>(f,monte_carlo(rng,1),range_rest);
+        auto f_regdim = function_split_and_integrate_at<DIM>(f,monte_carlo_per_bin(rng,1),range_rest);
 
         std::array<Float,DIMBINS> drange;
         for (std::size_t i=0;i<DIMBINS;++i) drange[i] = (range.max(i) - range.min(i))/Float(bin_resolution[i]);
