@@ -80,7 +80,7 @@ public:
             for (std::size_t i=0;i<DIMBINS;++i)
                 subrange = subrange.subrange_dimension(i,range.min(i)+pos[i]*drange[i],range.min(i)+(pos[i]+1)*drange[i]);
             for (unsigned long s = 0; s<samples;++s) {
-                bins(pos) += f(random_sequence<Float,RNG>(subrange,unsigned(rng())))*factor;
+                bins(pos) += f(random_sequence<Float,RNG>(subrange,rng))*factor;
                 // --> Unsigned rng seeds the rng. We need to check if there is a better way
             }
         }
