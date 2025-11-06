@@ -33,8 +33,8 @@ public:
 		bool operator!=(const const_iterator& that) const { return true;  } //Infinite list
     }; 
 
-    const_iterator begin() { return const_iterator(rng,range); }
-    const_iterator end() { return const_iterator(rng,range); }
+    const_iterator begin() const { return const_iterator(rng,range); }
+    const_iterator end() const { return const_iterator(rng,range); }
 };
 
 template<typename Number,typename RNG>
