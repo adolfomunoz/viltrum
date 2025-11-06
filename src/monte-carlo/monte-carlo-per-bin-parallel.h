@@ -103,7 +103,7 @@ public:
 };
 
 template<typename RNG>
-auto monte_carlo_per_bin_parallel(RNG&& rng, unsigned long samples, std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
+auto monte_carlo_per_bin_parallel(RNG&& rng, unsigned long samples, std::enable_if_t<!std::is_integral_v<std::decay_t<RNG>>,int> dummy = 0) {
     return MonteCarloPerBinParallel<std::decay_t<RNG>>(std::forward<RNG>(rng),samples);
 }
 
