@@ -2,11 +2,16 @@
 
 #include "slice.h"
 #include "../array.h"
+#include "../multidimensional-range.h"
 
 
 namespace viltrum {
-
 namespace detail {
+
+/**
+ * This was my previous implementation, which was particularly probelmatic due to 
+ * unnecesary recursivity
+ * 
 template<typename F, typename MA>
 typename std::enable_if<!std::is_convertible<F,typename MA::value_type>::value,void>::type fill(const F& f, MA& ma) {
 	for (std::size_t i = 0; i<MA::size; ++i)
@@ -27,6 +32,58 @@ typename std::enable_if<std::is_convertible<V,typename MA::value_type>::value,vo
 			auto s = ma.slice(i);
 			detail::fill(v,s);
 		}
+}
+*/
+
+/**
+ * @brief This is my new implementation with the help of gemini.
+ * 
+ * It has the same behavior yet being simpler. 
+ * 
+ */
+// Versión aplanada de fill para funciones
+template<typename F, typename MA>
+typename std::enable_if<!std::is_convertible<F, typename MA::value_type>::value, void>::type 
+fill(const F& f, MA& ma) {
+    constexpr std::size_t DIM = MA::dimensions;
+    constexpr std::size_t SIZE = MA::size;
+
+    // Creamos la resolución para el rango (SIZE en cada dimensión)
+    std::array<std::size_t, DIM> resolution;
+    resolution.fill(SIZE);
+
+    // Iteramos por todos los elementos usando un solo bucle plano
+    for (const auto& indices : multidimensional_range(resolution)) {
+        std::array<double, DIM> coords;
+        
+        // Calculamos las coordenadas normalizadas [0.0, 1.0]
+        for (std::size_t d = 0; d < DIM; ++d) {
+            if constexpr (SIZE > 1) {
+                coords[d] = double(indices[d]) / double(SIZE - 1);
+            } else {
+                coords[d] = 0.0; 
+            }
+        }
+
+        // Llamamos a la función f con el array completo de coordenadas una sola vez
+        // ma[indices] llamará al operador[] que ya gestiona la memoria
+        ma[indices] = f(coords);
+    }
+}
+
+// Sobrecarga para llenar con un valor constante (versión más rápida)
+template<typename V, typename MA>
+typename std::enable_if<std::is_convertible<V, typename MA::value_type>::value, void>::type 
+fill(const V& v, MA& ma) {
+    constexpr std::size_t DIM = MA::dimensions;
+    constexpr std::size_t SIZE = MA::size;
+    
+    std::array<std::size_t, DIM> resolution;
+    resolution.fill(SIZE);
+    
+    for (const auto& indices : multidimensional_range(resolution)) {
+        ma[indices] = v;
+    }
 }
 
 /*

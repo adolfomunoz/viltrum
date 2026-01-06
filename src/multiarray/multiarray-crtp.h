@@ -153,18 +153,22 @@ MThis& operator=(const multiarray_const<MThat>& that) { \
 	static_assert(dimensions == MThat::dimensions, "Assignment of multiarrays with different number of dimensions"); \
 	static_assert(size == MThat::size, "Assignment of multiarrays with different sizes"); \
 	if constexpr(dimensions == 1) { \
-		for (std::size_t i = 0; i < size; ++i) \
-			(*this)[{i}] =  static_cast<const MThat&>(that)[{i}]; \
+		for (std::size_t i = 0; i < size; ++i) {\
+			std::array<std::size_t, 1> idx = {i}; \
+			(*this)[idx] =  static_cast<const MThat&>(that)[idx]; \
+		}\
 	} else { \
 		for (std::size_t i = 0; i < size; ++i) \
-			this->slice(i) = that.slice(i); \
+			this->slice(i) = static_cast<const MThat&>(that).slice(i); \
 	} \
 	return (*this); \
 }  \
 MThis& operator=(const MThis& that) { \
 	if constexpr(dimensions == 1) { \
-		for (std::size_t i = 0; i < size; ++i) \
-			(*this)[{i}] =  that[{i}]; \
+		for (std::size_t i = 0; i < size; ++i) {\
+			std::array<std::size_t, 1> idx = {i}; \
+			(*this)[idx] =  that[idx]; \
+		}\
 	} else { \
 		for (std::size_t i = 0; i < size; ++i) \
 			this->slice(i) = that.slice(i); \
