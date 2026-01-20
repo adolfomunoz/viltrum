@@ -13,5 +13,7 @@
 #include "src/control-variates/integrator-adaptive-control-variates.h"
 #include "src/control-variates/integrator-adaptive-variance-reduction.h"
 #include "src/control-variates/integrator-adaptive-fubini-variance-reduction.h"
+#include "src/control-variates/integrator-adaptive-variance-reduction-optimized.h"
+#include "src/control-variates/integrator-adaptive-fubini-variance-reduction-optimized.h"
 
 
