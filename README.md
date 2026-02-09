@@ -15,7 +15,7 @@ VILTRUM: Varied Integration Layouts for arbiTRary integrals in a Unified Manner 
     <br />
     <a href="https://mcrespo.me/"><strong>Miguel Crespo</strong></a>
     ·
-    <a href="http://giga.cps.unizar.es/~ajarabo/"><strong>Adrian Jarabo</strong></a>
+    <strong>Adrian Jarabo</strong>
     ·
     <a href="http://adolfo-munoz.com/"><strong>Adolfo Muñoz</strong></a>
   </p>
@@ -52,25 +52,22 @@ That would be enough to use all the features of the library. There are other alt
 
 Integrating a function in a specific n-dimensional range is rather simple. You need the following information:
 - An *integrator*, a numerical integration method, for which there are [several to choose from](doc/integrators.md).
-- An *integrand*, a function to be integrated. It's only parameter has to be a `std::array<F,N>`, where `F` is a floating point number and `N` is the number of dimensions. There are [several ways in which such integrand can be defined](doc/integrands.md). The integrand can return any numeric value, or, in general, any data type that supports addition and multiplication by a scalar (tested with [Eigen arrays](https://eigen.tuxfamily.org/dox/group__TutorialArrayClass.html) ).
-- A *range*, the integration domain, that is composed on two `std::array<F,N>` marking the limits of the potentially multidimensional integration domain, which [can be defined in different ways](doc/ranges.md).
+- An *integrand*, a function to be integrated. There are [several ways in which such integrand can be defined](doc/integrands.md). The integrand can return any numeric value, or, in general, any data type that supports addition and multiplication by a scalar (tested with [Eigen arrays](https://eigen.tuxfamily.org/dox/group__TutorialArrayClass.html) ).
+- A *range*, the integration domain, that marks the limits of the integration domain, which [can be defined in different ways](doc/ranges.md).
 
 Example:
 
 ```cpp
-float sphere(const std::array<float,3>& x) {
-    return (x[0]*x[0]+x[1]*x[1]+x[2]*x[2])<=1.0f?1.0f:0.0f;
-}
-int main() {
-    unsigned long samples = 1024;
-    auto method = viltrum::integrator_monte_carlo_uniform(samples);
-    auto range = viltrum::range(std::array<float,3>{-1.0f,-1.0f,-1.0f},std::array<float,3>{1.0f,1.0f,1.0f});
-    std::cout<<"Sphere volume = "<<method.integrate(sphere,range)<<"\n";
-}
+float sol = viltrum::integrate(
+    viltrum::monte_carlo(64),  //Numerical integration techinque: Monte-Carlo with 64 samples
+    [] (float x) -> float { return std::sin(x);}, //Function to integrate: sin(x)
+    viltrum::range(0.0f,3.14159265f) //Integration range: from 0 to pi
+);
 ```
 
-The return type of the `integrate` method will be the same return type of the integrand (`float` in the example above).
+The return type of the `integrate` function will be the same return type of the integrand (`float` in the example above). The full simple code for this example is [here](../main/doc/montecarlo-1d.cc).
 
+<!--
 ### Integrating into bins
 
 It is also possible to obtain not only a single integral value, but to obtain integrals in a *regular n-dimensional grid* of cells or *bins*. For this purpose, this library provides *bin integrators*, that is, integrators that are capable of integrating into bins. For using them, in addition to the integrand and range you need:
@@ -146,6 +143,7 @@ where:
 - `dim` is the number of dimensions to be explored.
 - `bins` is the total number of bins (pixels in the case of images) in all dimensions.  
 
+-->
 
 ## License
 

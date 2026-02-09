@@ -32,7 +32,7 @@ add_executable(test-region-sample-3d main/compilation-tests/region-sample-3d.cc)
 ##########
 # FOR DOCUMENTATION
 ##########
-#add_executable(integrands main/doc/integrands.cc)
+add_executable(montecarlo-1d main/doc/montecarlo-1d.cc)
 #add_executable(ranges main/doc/ranges.cc)
 #add_executable(integrators main/doc/integrators.cc)
 #add_executable(bins main/doc/bins.cc)
