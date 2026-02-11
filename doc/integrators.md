@@ -14,7 +14,7 @@ When using binning (integrating into a set of bins distributed uniformly in a nu
 viltrum::integrate(<integrator>,<bins>,<binresolution>,<integrand>,<range>)
 ```
 
-where `<integrator>`, `<integrand>` and `<range>` have the same meaning. `<binresolution>` is a `std::array<std::size_t,N>` where `N` is the number of dimensions of the binning structure, and each component of the array is the resolution of the binning structure. For instance `std::array<std::size_t,2>{1920,1080}` indicates that the binning structure is two dimensional and has a resolution of 1920x1080. `<bins>` is the binning structure, which is accessed as a function with a `std::array<std::size_t,N>` as parameter.
+where `<integrator>`, `<integrand>` and `<range>` have the same meaning. `<binresolution>` is a `std::array<std::size_t,N>` where `N` is the number of dimensions of the binning structure, and each component of the array is the resolution of the binning structure. For instance `std::array<std::size_t,2>{1920,1080}` indicates that the binning structure is two dimensional and has a resolution of 1920x1080. `<bins>` is the binning structure, which is accessed as a function with a `std::array<std::size_t,N>` as parameter which indicates the position for all `N` dimensions (indexed from 0 to the resolution for that dimension minus 1).
 
 For each integrator, its parameters are defined when constructing it, and the type and meaning of each of the parameters depends on the specific integrator.
 
