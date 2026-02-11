@@ -53,9 +53,9 @@ That would be enough to use all the features of the library. There are other alt
 Integrating a function in a specific n-dimensional range is rather simple. You need the following information:
 - An *integrator*, a numerical integration method, for which there are [several to choose from](doc/integrators.md).
 - An *integrand*, a function to be integrated. There are [several ways in which such integrand can be defined](doc/integrands.md). The integrand can return any numeric value, or, in general, any data type that supports addition and multiplication by a scalar (tested with [Eigen arrays](https://eigen.tuxfamily.org/dox/group__TutorialArrayClass.html) ).
-- A *range*, the integration domain, that marks the limits of the integration domain, which [can be defined in different ways](doc/ranges.md).
+- A *range*, the integration domain, that marks the limits of the integration domain, which [can be defined in different ways](doc/ranges.md). The dimensionality of the integration range must match the dimensionality of the integrand.
 
-Example:
+The following example shows all three in action: a Monte-Carlo integrator with 64 samples and a random seed, a 1D integrand defined as a lambda function that calculates the sine of a number in `float`, and a 1D integration range between 0 and pi. 
 
 ```cpp
 float sol = viltrum::integrate(
