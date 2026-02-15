@@ -65,7 +65,7 @@ float sol = viltrum::integrate(
 );
 ```
 
-The return type of the `integrate` function will be the same return type of the integrand (`float` in the example above). The full simple code for this example is [here](../main/doc/montecarlo-1d.cc).
+The return type of the `integrate` function will be the same return type of the integrand (`float` in the example above). The full simple code for this example is [here](main/doc/montecarlo-1d.cc).
 
 Alternatively, it is also possible to obtain not only a single integral value, but to obtain integrals in a *regular n-dimensional grid* of cells or *bins*. For this purpose, this library provides *bin integrators*, that is, integrators that are capable of integrating into bins. For using them, in addition to the integrand and range you need:
 - A *bin accesor*, that is, a function that given an *n*-dimensional array (where *n* is the dimensionality of the bin regular structure) of positions (indices of type `std::size_t`) gives read and write access to the binning structure in that specific position.
@@ -90,7 +90,7 @@ viltrum::integrate(
 );
 ```
 
-The data type of the binning structure (the reference returned by the bin accesor) and the data type returned by the integrand must be the same (or at least, compatible). Also, as above, the data type of each element of the range (`float` in the example above) must be of the same type of every element of the parameter set of the function. The full code of the example above is [here](../main/doc/montecarlo-2d.cc).
+The data type of the binning structure (the reference returned by the bin accesor) and the data type returned by the integrand must be the same (or at least, compatible). Also, as above, the data type of each element of the range (`float` in the example above) must be of the same type of every element of the parameter set of the function. The full code of the example above is [here](main/doc/montecarlo-2d.cc).
 
 Last, it is also possible to deal with integrals of "infinite" (unbounded) dimensionality. Examples of such are an infinite series or the path integral for rendering. Not all integrators are able to deal with integrals of unbounded dimensionality (Monte-Carlo, deals with it perfectly, though). Integrals of unbounded dimensionality are dealt with easily: first, the integration range must be of infinite dimensionality (`range_infinite`). Then, the integrand must have as parameter an "automatic" data type, which is an iterable infinite sequence of numbers (the paramters of the integrand). An example of this is the following:
 
@@ -121,7 +121,7 @@ float sol = viltrum::integrate(
 std::cout<<"Integral: "<<std::setprecision(6)<<sol<<" should be close to 2.0\n";
 ```
 
-You can find the full example [here](../main/doc/montecarlo-infd.cc).
+You can find the full example [here](main/doc/montecarlo-infd.cc).
 
 
 ## License
