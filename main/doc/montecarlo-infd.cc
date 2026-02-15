@@ -21,7 +21,6 @@ int main() {
         return 2.0f*sum;
     };
 
-    // The integral of this function is a geometric series with ratio 0.5, so the result should be 2.0f.
 
     float sol = viltrum::integrate(
         viltrum::monte_carlo(8192),  //Numerical integration techinque: Monte-Carlo with 8192 samples
@@ -29,5 +28,6 @@ int main() {
         viltrum::range_infinite<float>(0.0f,1.0f) //Range of infinite dimensionality, all dimensions between 0 and 1
     );
 
+    // The integral of this function is a geometric series with ratio 0.5, so the result should be 2.0f.
     std::cout<<"Integral: "<<std::setprecision(6)<<sol<<" should be close to 2.0\n";
 }
