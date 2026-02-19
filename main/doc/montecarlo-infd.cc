@@ -3,10 +3,10 @@
 #include <iomanip>
 
 int main() {
-    // This integrand is an infinite sum of decaying products, with decaying factor 0.5.
-    auto integrand = [] (const auto& seq) -> float {
+    float decaying_factor = 0.75f;
+    // This integrand is an infinite sum of decaying products.
+    auto integrand = [decaying_factor] (const auto& seq) -> float {
         auto x = seq.begin(); //The sequence is an infinite sequence of numbers within the integration range, which is generated on the fly by the integrator. We can iterate over it until we want.
-        const float decaying_factor = 0.5f;
         float sum = 0.0f;
         float term = 1.0f;  
         // For each iteration we take two samples:
@@ -14,11 +14,11 @@ int main() {
         // - the second is the value of the component with the decaying factor, which is multiplied by the term and added to the sum.       
         while ((*x) < decaying_factor) { 
             ++x; 
-            term *= ((*x)/decaying_factor); 
+            term *= 2.0f*(*x); 
             ++x; 
             sum += term; 
         }
-        return 2.0f*sum;
+        return sum;
     };
 
 
@@ -29,5 +29,5 @@ int main() {
     );
 
     // The integral of this function is a geometric series with ratio 0.5, so the result should be 2.0f.
-    std::cout<<"Integral: "<<std::setprecision(6)<<sol<<" should be close to 2.0\n";
+    std::cout<<"Integral: "<<std::setprecision(6)<<sol<<" should be close to "<<(decaying_factor/(1.0f-decaying_factor))<<std::endl;
 }
