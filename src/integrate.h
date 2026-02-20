@@ -18,49 +18,49 @@ namespace detail {
     template<typename P, typename F>
     struct Integrand<P,F,typename  std::enable_if_t<std::is_invocable_v<F,P>> > {
         static auto adapt(const F& f) { 
-            return [&f] (const std::array<P,1>& x) { return f(x[0]);};   
+            return [f] (const std::array<P,1>& x) { return f(x[0]);};   
         } 
     };
 
     template<typename P, typename F>
     struct Integrand<P,F,typename  std::enable_if_t<std::is_invocable_v<F,P,P>> > {
         static auto adapt(const F& f) { 
-            return [&f] (const std::array<P,2>& x) { return f(x[0],x[1]);};   
+            return [f] (const std::array<P,2>& x) { return f(x[0],x[1]);};   
         } 
     };
 
     template<typename P, typename F>
     struct Integrand<P,F,typename  std::enable_if_t<std::is_invocable_v<F,P,P,P>> > {
         static auto adapt(const F& f) { 
-            return [&f] (const std::array<P,3>& x) { return f(x[0],x[1],x[2]);};   
+            return [f] (const std::array<P,3>& x) { return f(x[0],x[1],x[2]);};   
         } 
     };
 
     template<typename P, typename F>
     struct Integrand<P,F,typename  std::enable_if_t<std::is_invocable_v<F,P,P,P,P>> > {
         static auto adapt(const F& f) { 
-            return [&f] (const std::array<P,4>& x) { return f(x[0],x[1],x[2],x[3]);};   
+            return [f] (const std::array<P,4>& x) { return f(x[0],x[1],x[2],x[3]);};   
         } 
     };
 
     template<typename P, typename F>
     struct Integrand<P,F,typename  std::enable_if_t<std::is_invocable_v<F,P,P,P,P,P>> > {
         static auto adapt(const F& f) { 
-            return [&f] (const std::array<P,5>& x) { return f(x[0],x[1],x[2],x[3],x[4]);};   
+            return [f] (const std::array<P,5>& x) { return f(x[0],x[1],x[2],x[3],x[4]);};   
         } 
     };
 
     template<typename P, typename F>
     struct Integrand<P,F,typename  std::enable_if_t<std::is_invocable_v<F,P,P,P,P,P,P>> > {
         static auto adapt(const F& f) { 
-            return [&f] (const std::array<P,6>& x) { return f(x[0],x[1],x[2],x[3],x[4],x[5]);};   
+            return [f] (const std::array<P,6>& x) { return f(x[0],x[1],x[2],x[3],x[4],x[5]);};   
         } 
     };
 
     template<typename P, typename F>
     struct Integrand<P,F,typename  std::enable_if_t<std::is_invocable_v<F,P,P,P,P,P,P,P>> > {
         static auto adapt(const F& f) { 
-            return [&f] (const std::array<P,7>& x) { return f(x[0],x[1],x[2],x[3],x[4],x[5],x[6]);};   
+            return [f] (const std::array<P,7>& x) { return f(x[0],x[1],x[2],x[3],x[4],x[5],x[6]);};   
         } 
     };
     template<typename P, typename F>
