@@ -13,8 +13,47 @@
 
 namespace viltrum {
 
+template<typename F, typename RNG, typename Range>
+class MonteCarloFunction {
+    const F& f;
+    RNG& rng;
+    const Range& range_mc;
+public:
+    MonteCarloFunction(const F& f, RNG& rng, const Range& range_mc) :
+        f(f), rng(rng), range_mc(range_mc) {}
+
+    template<typename Float, std::size_t DIM>
+    auto operator()(const std::array<Float,DIM>& x) const {
+        std::array<Float, Range::DIM> sample;
+        for (std::size_t i=0;i<Range::DIM;++i) {
+		    std::uniform_real_distribution<Float> dis(range_mc.min(i),range_mc.max(i));
+		    sample[i] = dis(rng);
+	    }
+        return f(x | sample);
+    }
+};
+
+template<typename F, typename RNG, typename Float>
+class MonteCarloFunction<F,RNG,RangeInfinite<Float>> {
+    const F& f;
+    RNG& rng;
+    const RangeInfinite<Float>& range_mc;
+public:
+    MonteCarloFunction(const F& f, RNG& rng, const RangeInfinite<Float>& range_mc) :
+        f(f), rng(rng), range_mc(range_mc) {}
+    template<std::size_t DIM>
+    auto operator()(const std::array<Float,DIM>& x) const {
+        return f(concat(x,random_sequence(range_mc,rng)));
+    }
+};
+
+template<typename F, typename RNG, typename Range>
+auto monte_carlo_function(const F& f, RNG& rng, const Range& range) {
+    return MonteCarloFunction<F,RNG,Range>(f,rng,range);
+}
+
 template<typename RR, typename CV, typename RS, typename RNG>
-class RegionsIntegratorParallelVarianceReduction {
+class RegionsIntegratorParallelVarianceReductionOptimized {
     RR rr;
     CV cv;
     RS region_sampler;
@@ -23,9 +62,9 @@ class RegionsIntegratorParallelVarianceReduction {
     std::size_t nmutexes;
 
 public:
-    RegionsIntegratorParallelVarianceReduction(RR&& rr, CV&& cv, RS&& rs, RNG&& r, unsigned long s,std::size_t n = 16) 
+    RegionsIntegratorParallelVarianceReductionOptimized(RR&& rr, CV&& cv, RS&& rs, RNG&& r, unsigned long s,std::size_t n = 16) 
         : rr(rr), cv(cv), region_sampler(rs), rng(std::move(r)), samples(s), nmutexes(n) {}
-    RegionsIntegratorParallelVarianceReduction(RR&& rr, CV&& cv, RS&& rs, RNG& r, unsigned long s,std::size_t n = 16) 
+    RegionsIntegratorParallelVarianceReductionOptimized(RR&& rr, CV&& cv, RS&& rs, RNG& r, unsigned long s,std::size_t n = 16) 
         : rr(rr), cv(cv), region_sampler(rs), rng(std::size_t(r())), samples(s), nmutexes(n) {}
 
 
@@ -66,7 +105,7 @@ public:
         //TODO: remember to change it back to parallel
         auto variance_reduction =             [&] (const std::array<std::size_t, DIMBINS>& pos) {
                 RNG& rng = rngs[pos]; 
-                auto f_regdim = function_split_and_integrate_at<DIM>(f,monte_carlo_per_bin(rng,1),range_rest);
+                auto f_regdim = monte_carlo_function(f,rng,range_rest);
                 using Sample = std::decay_t<decltype(f_regdim(std::declval<std::array<Float,DIM>>()))>;
                 Range<Float,DIM> binrange = range_first;
                 for (std::size_t i=0;i<DIMBINS;++i)
@@ -103,23 +142,23 @@ public:
 };
 
 template<typename RR, typename CV, typename RS, typename RNG>
-auto regions_integrator_parallel_variance_reduction(RR&& rr, CV&& cv, RS&& rs, RNG&& rng, unsigned long samples, std::size_t nmutexes = 16, std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
-    return RegionsIntegratorParallelVarianceReduction<std::decay_t<RR>,std::decay_t<CV>,std::decay_t<RS>,std::decay_t<RNG>>(std::forward<RR>(rr), std::forward<CV>(cv), std::forward<RS>(rs), std::forward<RNG>(rng),samples,nmutexes);
+auto regions_integrator_parallel_variance_reduction_optimized(RR&& rr, CV&& cv, RS&& rs, RNG&& rng, unsigned long samples, std::size_t nmutexes = 16, std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
+    return RegionsIntegratorParallelVarianceReductionOptimized<std::decay_t<RR>,std::decay_t<CV>,std::decay_t<RS>,std::decay_t<RNG>>(std::forward<RR>(rr), std::forward<CV>(cv), std::forward<RS>(rs), std::forward<RNG>(rng),samples,nmutexes);
 }
 
 template<typename RR, typename CV, typename RNG>
-auto regions_integrator_parallel_variance_reduction(RR&& rr, CV&& cv, RNG&& rng, unsigned long samples, std::size_t nmutexes = 16, std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
-    return regions_integrator_parallel_variance_reduction(std::forward<RR>(rr), std::forward<CV>(cv), region_sampling_uniform(), std::forward<RNG>(rng),samples,nmutexes);
+auto regions_integrator_parallel_variance_reduction_optimized(RR&& rr, CV&& cv, RNG&& rng, unsigned long samples, std::size_t nmutexes = 16, std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
+    return regions_integrator_parallel_variance_reduction_optimized(std::forward<RR>(rr), std::forward<CV>(cv), region_sampling_uniform(), std::forward<RNG>(rng),samples,nmutexes);
 }
 
 template<typename RR, typename CV>
-auto regions_integrator_parallel_variance_reduction(RR&& rr, CV&& cv, unsigned long samples, std::size_t seed = std::random_device()(), std::size_t nmutexes = 16) {
-    return regions_integrator_parallel_variance_reduction(std::forward<RR>(rr), std::forward<CV>(cv), std::mt19937(seed),samples,nmutexes);
+auto regions_integrator_parallel_variance_reduction_optimized(RR&& rr, CV&& cv, unsigned long samples, std::size_t seed = std::random_device()(), std::size_t nmutexes = 16) {
+    return regions_integrator_parallel_variance_reduction_optimized(std::forward<RR>(rr), std::forward<CV>(cv), std::mt19937(seed),samples,nmutexes);
 }
 
 template<typename RR>
-auto regions_integrator_parallel_variance_reduction(RR&& rr, double alpha, unsigned long samples, std::size_t seed = std::random_device()(), std::size_t nmutexes = 16) {
-    return regions_integrator_parallel_variance_reduction(std::forward<RR>(rr), cv_fixed_weight(alpha), std::mt19937(seed),samples,nmutexes);
+auto regions_integrator_parallel_variance_reduction_optimized(RR&& rr, double alpha, unsigned long samples, std::size_t seed = std::random_device()(), std::size_t nmutexes = 16) {
+    return regions_integrator_parallel_variance_reduction_optimized(std::forward<RR>(rr), cv_fixed_weight(alpha), std::mt19937(seed),samples,nmutexes);
 }
 
 }

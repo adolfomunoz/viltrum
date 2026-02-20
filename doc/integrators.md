@@ -1,12 +1,20 @@
 # `viltrum` - Integrators
 
-A `viltrum` integrator represents al algorithm, a numerical method that is able to approximate an integral. All integrators present the same method:
+A `viltrum` integrator represents al algorithm, a numerical method that is able to approximate an integral. All integrators can be used with all different `viltrum::integrate` versions. For instance, for without binning (a single output) the call is as follows:
 
 ```cpp
-integrator.integrate(<integrand>,<range>) 
+auto solution = viltrum::integrate(<integrator>,<integrand>,<range>) 
 ```
 
-that applies the algorithm defined on the integrator `integrator` to the integral of `<integrand>` along the range `<range>`. There are several ways in which (integrands can be defined)[integrands.md] and in which (integration ranges can be defined)[ranges.md].
+that applies the algorithm defined on the integrator `<integrator>` to the integral of `<integrand>` along the range `<range>`. There are several ways in which (integrands can be defined)[integrands.md] and in which (integration ranges can be defined)[ranges.md].
+
+When using binning (integrating into a set of bins distributed uniformly in a number of dimensions) then the call can be done as
+
+```cpp
+viltrum::integrate(<integrator>,<bins>,<binresolution>,<integrand>,<range>)
+```
+
+where `<integrator>`, `<integrand>` and `<range>` have the same meaning. `<binresolution>` is a `std::array<std::size_t,N>` where `N` is the number of dimensions of the binning structure, and each component of the array is the resolution of the binning structure. For instance `std::array<std::size_t,2>{1920,1080}` indicates that the binning structure is two dimensional and has a resolution of 1920x1080. `<bins>` is the binning structure, which is accessed as a function with a `std::array<std::size_t,N>` as parameter which indicates the position for all `N` dimensions (indexed from 0 to the resolution for that dimension minus 1).
 
 For each integrator, its parameters are defined when constructing it, and the type and meaning of each of the parameters depends on the specific integrator.
 
@@ -132,6 +140,7 @@ where:
 - The second line creates an adaptive integrator with a nested Boole-Simpson rule, the default error metric and 10 iterations.
 
 
+<!--
 ## Adaptive nested Newton-Cotes control variates with Monte Carlo integration of the residual
 
 This strategy is the base of our paper [**Primary-Space Adaptive Control Variates using Piecewise-Polynomial Approximations**](https://mcrescas.github.io/publications/primary-space-cv/), and it preserves the best of both strategies: the low frequency regions are better recovered using adaptive Newton-Cotes for a number of iterations and high frequency details are better recovered using Monte-Carlo (of the residual with respect to the Newton-Cotes approximation). 
@@ -182,4 +191,5 @@ where
 
 The code illustrated in this page can be tested and compiled in a [source code example](../main/doc/integrators.cc)
 
+-->
 

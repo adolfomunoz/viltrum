@@ -15,7 +15,7 @@ VILTRUM: Varied Integration Layouts for arbiTRary integrals in a Unified Manner 
     <br />
     <a href="https://mcrespo.me/"><strong>Miguel Crespo</strong></a>
     ·
-    <a href="http://giga.cps.unizar.es/~ajarabo/"><strong>Adrian Jarabo</strong></a>
+    <strong>Adrian Jarabo</strong>
     ·
     <a href="http://adolfo-munoz.com/"><strong>Adolfo Muñoz</strong></a>
   </p>
@@ -52,99 +52,76 @@ That would be enough to use all the features of the library. There are other alt
 
 Integrating a function in a specific n-dimensional range is rather simple. You need the following information:
 - An *integrator*, a numerical integration method, for which there are [several to choose from](doc/integrators.md).
-- An *integrand*, a function to be integrated. It's only parameter has to be a `std::array<F,N>`, where `F` is a floating point number and `N` is the number of dimensions. There are [several ways in which such integrand can be defined](doc/integrands.md). The integrand can return any numeric value, or, in general, any data type that supports addition and multiplication by a scalar (tested with [Eigen arrays](https://eigen.tuxfamily.org/dox/group__TutorialArrayClass.html) ).
-- A *range*, the integration domain, that is composed on two `std::array<F,N>` marking the limits of the potentially multidimensional integration domain, which [can be defined in different ways](doc/ranges.md).
+- An *integrand*, a function to be integrated. There are [several ways in which such integrand can be defined](doc/integrands.md). The integrand can return any numeric value, or, in general, any data type that supports addition and multiplication by a scalar (tested with [Eigen arrays](https://eigen.tuxfamily.org/dox/group__TutorialArrayClass.html) ).
+- A *range*, the integration domain, that marks the limits of the integration domain, which [can be defined in different ways](doc/ranges.md). The dimensionality of the integration range must match the dimensionality of the integrand, and the numeric data type of the range must match the data type of the parameters.
 
-Example:
-
-```cpp
-float sphere(const std::array<float,3>& x) {
-    return (x[0]*x[0]+x[1]*x[1]+x[2]*x[2])<=1.0f?1.0f:0.0f;
-}
-int main() {
-    unsigned long samples = 1024;
-    auto method = viltrum::integrator_monte_carlo_uniform(samples);
-    auto range = viltrum::range(std::array<float,3>{-1.0f,-1.0f,-1.0f},std::array<float,3>{1.0f,1.0f,1.0f});
-    std::cout<<"Sphere volume = "<<method.integrate(sphere,range)<<"\n";
-}
-```
-
-The return type of the `integrate` method will be the same return type of the integrand (`float` in the example above).
-
-### Integrating into bins
-
-It is also possible to obtain not only a single integral value, but to obtain integrals in a *regular n-dimensional grid* of cells or *bins*. For this purpose, this library provides *bin integrators*, that is, integrators that are capable of integrating into bins. For using them, in addition to the integrand and range you need:
-- A *bin accesor*, that is, a function that given an *n*-dimensional array (where *n* is the dimensionality of the bin regular structure) of positions (of type `std::size_t`) gives read and write access to the binning structure in that specific position.
-- A *resolution*, a *n*-dimensional array of `std::size_t` that gives the resolution of the bin structure for each dimension *n*.
-
-Given these common structure:Bin integrators can be used as follows:
+The following example shows all three in action: a Monte-Carlo integrator with 64 samples and a random seed, a 1D integrand defined as a lambda function that calculates the sine of a number in `float`, and a 1D integration range between 0 and pi. 
 
 ```cpp
-float slope(const std::array<float,2>& x) { return (x[1]<x[0])?1.0f:0.0f; }
-
-int main(int argc, char **argv) {
-    auto integrator_bins = viltrum::integrator_bins_monte_carlo_uniform(1024);
-    auto range = viltrum::range(std::array<float,2>{0,0},std::array<float,2>{1,1});
-    float output_array[16];
-    //...
-}
-```
-
-bin integrators can be used as follows (1D example):
-
-```cpp
-    auto output_array_access = [&output_array] (const std::array<std::size_t,1>& i) -> float& { return output_array[i[0]]; }; 
-    integrator_bins.integrate(output_array_access,std::array<std::size_t,1>{16},slope,range);
-    for (float f : output_array) std::cout<<f<<" "; std::cout<<std::endl;
-```
-
-and can be expanded to two dimensions as follows:
-
-```cpp
-    auto output_array_access_2d = [&output_array] (const std::array<std::size_t,2>& i) -> float& { return output_array[4*i[0]+i[1]]; }; 
-    integrator_bins.integrate(output_array_access_2d,std::array<std::size_t,2>{4,4},slope,range);
-```
-
-Additionally, the `viltrum` library offers a functional version of the same method:
-```cpp
-    integrate_bins(integrator_bins,output_array_access,std::array<std::size_t,1>{16},slope,range);
-    integrate_bins(integrator_bins,output_array_access_2d,std::array<std::size_t,2>{4,4},slope,range);
-```
-
-This functional version is able to deduce the bin accesor as well as the resolution for `std::vector` data types, in which there is only one parameter defining the binning structure:
-```cpp
-    std::vector<float> output_vector(16);
-    integrate_bins(integrator_bins, output_vector, slope, range);
-    for (float f : output_vector) std::cout<<f<<" ";
-    std::cout<<std::endl;
-    
-    std::vector<std::vector<float>> output_matrix(4,std::vector<float>(4));
-    integrate_bins(integrator_bins, output_matrix, slope, range);
-    std::cout<<std::endl;
-    for (const std::vector<float>& row : output_matrix) {
-        for (float f : row) std::cout<<f<<" ";
-        std::cout<<std::endl;
-    }
-    std::cout<<std::endl;
-```
-
-If you want to define your own automatic bin accesors you can take inspiration from [our source code for the case of vectors](quadrature/bins-containers-adaptor.h) but we do not provide documentation for that (you can always use the general version by explicitly indicating bin accesor and resolution independently as illustrated above).
-
-Last, there are [several bin integrators to choose from](doc/binintegrators.md). However, if you want to use exactly the same integrator with the default parameters than we use in [our paper](https://mcrescas.github.io/publications/primary-space-cv/) define the bin integrator as follows:
-  
-```cpp
-unsigned long spp_cv = std::max(1UL,(unsigned long)(spp*(1.0/16.0)));
-auto integrator = integrator_optimized_perpixel_adaptive_stratified_control_variates(
-    viltrum::nested(viltrum::simpson,viltrum::trapezoidal), // nested rule, order 2 polynomials
-    viltrum::error_single_dimension_size(1.e-5), // error heuristic
-    spp_cv*bins/(2*std::pow(3, dim-1)), // number of adaptive iterations calculated from the spps
-    std::max(1UL,spp-spp_cv) // number of spps for the residual
+float sol = viltrum::integrate(
+    viltrum::monte_carlo(64),  //Numerical integration techinque: Monte-Carlo with 64 samples
+    [] (float x) -> float { return std::sin(x);}, //Function to integrate: sin(x)
+    viltrum::range(0.0f,3.14159265f) //Integration range: from 0 to pi
 );
 ```
-where:
-- `spp` is the number of samples per pixel.
-- `dim` is the number of dimensions to be explored.
-- `bins` is the total number of bins (pixels in the case of images) in all dimensions.  
+
+The return type of the `integrate` function will be the same return type of the integrand (`float` in the example above). The full simple code for this example is [here](main/doc/montecarlo-1d.cc).
+
+Alternatively, it is also possible to obtain not only a single integral value, but to obtain integrals in a *regular n-dimensional grid* of cells or *bins*. For this purpose, this library provides *bin integrators*, that is, integrators that are capable of integrating into bins. For using them, in addition to the integrand and range you need:
+- A *bin accesor*, that is, a function that given an *n*-dimensional array (where *n* is the dimensionality of the bin regular structure) of positions (indices of type `std::size_t`) gives read and write access to the binning structure in that specific position.
+- A *resolution*, a *n*-dimensional array of `std::size_t` that gives the resolution of the bin structure for each dimension *n*.
+
+The following example shows how to integrate into a basic array of floats, integrating a 2D integrand into a 1D binning structure. For that, we need to define how to access such array of floats (the *bin accessor*):
+
+```cpp
+float sol[10]; //We will compute the integral in 10 bins, so we need an array of 10 floats to store the results
+//Bin accesor: access to the binning structure (sol) through the position (pos, the index) in the range. 
+auto sol_access = [&sol] (const std::array<std::size_t,1>& pos) -> float& { return sol[pos[0]]; }; 
+//  The function to integrate is f(x,y) = x^2 + y^2. The parameter is an std::array with the two dimenions but it could also be a bidimensional function with two parameters
+auto integrand = [] (const std::array<float,2>& x) -> float { return x[0]*x[0] + x[1]*x[1]; };
+//Integration range: from (0,0) to (1,1). Could also be viltrum::range(0.0f,1.0f,0.0f,1.0f)
+auto range = viltrum::range(std::array<float,2>{0.0f,0.0f}, std::array<float,2>{1.0f,1.0f}); 
+viltrum::integrate(
+    viltrum::monte_carlo(8192),  //Numerical integration techinque: Monte-Carlo with 8192 samples (distributed along the whole integration domain)
+    sol_access,
+    std::array<std::size_t,1>{10}, //Number of bins in each dimension (8 bins in this case) integrand. Dimensionality should be the same than the parameter of the access above
+    integrand,
+    range
+);
+```
+
+The data type of the binning structure (the reference returned by the bin accesor) and the data type returned by the integrand must be the same (or at least, compatible). Also, as above, the data type of each element of the range (`float` in the example above) must be of the same type of every element of the parameter set of the function. The full code of the example above is [here](main/doc/montecarlo-2d.cc).
+
+Last, it is also possible to deal with integrals of "infinite" (unbounded) dimensionality. Examples of such are an infinite series or the path integral for rendering. Not all integrators are able to deal with integrals of unbounded dimensionality (Monte-Carlo, deals with it perfectly, though). Integrals of unbounded dimensionality are dealt with easily: first, the integration range must be of infinite dimensionality (`range_infinite`). Then, the integrand must have as parameter an "automatic" data type, which is an iterable infinite sequence of numbers (the paramters of the integrand). An example of this is the following:
+
+```cpp
+// This integrand is an infinite sum of decaying products, with decaying factor 0.5.
+auto integrand = [] (const auto& seq) -> float {
+    auto x = seq.begin(); //The sequence is an infinite sequence of numbers within the integration range, which is generated on the fly by the integrator. We can iterate over it until we want.
+    const float decaying_factor = 0.5f;
+    float sum = 0.0f;
+    float term = 1.0f;  
+    // For each iteration we take two samples:
+    // - the first is Russian Roulette for the component with the decaying factor.
+    // - the second is the value of the component with the decaying factor, which is multiplied by the term and added to the sum.       
+    while ((*x) < decaying_factor) { 
+        ++x; 
+        term *= ((*x)/decaying_factor); 
+        ++x; 
+        sum += term; 
+    }
+    return 2.0f*sum;
+};
+float sol = viltrum::integrate(
+    viltrum::monte_carlo(8192),  //Numerical integration techinque: Monte-Carlo with 8192 samples
+    integrand,
+    viltrum::range_infinite<float>(0.0f,1.0f) //Range of infinite dimensionality, all dimensions between 0 and 1
+);
+// The integral of this function is a geometric series with ratio 0.5, so the result should be 2.0f.
+std::cout<<"Integral: "<<std::setprecision(6)<<sol<<" should be close to 2.0\n";
+```
+
+You can find the full example [here](main/doc/montecarlo-infd.cc).
 
 
 ## License

@@ -80,16 +80,24 @@ void integrate(const Integrator& integrator, Bins& bins, const std::array<std::s
 
 template<typename Integrator, typename Bins, std::size_t DIMBINS, typename F, typename Float, typename Logger>
 void integrate(const Integrator& integrator, Bins& bins, const std::array<std::size_t,DIMBINS>& resolution, 
-            const F& function, const RangeInfinite<Float>& range, Logger& logger,
-            std::enable_if_t<std::is_convertible_v<
-                std::decay_t<decltype(function(std::vector<Float>()))>,
-                std::decay_t<decltype(bins(std::array<std::size_t,DIMBINS>()))>>,int> dummy=0) {
+            const F& function, const RangeInfinite<Float>& range, Logger& logger) {
+                //,
+            //std::enable_if_t<std::is_convertible_v<
+                //std::decay_t<decltype(function(std::vector<Float>()))>,
+                //std::decay_t<decltype(bins(std::array<std::size_t,DIMBINS>()))>>,int> dummy=0) {
+                // Removed the above SFINAE because it was too restrictive in some circumstances
     integrator.integrate(bins,resolution, function, range, logger);
 }
 
 
 template<typename Integrator, typename Bins, std::size_t DIMBINS, typename F, typename Float, std::size_t DIM>
 void integrate(const Integrator& integrator, Bins& bins, const std::array<std::size_t,DIMBINS>& resolution, const F& function, const Range<Float,DIM>& range) {
+    LoggerNull log;
+    integrate(integrator, bins, resolution, function, range, log);
+}
+
+template<typename Integrator, typename Bins, std::size_t DIMBINS, typename F, typename Float>
+void integrate(const Integrator& integrator, Bins& bins, const std::array<std::size_t,DIMBINS>& resolution, const F& function, const RangeInfinite<Float>& range) {
     LoggerNull log;
     integrate(integrator, bins, resolution, function, range, log);
 }
