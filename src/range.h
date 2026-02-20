@@ -1,6 +1,7 @@
 #pragma once
 
 #include "array.h"
+#include <vector>
 #include <tuple>
 #include <type_traits>
 

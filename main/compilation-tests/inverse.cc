@@ -80,8 +80,6 @@ float sample_normalized(float s, float a, float b, const std::array<float,3>& p)
 }
 
 int main(int argc, char *argv[]){
-
-    float x;
     std::array<float,3> p = {0.43,0.9,0.42};
     
 

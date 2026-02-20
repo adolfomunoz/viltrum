@@ -33,9 +33,11 @@ auto operator|(const std::array<T,N1>& a1,const std::array<T,N2>& a2) noexcept -
 template<typename T, std::size_t N>
 auto insert(const std::array<T,N>& a, const T& t, std::size_t at) noexcept -> std::array<T,N+1> {
 	std::array<T,N+1> s;
-	std::copy(a.begin(),a.begin()+at,s.begin());
+	for (std::size_t i = 0; i < at; ++i)
+		s[i] = a[i];
 	s[at]=t;
-	std::copy(a.begin()+at,a.end(),s.begin()+at+1);	
+	for (std::size_t i = at; i < N; ++i)
+		s[i + 1] = a[i];
 	return s;
 }
 

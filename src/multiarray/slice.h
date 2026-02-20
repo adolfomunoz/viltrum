@@ -21,9 +21,11 @@ public:
 	multiarray_slice_const(const Base& base, std::size_t dimension = 0, std::size_t index = 0) noexcept :base(base),dimension(dimension),index(index) {}
 	const value_type& operator[](const index_type& indices) const noexcept { 
 		std::array<std::size_t,Base::dimensions> slice_indices; 
-		std::copy(indices.begin(),indices.begin()+dimension,slice_indices.begin());
+		for (std::size_t d = 0; d < dimension; ++d)
+			slice_indices[d] = indices[d];
 		slice_indices[dimension]=index;
-		std::copy(indices.begin()+dimension,indices.end(),slice_indices.begin()+dimension+1);
+		for (std::size_t d = dimension; d < dimensions; ++d)
+			slice_indices[d + 1] = indices[d];
 		return base[slice_indices]; 
 	}
 };
@@ -44,16 +46,20 @@ public:
 	multiarray_slice(Base& base,std::size_t  dimension = 0, std::size_t index = 0) noexcept :base(base),dimension(dimension),index(index) {}
 	const value_type& operator[](const index_type& indices) const noexcept { 
 		std::array<std::size_t,Base::dimensions> slice_indices; 
-		std::copy(indices.begin(),indices.begin()+dimension,slice_indices.begin());
+		for (std::size_t d = 0; d < dimension; ++d)
+			slice_indices[d] = indices[d];
 		slice_indices[dimension]=index;
-		std::copy(indices.begin()+dimension,indices.end(),slice_indices.begin()+dimension+1);
+		for (std::size_t d = dimension; d < dimensions; ++d)
+			slice_indices[d + 1] = indices[d];
 		return base[slice_indices]; 
 	}
 	value_type& operator[](const index_type& indices) noexcept { 
 		std::array<std::size_t,Base::dimensions> slice_indices; 
-		std::copy(indices.begin(),indices.begin()+dimension,slice_indices.begin());
+		for (std::size_t d = 0; d < dimension; ++d)
+			slice_indices[d] = indices[d];
 		slice_indices[dimension]=index;
-		std::copy(indices.begin()+dimension,indices.end(),slice_indices.begin()+dimension+1);
+		for (std::size_t d = dimension; d < dimensions; ++d)
+			slice_indices[d + 1] = indices[d];
 		return base[slice_indices]; 
 	}
 	
