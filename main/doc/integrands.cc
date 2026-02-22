@@ -23,7 +23,7 @@ public:
 };
 
 int main(int argc, char** argv) {
-    unsigned long samples = 16;
+    unsigned long samples = 1024;
     for (int i = 0; i<argc-1; ++i) {
         if (std::string(argv[i])=="-samples") samples = atol(argv[++i]);
     }
