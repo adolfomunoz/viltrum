@@ -19,4 +19,12 @@ int main() {
     );
 
     for (std::size_t i=0;i<10;++i) { std::cout<<"Bin "<<i<<": "<<sol[i]<<"\n";}
+
+    std::vector<float> sol_vec(10);
+    viltrum::integrate(
+        viltrum::monte_carlo(8192), 
+        sol_vec, //The binning structure can be a vector, so the accessor and the resolution are implicit 
+        integrand,
+        range
+    );
 }

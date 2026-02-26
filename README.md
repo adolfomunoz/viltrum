@@ -90,7 +90,21 @@ viltrum::integrate(
 );
 ```
 
-The data type of the binning structure (the reference returned by the bin accesor) and the data type returned by the integrand must be the same (or at least, compatible). Also, as above, the data type of each element of the range (`float` in the example above) must be of the same type of every element of the parameter set of the function. The full code of the example above is [here](main/doc/montecarlo-2d.cc).
+The data type of the binning structure (the reference returned by the bin accesor) and the data type returned by the integrand must be the same (or at least, compatible). Also, as above, the data type of each element of the range (`float` in the example above) must be of the same type of every element of the parameter set of the function. 
+
+Some data types, such as `std::vector` have a specific version of the integrate function that automatically establishes the accessor and the resolution:
+
+```cpp
+std::vector<float> sol_vec(10);
+viltrum::integrate(
+    viltrum::monte_carlo(8192), 
+    sol_vec, //The binning structure can be a vector, so the accessor and the resolution are implicit 
+    integrand,
+    range
+);
+```
+
+The full code of the examples above is [here](main/doc/montecarlo-2d.cc). 
 
 Last, it is also possible to deal with integrals of "infinite" (unbounded) dimensionality. Examples of such are an infinite series or the path integral for rendering. Not all integrators are able to deal with integrals of unbounded dimensionality (Monte-Carlo, deals with it perfectly, though). Integrals of unbounded dimensionality are dealt with easily: first, the integration range must be of infinite dimensionality (`range_infinite`). Then, the integrand must have as parameter an "automatic" data type, which is an iterable infinite sequence of numbers (the paramters of the integrand). An example of this is the following:
 

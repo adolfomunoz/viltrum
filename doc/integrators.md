@@ -24,18 +24,18 @@ For each integrator, its parameters are defined when constructing it, and the ty
 
 It can be defined in two ways:
 
-```
-integrator_monte_carlo_uniform(<rng>,<nsamples>)
+```cpp
+viltrum::monte_carlo(<rng>,<nsamples>)
 ```
 
 where:
-- `<rng>` is a C++11 random number generator, such as `std::mt19937_64` (which is the default) or `std::ranlux48`
+- `<rng>` is a C++11 random number generator, such as `std::mt19937` (which is the default) or `std::ranlux48`
 - `<nsamples>` which is the number of random samples chosen randomly and uniformly within the integration range.
 
 Alternatively, another construction of this integrator selects by default the `std::mt19937_64` C++11 random number generator as follows:
 
 ```
-integrator_monte_carlo_uniform(<nsamples>,<seed>)
+monte_carlo(<nsamples>,<seed>)
 ```
 
 that will use the default random number generator with the seed `<seed>`. The `<seed>` parameter is optional and, if omitted, it is chosen randomly using C++11's default engine.
@@ -43,14 +43,14 @@ that will use the default random number generator with the seed `<seed>`. The `<
 Those construction options and parameters are illustrated in the following C++ snipplet:
 
 ```cpp
-std::cout<<viltrum::integrator_monte_carlo_uniform(std::ranlux48(),100).integrate(function,range)<<" ";
-std::cout<<viltrum::integrator_monte_carlo_uniform(100,0).integrate(function,range)<<" ";
-std::cout<<viltrum::integrator_monte_carlo_uniform(100).integrate(function,range)<<"\n";
+std::cout<<viltrum::monte_carlo(std::ranlux48(),100).integrate(function,range)<<" ";
+std::cout<<viltrum::monte_carlo(100,0).integrate(function,range)<<" ";
+std::cout<<viltrum::monte_carlo(100).integrate(function,range)<<"\n";
 ```
 
 - The first invocation defines a Monte Carlo integrator with 100 samples and the `std::ranlux48` random number generator.
-- The second invocation defines a Monte Carlo integrator with 100 samples and a `std::mt19937_64` random number generator with seed 0.
-- The third invocation defines a Monte Carlo integrator with 100 samples and a `std::mt19937_64` random number generator with random seed.
+- The second invocation defines a Monte Carlo integrator with 100 samples and a `std::mt19937` random number generator with seed 0.
+- The third invocation defines a Monte Carlo integrator with 100 samples and a `std::mt19937` random number generator with random seed.
 
 ## Newton-Cotes quadrature rules
 
