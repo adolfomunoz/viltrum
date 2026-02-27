@@ -56,23 +56,44 @@ int main(int argc, char **argv) {
 
     //Newton-Cotes Quadrature rules
     std::cout<<viltrum::integrate(viltrum::integrator_newton_cotes(viltrum::trapezoidal), integrand, range)<<" ";
+    std::cout<<viltrum::integrate(viltrum::integrator_newton_cotes(viltrum::simpson), integrand, range);
+    std::cout<<viltrum::integrate(viltrum::integrator_newton_cotes(viltrum::boole), integrand, range)<<" ";
     sol_bins.assign(sol_bins.size(),0.0f);
-    viltrum::integrate(viltrum::integrator_newton_cotes(viltrum::simpson), sol_bins, integrand, range);
+    viltrum::integrate(viltrum::integrator_newton_cotes(viltrum::steps<2>(viltrum::boole)), sol_bins, integrand, range);
     for (std::size_t i=0;i<sol_bins.size();++i) { std::cout<<" Bin "<<i<<": "<<sol_bins[i]<<" | ";}
     std::cout<<"\n";
-    std::cout<<viltrum::integrate(viltrum::integrator_newton_cotes(viltrum::boole), integrand, range)<<" ";
-    std::cout<<viltrum::integrate(viltrum::integrator_newton_cotes(viltrum::steps<2>(viltrum::boole)), integrand, range)<<" ";
 
-    /*
+
     //Adaptive Nested Newton-Cotes with tolerance
-    std::cout<<viltrum::integrator_adaptive_tolerance(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),viltrum::error_relative_single_dimension(),1.e-3).integrate(function,range)<<" ";
-    std::cout<<viltrum::integrator_adaptive_tolerance(viltrum::nested(viltrum::boole,viltrum::simpson),1.e-3).integrate(function,range)<<" ";
-    std::cout<<viltrum::integrator_adaptive_tolerance(viltrum::nested(viltrum::steps<2>(viltrum::boole),viltrum::boole)).integrate(function,range)<<"\n";
- 
+    std::cout<<viltrum::integrate(viltrum::integrator_adaptive_tolerance(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),viltrum::error_heuristic_default(viltrum::error_metric_absolute()),1.e-3), integrand, range)<<" "; 
+    sol_bins.assign(sol_bins.size(),0.0f);
+    viltrum::integrate(viltrum::integrator_adaptive_tolerance(viltrum::nested(viltrum::boole,viltrum::simpson),viltrum::error_heuristic_size(viltrum::error_metric_relative(),1.e-5),1.e-3), sol_bins, integrand, range);
+    for (std::size_t i=0;i<sol_bins.size();++i) { std::cout<<" Bin "<<i<<": "<<sol_bins[i]<<" | ";}
+    std::cout<<"\n";
+
     //Adaptive Nested Newton-Cotes with number of steps
-    std::cout<<viltrum::integrator_adaptive_iterations(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),viltrum::error_relative_single_dimension(),10).integrate(function,range)<<" ";
-    std::cout<<viltrum::integrator_adaptive_iterations(viltrum::nested(viltrum::boole,viltrum::simpson),10).integrate(function,range)<<"\n";
-*/
+    std::cout<<viltrum::integrate(viltrum::integrator_adaptive_iterations_parallel(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),viltrum::error_heuristic_default(viltrum::error_metric_absolute()),32), integrand, range)<<" "; 
+    sol_bins.assign(sol_bins.size(),0.0f);
+    viltrum::integrate(viltrum::integrator_adaptive_iterations_parallel(viltrum::nested(viltrum::boole,viltrum::simpson),viltrum::error_heuristic_size(viltrum::error_metric_relative(),1.e-5),32), sol_bins, integrand, range);
+    for (std::size_t i=0;i<sol_bins.size();++i) { std::cout<<" Bin "<<i<<": "<<sol_bins[i]<<" | ";}
+    std::cout<<"\n";
+
+    //Fubini with adaptive newton cotes and Monte-Carlo
+    std::cout<<viltrum::integrate(
+        viltrum::integrator_fubini<1>(
+            viltrum::integrator_adaptive_iterations_parallel(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),viltrum::error_heuristic_default(viltrum::error_metric_absolute()),32),
+            viltrum::monte_carlo(32)
+        ), integrand, range)<<" ";
+
+    //Fubini with adaptive newton cotes and Monte-Carlo
+    std::cout<<viltrum::integrate(
+        viltrum::integrator_fubini<1>(
+            viltrum::integrator_adaptive_iterations_parallel(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),viltrum::error_heuristic_default(viltrum::error_metric_absolute()),32),
+            viltrum::monte_carlo(32)
+        ), integrand_infinite, range_infinite)<<" ";
+
+    
+
 	return 0;
 }
 
