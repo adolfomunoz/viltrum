@@ -36,7 +36,6 @@ int main(int argc, char **argv) {
     auto range_infinite = viltrum::range_primary_infinite<float>();
     std::vector<float> sol_bins(5,0.0f);
 
-
     //Monte-Carlo
     std::cout<<viltrum::integrate(viltrum::monte_carlo(std::ranlux48(),100), integrand, range)<<" ";
     std::cout<<viltrum::integrate(viltrum::monte_carlo(100,0), integrand_infinite,range_infinite)<<" ";
@@ -72,7 +71,7 @@ int main(int argc, char **argv) {
     std::cout<<"\n";
 
     //Adaptive Nested Newton-Cotes with number of steps
-    std::cout<<viltrum::integrate(viltrum::integrator_adaptive_iterations_parallel(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),viltrum::error_heuristic_default(viltrum::error_metric_absolute()),32), integrand, range)<<" "; 
+    std::cout<<viltrum::integrate(viltrum::integrator_adaptive_iterations(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),viltrum::error_heuristic_default(viltrum::error_metric_absolute()),32), integrand, range)<<" "; 
     sol_bins.assign(sol_bins.size(),0.0f);
     viltrum::integrate(viltrum::integrator_adaptive_iterations_parallel(viltrum::nested(viltrum::boole,viltrum::simpson),viltrum::error_heuristic_size(viltrum::error_metric_relative(),1.e-5),32), sol_bins, integrand, range);
     for (std::size_t i=0;i<sol_bins.size();++i) { std::cout<<" Bin "<<i<<": "<<sol_bins[i]<<" | ";}
@@ -85,14 +84,20 @@ int main(int argc, char **argv) {
             viltrum::monte_carlo(32)
         ), integrand, range)<<" ";
 
-    //Fubini with adaptive newton cotes and Monte-Carlo
+    //Fubini with adaptive newton cotes and Monte-Carlo, infinite dimensionality
     std::cout<<viltrum::integrate(
         viltrum::integrator_fubini<1>(
             viltrum::integrator_adaptive_iterations_parallel(viltrum::nested(viltrum::simpson,viltrum::trapezoidal),viltrum::error_heuristic_default(viltrum::error_metric_absolute()),32),
             viltrum::monte_carlo(32)
-        ), integrand_infinite, range_infinite)<<" ";
+        ), integrand_infinite, range_infinite)<<"\n";
 
     
+    //Crespo et al. 2021 integrator (with small improvements)
+    std::cout<<viltrum::integrate(
+        viltrum::integrator_crespo2021(16,64), integrand, range)<<" ";
+    //Crespo et al. 2021 integrator for innite dimensionality (4 dimensions on the polynomial) 
+    std::cout<<viltrum::integrate(
+        viltrum::integrator_crespo2021_infinite<4>(16,4,64), integrand_infinite, range_infinite)<<"\n";
 
 	return 0;
 }
