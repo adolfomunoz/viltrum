@@ -45,13 +45,13 @@ Then ensure the cloned `viltrum` directory is on your compiler include path (for
 #include <viltrum/viltrum.h>
 ```
 
-Other options (git submodule, `ExternalProject_Add`, or CMake `FetchContent`) are described in [doc/installation.md]. The repository also contains a CMake-based build for examples and tests; this is optional and not required to use the header-only library.
+Other options (git submodule, `ExternalProject_Add`, or CMake `FetchContent`) are described [here](doc/installation.md). The repository also contains a CMake-based build for examples and tests; this is optional and not required to use the header-only library.
 
 ## Usage
 
 Integrating a function over an n-dimensional domain is straightforward. You need:
 - An *integrator*: a numerical integration method (see [integrators](doc/integrators.md)).
-- An *integrand*: the function to integrate (see [integrands](doc/integrands.md)). The integrand may return any numeric type that supports addition and scalar multiplication (we test with [Eigen arrays](https://eigen.tuxfamily.org/dox/group__TutorialArrayClass.html)).
+- An *integrand*: the function to integrate (see [integrands](doc/integrands.md)). The integrand may return any numeric type that supports addition and scalar multiplication (we tested with [Eigen arrays](https://eigen.tuxfamily.org/dox/group__TutorialArrayClass.html)).
 - A *range*: the integration domain and coordinate type (see [ranges](doc/ranges.md)). The range dimensionality must match the integrand's parameters and the numeric type must match the integrand's coordinate type.
 
 The following example shows all three in action: a Monte-Carlo integrator with 64 samples and a random seed, a 1D integrand defined as a lambda function that calculates the sine of a number in `float`, and a 1D integration range between 0 and pi. 
@@ -64,7 +64,7 @@ float sol = viltrum::integrate(
 );
 ```
 
-The return type of `viltrum::integrate` is the integrand's return type (`float` in the example). See the full example at [../main/doc/montecarlo-1d.cc].
+The return type of `viltrum::integrate` is the integrand's return type (`float` in the example). See the full example [here](../main/doc/montecarlo-1d.cc).
 
 You can also compute integrals on a regular n-dimensional grid of cells (bins). `viltrum` provides bin integrators that accumulate integrals per cell. In addition to the integrand and range you provide:
 - A *bin accessor*: a callable that, given an `std::array<std::size_t,N>` bin index, returns a reference to the bin value (for reading/writing).
@@ -107,7 +107,7 @@ viltrum::integrate(
 );
 ```
 
-See main/doc/montecarlo-2d.cc for the complete example.
+See [main/doc/montecarlo-2d.cc](../main/doc/montecarlo-2d.cc) for the complete example.
 
 Finally, `viltrum` can handle integrals of effectively "infinite" (unbounded) dimensionality — for example, infinite series or some path-integral formulations. Not all integrators support infinite-dimensional integrands, but Monte Carlo-based integrators do. To use infinite-dimensional integration:
 
@@ -142,7 +142,7 @@ float sol = viltrum::integrate(
 std::cout << "Integral: " << std::setprecision(6) << sol << " should be close to 2.0\n";
 ```
 
-See the full example at main/doc/montecarlo-infd.cc.
+See the full example at [main/doc/montecarlo-infd.cc](../main/doc/montecarlo-infd.cc).
 
 
 ## License
