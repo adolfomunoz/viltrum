@@ -35,6 +35,9 @@ public:
 };
 
 template<typename Norm = NormDefault>
+class cv_optimize_debug_weight; //Forward declaration, we need it for cv_optimize_weight
+
+template<typename Norm = NormDefault>
 class cv_optimize_weight {
     Norm norm;
 public:
@@ -90,11 +93,45 @@ public:
             }
         }
         friend class cv_optimize_weight;
+        friend class cv_optimize_debug_weight<Norm>;
     };
 
     template<typename Sample>
     Accumulator<Sample> accumulator(const Sample& ini = Sample(0)) const {
         return Accumulator<Sample>(norm,ini);
     }
+};
+
+template<typename Norm>
+class cv_optimize_debug_weight {
+    Norm norm;
+public:
+    cv_optimize_debug_weight(const Norm& n = Norm()) : norm(n) {}
+
+    template<typename Sample>
+    class Accumulator {
+    private:
+        typename cv_optimize_weight<Norm>::template Accumulator<Sample> acc;
+        std::size_t size;
+        Accumulator(const Norm& n, const Sample& ini = Sample(0)) : 
+            acc(n,ini), size(0) {}
+    public:
+        void push(const Sample& function_sample, const Sample& approximation_sample) {
+            acc.push(function_sample, approximation_sample);
+            ++size;
+        }
+
+        Sample integral(const Sample& approximation) const {
+            if (size < 2) return Sample(1); //Debugging alpha value. In this case is 1.
+            else return Sample(acc.alpha());
+        }
+
+        friend class cv_optimize_debug_weight;
+    };
+
+    template<typename Sample>
+    Accumulator<Sample> accumulator(const Sample& ini = Sample(0)) const {
+        return Accumulator<Sample>(norm,ini);
+    }    
 };
 } 
