@@ -77,7 +77,13 @@ where `<bin_integrator>` represents the integrator that is applied to each of th
 ```
 integrator_per_bin_parallel(<bin_integrator>)
 ```
-that uses C++17's execution policies. In some compilers (g++) that requires linking [Intel's TBB library](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onetbb.html)
+that uses C++17's execution policies. In some compilers (g++) that requires linking [Intel's TBB library](https://www.intel.com/content/www/us/en/developer/tools/oneapi/onetbb.html). An example of the use of this integrator is the following:
+
+```cpp
+viltrum::integrate(viltrum::integrator_per_bin(viltrum::monte_carlo(20,0)), sol_bins, integrand, range);
+viltrum::integrate(viltrum::integrator_per_bin_parallel(viltrum::monte_carlo(20,0)), sol_bins, integrand_infinite, range_infinite);
+```
+where the first call integrates into a binning structure using a per-bin integrator that applies Monte Carlo with 20 samples and seed 0 to each of the bins, and the second call does the same but parallelizing the exploration of the bins and applying it to an integrand of infinite dimensionality, which can only be done because the inner integrator supports infinite dimensionality. The use of this integrator only makes sense when integrating into a binning structure.
 
 ## Newton-Cotes quadrature rules
 
