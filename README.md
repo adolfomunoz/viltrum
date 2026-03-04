@@ -1,6 +1,6 @@
 # viltrum
 
-VILTRUM: Varied Integration Layouts for arbiTRary integrals in a Unified Manner - A C++17 header-only library that provides a set of numerical integration routines. This library was generated during research for our paper:
+VILTRUM: Varied Integration Layouts for arbiTRary integrals in a Unified Manner — a C++17 header-only library that provides a set of numerical integration routines. This library was developed during research for our paper:
 
 <p align="center">
 
@@ -33,114 +33,121 @@ VILTRUM: Varied Integration Layouts for arbiTRary integrals in a Unified Manner 
 
 ## Installation
 
-`viltrum` is a header-only library and has no external dependencies, so installation is rather simple (it does not require any compilation process). You just need to download the library in a specific folder:
+`viltrum` is a header-only library and has no external dependencies, so installation is simple (no separate compilation required). Clone the repository into a directory accessible from your build system:
 
-```
-folder> git clone https://github.com/adolfomunoz/viltrum.git
+```bash
+git clone https://github.com/adolfomunoz/viltrum.git
 ```
 
-Then make sure `folder` is within the included directories (`-Ifolder` parameter in g++, `include_directories("folder")` in CMake) and 
-include it from C++.
+Then ensure the cloned `viltrum` directory is on your compiler include path (for example `-I/path/to/viltrum` for `g++`, or add it with `target_include_directories()` in CMake). Include the main header in your sources:
 
 ```cpp
 #include <viltrum/viltrum.h>
 ```
 
-That would be enough to use all the features of the library. There are other alternatives that might be more comfortable for you, see them [here](doc/installation.md). There is a CMake-based building system for several example and test executable files that automatically downloads external dependencies and compiles all executables but it is not needed for the libray's usage.
+Other options (git submodule, `ExternalProject_Add`, or CMake `FetchContent`) are described in [doc/installation.md]. The repository also contains a CMake-based build for examples and tests; this is optional and not required to use the header-only library.
 
 ## Usage
 
-Integrating a function in a specific n-dimensional range is rather simple. You need the following information:
-- An *integrator*, a numerical integration method, for which there are [several to choose from](doc/integrators.md).
-- An *integrand*, a function to be integrated. There are [several ways in which such integrand can be defined](doc/integrands.md). The integrand can return any numeric value, or, in general, any data type that supports addition and multiplication by a scalar (tested with [Eigen arrays](https://eigen.tuxfamily.org/dox/group__TutorialArrayClass.html) ).
-- A *range*, the integration domain, that marks the limits of the integration domain, which [can be defined in different ways](doc/ranges.md). The dimensionality of the integration range must match the dimensionality of the integrand, and the numeric data type of the range must match the data type of the parameters.
+Integrating a function over an n-dimensional domain is straightforward. You need:
+- An *integrator*: a numerical integration method (see [integrators](doc/integrators.md)).
+- An *integrand*: the function to integrate (see [integrands](doc/integrands.md)). The integrand may return any numeric type that supports addition and scalar multiplication (we test with [Eigen arrays](https://eigen.tuxfamily.org/dox/group__TutorialArrayClass.html)).
+- A *range*: the integration domain and coordinate type (see [ranges](doc/ranges.md)). The range dimensionality must match the integrand's parameters and the numeric type must match the integrand's coordinate type.
 
 The following example shows all three in action: a Monte-Carlo integrator with 64 samples and a random seed, a 1D integrand defined as a lambda function that calculates the sine of a number in `float`, and a 1D integration range between 0 and pi. 
 
 ```cpp
 float sol = viltrum::integrate(
-    viltrum::monte_carlo(64),  //Numerical integration techinque: Monte-Carlo with 64 samples
-    [] (float x) -> float { return std::sin(x);}, //Function to integrate: sin(x)
-    viltrum::range(0.0f,3.14159265f) //Integration range: from 0 to pi
+  viltrum::monte_carlo(64),                         // Monte Carlo with 64 samples
+  [] (float x) -> float { return std::sin(x); },    // integrand: sin(x)
+  viltrum::range(0.0f, 3.14159265f)                 // range: from 0 to pi
 );
 ```
 
-The return type of the `integrate` function will be the same return type of the integrand (`float` in the example above). The full simple code for this example is [here](main/doc/montecarlo-1d.cc).
+The return type of `viltrum::integrate` is the integrand's return type (`float` in the example). See the full example at [../main/doc/montecarlo-1d.cc].
 
-Alternatively, it is also possible to obtain not only a single integral value, but to obtain integrals in a *regular n-dimensional grid* of cells or *bins*. For this purpose, this library provides *bin integrators*, that is, integrators that are capable of integrating into bins. For using them, in addition to the integrand and range you need:
-- A *bin accesor*, that is, a function that given an *n*-dimensional array (where *n* is the dimensionality of the bin regular structure) of positions (indices of type `std::size_t`) gives read and write access to the binning structure in that specific position.
-- A *resolution*, a *n*-dimensional array of `std::size_t` that gives the resolution of the bin structure for each dimension *n*.
+You can also compute integrals on a regular n-dimensional grid of cells (bins). `viltrum` provides bin integrators that accumulate integrals per cell. In addition to the integrand and range you provide:
+- A *bin accessor*: a callable that, given an `std::array<std::size_t,N>` bin index, returns a reference to the bin value (for reading/writing).
+- A *resolution*: an `std::array<std::size_t,N>` specifying the number of bins along each dimension.
 
 The following example shows how to integrate into a basic array of floats, integrating a 2D integrand into a 1D binning structure. For that, we need to define how to access such array of floats (the *bin accessor*):
 
 ```cpp
-float sol[10]; //We will compute the integral in 10 bins, so we need an array of 10 floats to store the results
-//Bin accesor: access to the binning structure (sol) through the position (pos, the index) in the range. 
-auto sol_access = [&sol] (const std::array<std::size_t,1>& pos) -> float& { return sol[pos[0]]; }; 
-//  The function to integrate is f(x,y) = x^2 + y^2. The parameter is an std::array with the two dimenions but it could also be a bidimensional function with two parameters
+float sol[10]; // store the results for 10 bins
+
+// Bin accessor: returns a reference into the bin array for a given bin index
+auto sol_access = [&sol] (const std::array<std::size_t,1>& pos) -> float& { return sol[pos[0]]; };
+
+// The integrand: f(x,y) = x^2 + y^2 (two-dimensional input)
 auto integrand = [] (const std::array<float,2>& x) -> float { return x[0]*x[0] + x[1]*x[1]; };
-//Integration range: from (0,0) to (1,1). Could also be viltrum::range(0.0f,1.0f,0.0f,1.0f)
-auto range = viltrum::range(std::array<float,2>{0.0f,0.0f}, std::array<float,2>{1.0f,1.0f}); 
+
+// Integration range: from (0,0) to (1,1)
+auto range = viltrum::range(std::array<float,2>{0.0f, 0.0f}, std::array<float,2>{1.0f, 1.0f});
+
 viltrum::integrate(
-    viltrum::monte_carlo(8192),  //Numerical integration techinque: Monte-Carlo with 8192 samples (distributed along the whole integration domain)
-    sol_access,
-    std::array<std::size_t,1>{10}, //Number of bins in each dimension (8 bins in this case) integrand. Dimensionality should be the same than the parameter of the access above
-    integrand,
-    range
+  viltrum::monte_carlo(8192),
+  sol_access,
+  std::array<std::size_t,1>{10}, // resolution (10 bins along the single bin dimension)
+  integrand,
+  range
 );
 ```
 
-The data type of the binning structure (the reference returned by the bin accesor) and the data type returned by the integrand must be the same (or at least, compatible). Also, as above, the data type of each element of the range (`float` in the example above) must be of the same type of every element of the parameter set of the function. 
+The bin value type (the reference returned by the accessor) and the integrand return type must be compatible. The coordinate type of the range must match the integrand's coordinate type.
 
 Some data types, such as `std::vector` have a specific version of the integrate function that automatically establishes the accessor and the resolution:
 
 ```cpp
 std::vector<float> sol_vec(10);
 viltrum::integrate(
-    viltrum::monte_carlo(8192), 
-    sol_vec, //The binning structure can be a vector, so the accessor and the resolution are implicit 
-    integrand,
-    range
+  viltrum::monte_carlo(8192),
+  sol_vec, // vector binning structure: accessor and resolution are implicit
+  integrand,
+  range
 );
 ```
 
-The full code of the examples above is [here](main/doc/montecarlo-2d.cc). 
+See main/doc/montecarlo-2d.cc for the complete example.
 
-Last, it is also possible to deal with integrals of "infinite" (unbounded) dimensionality. Examples of such are an infinite series or the path integral for rendering. Not all integrators are able to deal with integrals of unbounded dimensionality (Monte-Carlo, deals with it perfectly, though). Integrals of unbounded dimensionality are dealt with easily: first, the integration range must be of infinite dimensionality (`range_infinite`). Then, the integrand must have as parameter an "automatic" data type, which is an iterable infinite sequence of numbers (the paramters of the integrand). An example of this is the following:
+Finally, `viltrum` can handle integrals of effectively "infinite" (unbounded) dimensionality — for example, infinite series or some path-integral formulations. Not all integrators support infinite-dimensional integrands, but Monte Carlo-based integrators do. To use infinite-dimensional integration:
+
+- choose an infinite range (e.g. `range_infinite`);
+- write the integrand to accept a sequence-like iterable (an automatically generated sequence of samples).
+
+An example:
 
 ```cpp
-// This integrand is an infinite sum of decaying products, with decaying factor 0.5.
+// This integrand is an infinite sum using a Russian-Roulette termination rule.
 auto integrand = [] (const auto& seq) -> float {
-    auto x = seq.begin(); //The sequence is an infinite sequence of numbers within the integration range, which is generated on the fly by the integrator. We can iterate over it until we want.
-    const float decaying_factor = 0.5f;
-    float sum = 0.0f;
-    float term = 1.0f;  
-    // For each iteration we take two samples:
-    // - the first is Russian Roulette for the component with the decaying factor.
-    // - the second is the value of the component with the decaying factor, which is multiplied by the term and added to the sum.       
-    while ((*x) < decaying_factor) { 
-        ++x; 
-        term *= ((*x)/decaying_factor); 
-        ++x; 
-        sum += term; 
-    }
-    return 2.0f*sum;
+  auto x = seq.begin();
+  const float decaying_factor = 0.5f;
+  float sum = 0.0f;
+  float term = 1.0f;
+  while ((*x) < decaying_factor) {
+    ++x;
+    term *= ((*x) / decaying_factor);
+    ++x;
+    sum += term;
+  }
+  return 2.0f * sum;
 };
+
 float sol = viltrum::integrate(
-    viltrum::monte_carlo(8192),  //Numerical integration techinque: Monte-Carlo with 8192 samples
-    integrand,
-    viltrum::range_infinite<float>(0.0f,1.0f) //Range of infinite dimensionality, all dimensions between 0 and 1
+  viltrum::monte_carlo(8192),
+  integrand,
+  viltrum::range_infinite<float>(0.0f, 1.0f) // infinite-dimensional range (primary domain)
 );
-// The integral of this function is a geometric series with ratio 0.5, so the result should be 2.0f.
-std::cout<<"Integral: "<<std::setprecision(6)<<sol<<" should be close to 2.0\n";
+
+// The integral of this function is a geometric series with ratio 0.5, so the result should be ~2.0f.
+std::cout << "Integral: " << std::setprecision(6) << sol << " should be close to 2.0\n";
 ```
 
-You can find the full example [here](main/doc/montecarlo-infd.cc).
+See the full example at main/doc/montecarlo-infd.cc.
 
 
 ## License
 
-This code is released under the [GPL v3](LICENSE). Additionally, if you are using this code in academic research, we would be grateful if you cited our paper, for which we generated with this source code:
+This code is released under the [GPL v3](LICENSE). If you use this code in academic research, please consider citing our paper:
 
 ```bibtex
 @article{crespo21primary,

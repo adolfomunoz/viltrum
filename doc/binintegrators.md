@@ -1,4 +1,0 @@
-# `viltrum` - Bin integrators
-
-TODO
-
