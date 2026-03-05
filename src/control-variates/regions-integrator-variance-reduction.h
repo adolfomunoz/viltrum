@@ -33,7 +33,10 @@ public:
         using RegRange = std::decay_t<decltype(std::declval<Reg>().range())>;
         constexpr std::size_t DIM = RegRange::size;
         using Float = typename RegRange::value_type;
-        auto [range_first,range_rest] = range_split_at<DIM>(range); 
+        auto ranges = range_split_at<DIM>(range);
+        auto range_first = std::get<0>(ranges); auto range_rest = std::get<1>(ranges);
+        // vv This would be in C++20
+        //auto [range_first,range_rest] = range_split_at<DIM>(range); 
         auto f_regdim = function_split_and_integrate_at<DIM>(f,monte_carlo_per_bin(rng,1),range_rest);
 
         std::array<Float,DIMBINS> drange;

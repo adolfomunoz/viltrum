@@ -16,4 +16,5 @@
 #include "src/control-variates/integrator-adaptive-variance-reduction-optimized.h"
 #include "src/control-variates/integrator-adaptive-fubini-variance-reduction-optimized.h"
 #include "src/control-variates/integrator-crespo2021.h"
+#include "src/control-variates/integrator-adaptive-debug-count-regions.h"
 
