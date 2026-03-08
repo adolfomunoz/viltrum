@@ -77,10 +77,17 @@ public:
         } 
 
         double alpha() const {
+/**  This was before, but the casuistic of zero covariance vs zero variance is not well handled.
             if (size < 2) return 1;
             auto c = std::max(0.0,covariance());
             if (c<=0.0) return 0.0;
             auto v = std::max(c,variance());
+            return c/v;
+**/
+            if (size < 2) return 1;
+            auto v = std::max(0.0,variance());
+            if (v<=0.0) return 1.0;
+            auto c = std::min(v,covariance());
             return c/v;
         } 
 
