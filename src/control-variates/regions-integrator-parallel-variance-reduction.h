@@ -77,9 +77,15 @@ public:
                 Sample approximation(0);
                 for (std::size_t i = 0; i<regions_ranges.size(); ++i) {
                     regions_ranges[i] = std::tuple(perbin[pos][i],binrange.intersection(perbin[pos][i]->range()));
-                    if (!std::get<1>(regions_ranges[i]).empty())   
-                        approximation += double(factor)*std::get<0>(regions_ranges[i])->integral_subrange(std::get<1>(regions_ranges[i]));
-	            }
+                    if (!std::get<1>(regions_ranges[i]).empty()) {// This should not be empty, but we check it just in case   
+                        approximation += double(factor)*std::get<0>(regions_ranges[i])->integral_subrange(std::get<1>(regions_ranges[i]));    
+                    } else { // We leave this code here just in case. We have tested and it has never executed.
+                        std::cerr<<"Empty interection : "<<
+                            std::get<0>(regions_ranges[i])->range().min()<<"-"<<std::get<0>(regions_ranges[i])->range().max()<<
+                            " with "<<binrange.min()<<"-"<<binrange.max()<<
+                            " leads to "<<std::get<1>(regions_ranges[i]).min()<<"-"<<std::get<1>(regions_ranges[i]).max()<<std::endl;
+                    }   
+                }
                 //These are the samples for the residual, accumulated into accumulator
                 auto accumulator = cv.accumulator(Sample(0));
                 auto roulette = rr.russian_roulette(regions_ranges);
