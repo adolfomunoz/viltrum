@@ -80,13 +80,13 @@ public:
         if (std::isnan(size_rest)) add_error_for_rest = 0.0;
 
         auto max_err = region.error(0,error_metric_bins)*bins_weight + 
-            (add_error_for_bins + size_weight)*(region.range().max(0)-region.range().min(0));
+            add_error_for_bins + size_weight*(region.range().max(0)-region.range().min(0));
         std::size_t max_dim = 0;
         auto err = max_err;
 //        std::cerr<<std::setprecision(12)<<std::scientific<<"("<<size_bins<<","<<size_rest<<")  "<<"0 "<<err<<" | ";
 		for (std::size_t d = 1; d<R::dimensions; ++d) {
-            if (d<dimension) err = region.error(d,error_metric_bins)*bins_weight + (add_error_for_bins  + size_weight)*(region.range().max(d)-region.range().min(d));
-            else err = region.error(d,error_metric_rest) + (add_error_for_rest  + size_weight)*(region.range().max(d)-region.range().min(d));
+            if (d<dimension) err = region.error(d,error_metric_bins)*bins_weight + add_error_for_bins  + size_weight*(region.range().max(d)-region.range().min(d));
+            else err = region.error(d,error_metric_rest) + add_error_for_rest  + size_weight*(region.range().max(d)-region.range().min(d));
 //            std::cerr<<d<<" "<<err<<" | ";
 			if (err>=max_err) {
 				max_err = err; max_dim = d;
