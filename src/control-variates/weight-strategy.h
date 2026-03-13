@@ -84,10 +84,10 @@ public:
             auto v = std::max(c,variance());
             return c/v;
 **/
-            if (size < 2) return 1;
+            if (size < 2) return 1.0;
             auto v = std::max(0.0,variance());
             if (v<=0.0) return 1.0;
-            auto c = std::min(v,covariance());
+            auto c = std::min(v,std::max(0.0,covariance()));
             return c/v;
         } 
 
