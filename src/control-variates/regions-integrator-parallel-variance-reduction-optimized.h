@@ -4,7 +4,7 @@
 #include "../range.h"
 #include "mutexed-tensor-vector.h"
 #include "../foreach.h"
-#include "region-russian-roulette.h"
+#include "region-stratification.h"
 #include "weight-strategy.h"
 #include "region-sampling.h"
 #include "../combination/fubini.h"
@@ -52,9 +52,9 @@ auto monte_carlo_function(const F& f, RNG& rng, const Range& range) {
     return MonteCarloFunction<F,RNG,Range>(f,rng,range);
 }
 
-template<typename RR, typename CV, typename RS, typename RNG>
+template<typename Stratification, typename CV, typename RS, typename RNG>
 class RegionsIntegratorParallelVarianceReductionOptimized {
-    RR rr;
+    Stratification stratification;
     CV cv;
     RS region_sampler;
     mutable RNG rng;
@@ -62,11 +62,10 @@ class RegionsIntegratorParallelVarianceReductionOptimized {
     std::size_t nmutexes;
 
 public:
-    RegionsIntegratorParallelVarianceReductionOptimized(RR&& rr, CV&& cv, RS&& rs, RNG&& r, unsigned long s,std::size_t n = 16) 
-        : rr(rr), cv(cv), region_sampler(rs), rng(std::move(r)), samples(s), nmutexes(n) {}
-    RegionsIntegratorParallelVarianceReductionOptimized(RR&& rr, CV&& cv, RS&& rs, RNG& r, unsigned long s,std::size_t n = 16) 
-        : rr(rr), cv(cv), region_sampler(rs), rng(std::size_t(r())), samples(s), nmutexes(n) {}
-
+    RegionsIntegratorParallelVarianceReductionOptimized(Stratification&& stratification, CV&& cv, RS&& rs, RNG&& r, unsigned long s,std::size_t n = 16) 
+        : stratification(stratification), cv(cv), region_sampler(rs), rng(std::move(r)), samples(s), nmutexes(n) {}
+    RegionsIntegratorParallelVarianceReductionOptimized(Stratification&& stratification, CV&& cv, RS&& rs, RNG& r, unsigned long s,std::size_t n = 16) 
+        : stratification(stratification), cv(cv), region_sampler(rs), rng(std::size_t(r())), samples(s), nmutexes(n) {}
 
 	template<typename Bins, std::size_t DIMBINS, typename SeqRegions, typename F, typename IntegrationRange, typename Logger>
 	void integrate_regions(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
@@ -118,19 +117,21 @@ public:
                     regions_ranges[i] = std::tuple(perbin[pos][i],binrange.intersection(perbin[pos][i]->range()));
                     if (!std::get<1>(regions_ranges[i]).empty())   
                         approximation += double(factor)*std::get<0>(regions_ranges[i])->integral_subrange(std::get<1>(regions_ranges[i]));
-	            }
-                //These are the samples for the residual, accumulated into accumulator
+	            
+                }
+                //These are the samples for the residual, accumulated into accumulator and distributed according to the stratification strategy
+                std::vector<unsigned long> samples_per_region = stratification.samples_per_region(samples, regions_ranges, rng);
                 auto accumulator = cv.accumulator(Sample(0));
-                auto roulette = rr.russian_roulette(regions_ranges);
-                for (unsigned long i=0;i<samples;++i) {
-                    auto [chosen,rrfactor] = roulette.choose(rng);
-                    const auto& [r, region_bin_range]  = regions_ranges[chosen];
-                    const auto& [sample, sfactor] = region_sampler.sample(r,region_bin_range,rng); 
+                for (std::size_t i = 0; i<regions_ranges.size(); ++i) {
+                    const auto& [r, region_bin_range]  = regions_ranges[i];
+                    for (unsigned long s = 0; s<samples_per_region[i]; ++s) {
+                        const auto& [sample, sfactor] = region_sampler.sample(r,region_bin_range,rng); 
 
-                    accumulator.push(
-                        f_regdim(sample)*double(factor)*rrfactor*sfactor,
-                        r->approximation_at(sample)*double(factor)*rrfactor*sfactor
-                    );
+                        accumulator.push(
+                            f_regdim(sample)*double(factor)*sfactor*double(samples)/double(samples_per_region[i]),
+                            r->approximation_at(sample)*double(factor)*sfactor*double(samples)/double(samples_per_region[i])
+                        );
+                    }
                 }
                 bins(pos) = accumulator.integral(approximation);    
         };
