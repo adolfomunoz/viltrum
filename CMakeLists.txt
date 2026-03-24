@@ -4,7 +4,6 @@ project(viltrum)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 
 include(Paths) 
-#  include(External)
 include(Compiler)
 
 
@@ -28,6 +27,11 @@ add_executable(test-inverse main/compilation-tests/inverse.cc)
 add_executable(test-region-sample main/compilation-tests/region-sample.cc)
 add_executable(test-region-sample-2d main/compilation-tests/region-sample-2d.cc)
 add_executable(test-region-sample-3d main/compilation-tests/region-sample-3d.cc)
+
+add_executable(crespo21 main/compilation-tests/crespo21.cc)
+target_compile_options(crespo21 PRIVATE -pg)
+target_link_options(crespo21 PRIVATE -pg)
+target_link_libraries(crespo21 PRIVATE TBB::tbb)
 
 ##########
 # FOR DOCUMENTATION
