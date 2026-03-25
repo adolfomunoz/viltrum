@@ -132,7 +132,7 @@ integrator_adaptive_tolerance(<nested>,<error>,<tolerance>)
 
 where:
 - `<nested>` represents a nested quadrature rule, constructed as `nested(<rulehigh>,<rulelow>)` where `<rulehigh>` and `<rulelow>` are the high and low order quadrature rules.
-- `<error>` is a (error heuristic)[error.md], by default (if omitted) being an absolute error metric.
+- `<error>` is a [error heuristic](error.md), by default (if omitted) being an absolute error metric.
 - `<tolerance>` is a real number that defines the tolerance (should be positive). Lower values yield more accuracy but higher computation time. The specific meaning of the tolerance depends on the error metric. By default is 0.001
 
 This is illustrated in the following C++ code:
