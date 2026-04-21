@@ -15,6 +15,8 @@ class RandomSequenceRNG {
 public:
     RandomSequenceRNG(RNG&& r, const RangeInfinite<Number>& ra = RangeInfinite<Number>()) : 
         rng(std::forward<RNG>(r)), range(ra) {}
+    RandomSequenceRNG(const RNG& r, const RangeInfinite<Number>& ra = RangeInfinite<Number>()) : 
+        rng(r), range(ra) {}
 
     class const_iterator {
     private:

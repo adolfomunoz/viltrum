@@ -21,7 +21,6 @@ public:
         RNG& rng;
         const RangeInfinite<Number>& range;
         std::size_t i;
-        std::uniform_real_distribution<Number> dis;
         Number n;
         const_iterator(RNG& r, const RangeInfinite<Number>& ra) :
             rng(r), range(ra), i(0), n(std::uniform_real_distribution<Number>(range.min(i),range.max(i))(rng)) {} 

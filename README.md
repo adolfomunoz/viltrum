@@ -147,7 +147,10 @@ See the full example at [main/doc/montecarlo-infd.cc](../main/doc/montecarlo-inf
 
 ## License
 
-This code is released under the [GPL v3](LICENSE). If you use this code in academic research, please consider citing our paper:
+This code is released under the [GPL v3](LICENSE). This project includes code from [`pcg-cpp`](https://github.com/imneme/pcg-cpp) and [`Xoshiro-cpp`](https://github.com/Reputeless/Xoshiro-cpp), which are licensed under the MIT License. See the respective header files for detail, as well as the [license for `pcg-cpp`](https://github.com/imneme/pcg-cpp/blob/master/LICENSE-MIT.txt) and the [license for `Xoshiro-cpp`](https://github.com/Reputeless/Xoshiro-cpp/blob/master/LICENSE).
+
+
+If you use this code in academic research, please consider citing our paper:
 
 ```bibtex
 @article{crespo21primary,
