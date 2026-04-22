@@ -43,9 +43,9 @@ int main(int argc, char **argv) {
     }
 
     {
-        viltrum::LoggerProgress logger("Xoshiro256PlusPlus");
+        viltrum::LoggerProgress logger("Xoshiro128PlusPlus");
         std::vector<float> sol_bins(nbins,0.0f);
-        viltrum::integrate(viltrum::integrator_per_bin_parallel(viltrum::monte_carlo(XoshiroCpp::Xoshiro256PlusPlus(0), samples)), sol_bins, integrand_infinite, range_infinite, logger);
+        viltrum::integrate(viltrum::integrator_per_bin_parallel(viltrum::monte_carlo(XoshiroCpp::Xoshiro128PlusPlus(0), samples)), sol_bins, integrand_infinite, range_infinite, logger);
         for (float x : sol_bins) std::cout<<x<<" ";
         std::cout<<std::endl;
     }  

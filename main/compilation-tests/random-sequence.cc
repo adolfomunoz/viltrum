@@ -84,10 +84,10 @@ int main(int argc, char** argv) {
     test_sequence<RandomSequenceRef, std::mt19937>("Ref  - mt19937",  range,0, nitems, nseqs);
     test_sequence<RandomSequenceRefDis, std::mt19937>("Dis  - mt19937",  range,0, nitems, nseqs);
     
-    test_sequence<RandomSequenceSeed, XoshiroCpp::Xoshiro256PlusPlus>("Seed - xoshi. ", range, 0, nitems, nseqs);
-    test_sequence<RandomSequenceRNG, XoshiroCpp::Xoshiro256PlusPlus>("RNG  - xoshi. ", range, 0, nitems, nseqs);
-    test_sequence<RandomSequenceRef, XoshiroCpp::Xoshiro256PlusPlus>("Ref  - xoshi. ", range, 0, nitems, nseqs);
-    test_sequence<RandomSequenceRefDis, XoshiroCpp::Xoshiro256PlusPlus>("Dis  - xoshi. ", range, 0, nitems, nseqs);
+    test_sequence<RandomSequenceSeed, XoshiroCpp::Xoshiro128PlusPlus>("Seed - xoshi. ", range, 0, nitems, nseqs);
+    test_sequence<RandomSequenceRNG, XoshiroCpp::Xoshiro128PlusPlus>("RNG  - xoshi. ", range, 0, nitems, nseqs);
+    test_sequence<RandomSequenceRef, XoshiroCpp::Xoshiro128PlusPlus>("Ref  - xoshi. ", range, 0, nitems, nseqs);
+    test_sequence<RandomSequenceRefDis, XoshiroCpp::Xoshiro128PlusPlus>("Dis  - xoshi. ", range, 0, nitems, nseqs);
 
     test_sequence<RandomSequenceSeed, pcg32>("Seed - pcg32   ", range, 0, nitems, nseqs);
     test_sequence<RandomSequenceRNG, pcg32>("RNG  - pcg32   ", range, 0, nitems, nseqs);
