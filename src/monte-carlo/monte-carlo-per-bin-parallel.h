@@ -73,8 +73,9 @@ public:
 	template<typename Bins, std::size_t DIMBINS, typename F, typename Float, typename Logger>
 	void integrate(Bins& bins, const std::array<std::size_t,DIMBINS>& bin_resolution,
 		const F& f, const RangeInfinite<Float>& range, Logger& logger) const {
-        std::size_t resolution_factor(1);   
-        for (std::size_t i = 0; i < DIMBINS; ++i) resolution_factor*=bin_resolution[i];
+//  In this case, resolution_factor is unused. We comment this to avoid the warning.
+//        std::size_t resolution_factor(1);   
+//        for (std::size_t i = 0; i < DIMBINS; ++i) resolution_factor*=bin_resolution[i];
         double factor = range.volume()/double(samples);
         std::array<Float,DIMBINS> drange;
         for (std::size_t i=0;i<DIMBINS;++i) drange[i] = (range.max(i) - range.min(i))/((Float)(bin_resolution[i]));

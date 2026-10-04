@@ -30,8 +30,9 @@ public:
 
         std::array<Float,DIMBINS> drange;
         for (std::size_t i=0;i<DIMBINS;++i) drange[i] = (range.max(i) - range.min(i))/Float(bin_resolution[i]);
-        std::size_t factor = 1;
-        for (std::size_t i=0;i<DIMBINS;++i) factor*=bin_resolution[i];
+//  We comment this because it is unused when debugging and it generates a warning.
+//        std::size_t factor = 1;
+//        for (std::size_t i=0;i<DIMBINS;++i) factor*=bin_resolution[i];
         std::size_t progress = 0; std::size_t final_progress = seq_regions.size();
         auto logger_bins = logger_step(logger, "region counting");
         logger_bins.log_progress(progress,final_progress);
