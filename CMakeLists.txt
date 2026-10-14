@@ -32,6 +32,8 @@ add_executable(test-region-sample-3d main/compilation-tests/region-sample-3d.cc)
 target_link_libraries(test-region-sample-3d PRIVATE TBB::tbb)
 add_executable(montecarlo-rng main/compilation-tests/montecarlo-rng.cc)
 target_link_libraries(montecarlo-rng PRIVATE TBB::tbb)
+add_executable(test-priorityqueues main/compilation-tests/priorityqueues.cc)
+target_link_libraries(test-priorityqueues PRIVATE TBB::tbb)
 
 
 add_executable(crespo21 main/compilation-tests/crespo21.cc)

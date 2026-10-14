@@ -13,7 +13,7 @@ int main() {
         else return 0.0;
     };
 
-    //With floats, due to numerica stability, for a very large number of samples, monte_carlo fails to converge?
+    //With floats, due to numerical stability, for a very large number of samples, monte_carlo fails to converge?
     {
         LoggerProgress logger("Simple");
         std::cout<<integrate(monte_carlo(samples*bins),f,range_primary<2>(),logger)<<std::endl;  
