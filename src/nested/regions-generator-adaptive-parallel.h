@@ -42,7 +42,28 @@ struct Comparator {
     }
 };
 
-template<typename Rule, typename ErrorHeuristic,
+namespace heap {
+    struct multiqueue {
+        template<typename T, typename Comparator>
+        static auto make(const Comparator& comp) {
+           unsigned int num_threads = std::thread::hardware_concurrency();
+           if (num_threads == 0) num_threads = 2;   
+           return Multiqueue<T, Comparator>(4 * num_threads, 2, comp);
+        }
+    };
+    struct lockedpriorityqueue {
+        template<typename T, typename Comparator>
+        static auto make(const Comparator& comp) {
+            return LockedPriorityQueue<T, Comparator>(comp);
+        }
+    };
+    // I am not adding the skip list because our experiments show that
+    // there is a small chance of deadlock, and it actually
+    // performs worse than the multiqueue in our experiments.
+}
+
+
+template<typename Rule, typename ErrorHeuristic, typename Structure = heap::multiqueue,
          typename = std::enable_if_t<is_nested<Rule>::value>>
 class RegionsGeneratorAdaptiveParallel {
     Rule rule;
@@ -64,7 +85,7 @@ public:
         unsigned int num_threads = std::thread::hardware_concurrency();
         if (num_threads == 0) num_threads = 2;
 
-        Multiqueue<ERegion, Comparator> mq(4 * num_threads, 2, Comparator());
+        auto mq = Structure::template make<ERegion>(Comparator());
         mq.push(ERegion(r_init, errdim_init));
 
         std::atomic<std::size_t> completed{0};
@@ -97,7 +118,7 @@ public:
                     mq.push(ERegion(sr, error_heuristic(sr)));
 
                 // Only worker 0 logs, so the logger is never called concurrently.
-                if (worker == 0)
+                if ((worker == 0) && (completed.load(std::memory_order_relaxed) < subdivisions))
                     logger.log_progress(std::min(completed.load(std::memory_order_relaxed), subdivisions), subdivisions);
             }
         });
@@ -110,10 +131,16 @@ public:
     }
 };
 
+template<typename Rule, typename ErrorHeuristic, typename Structure>
+auto regions_generator_adaptive_parallel(const Rule& r, const ErrorHeuristic& er, const Structure& structure,
+                                           std::size_t subdivisions) {
+    return RegionsGeneratorAdaptiveParallel<Rule, ErrorHeuristic,Structure>(r, er, subdivisions);
+}
+
 template<typename Rule, typename ErrorHeuristic>
 auto regions_generator_adaptive_parallel(const Rule& r, const ErrorHeuristic& er,
                                            std::size_t subdivisions) {
-    return RegionsGeneratorAdaptiveParallel<Rule, ErrorHeuristic>(r, er, subdivisions);
+    return RegionsGeneratorAdaptiveParallel<Rule, ErrorHeuristic,heap::multiqueue>(r, er, subdivisions);
 }
 
 }

@@ -20,6 +20,23 @@ auto integrator_adaptive_iterations_parallel(const R& rule, const EH& error_heur
     return integrator_region_based(regions_generator_adaptive_parallel(rule,error_heuristic,iterations),regions_integrator_parallel_regions(nmutexes));
 }
 
+template<typename R, typename EH, typename Structure>
+auto integrator_adaptive_iterations_parallel(const R& rule, const EH& error_heuristic, const Structure& structure,std::size_t iterations, std::size_t nmutexes=16) {
+    return integrator_region_based(regions_generator_adaptive_parallel(rule,error_heuristic,structure,iterations),regions_integrator_parallel_regions(nmutexes));
+}
+
+template<typename R, typename EH>
+auto integrator_adaptive_iterations_parallel_bins(const R& rule, const EH& error_heuristic, std::size_t iterations) {
+    return integrator_region_based(regions_generator_adaptive_parallel(rule,error_heuristic,iterations),regions_integrator_parallel_bins());
+}
+
+template<typename R, typename EH, typename Structure>
+auto integrator_adaptive_iterations_parallel_bins(const R& rule, const EH& error_heuristic, const Structure& structure,std::size_t iterations) {
+    return integrator_region_based(regions_generator_adaptive_parallel(rule,error_heuristic,structure,iterations),regions_integrator_parallel_bins());
+}
+
+
+
 template<typename Rule>
 auto integrator_adaptive_iterations(const Rule& rule, std::size_t iterations) {
     return integrator_adaptive_iterations(rule,error_heuristic_default(error_metric_absolute()),iterations);

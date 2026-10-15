@@ -50,6 +50,7 @@ public:
                 std::this_thread::sleep_for(std::chrono::milliseconds(250));
             } 
         });*/
+        logger.log_progress(0ul,final_progress);
         std::for_each(std::execution::par_unseq, seq_regions.begin(),seq_regions.end(),[&] (const auto& r) {
 //            progress++;
             for (auto pos: pixels_in_region(r,bin_resolution,range)) {
