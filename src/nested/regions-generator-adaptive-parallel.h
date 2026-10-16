@@ -43,6 +43,7 @@ struct Comparator {
 };
 
 namespace heap {
+    struct sequential {}; //This is not used here, this is for use on the integrator_adaptive_iterations_parallel function, which is not used in this file.
     struct multiqueue {
         template<typename T, typename Comparator>
         static auto make(const Comparator& comp) {

@@ -48,6 +48,8 @@ int main(int argc, char** argv) {
 
     auto error_heuristic = error_heuristic_default(error_metric_absolute());
 
+    std::cout<<"Integration of a 2D function with adaptive iterations, bins="<<bins<<", iterations="<<iterations<<std::endl;
+
     test("Sequential                       ",
         integrator_adaptive_iterations(nested(simpson,trapezoidal),error_heuristic, iterations),
         f,bins);
