@@ -50,6 +50,10 @@ int main(int argc, char** argv) {
 
     std::cout<<"Integration of a 2D function with adaptive iterations, bins="<<bins<<", iterations="<<iterations<<std::endl;
 
+    test("Minimal Monte Carlo",
+        monte_carlo_per_bin(std::mt19937(1234),iterations*6/bins),
+        f,bins);
+
     test("Sequential                       ",
         integrator_adaptive_iterations(nested(simpson,trapezoidal),error_heuristic, iterations),
         f,bins);

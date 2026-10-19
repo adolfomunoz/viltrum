@@ -36,6 +36,8 @@ add_executable(test-priorityqueues main/compilation-tests/priorityqueues.cc)
 target_link_libraries(test-priorityqueues PRIVATE TBB::tbb)
 add_executable(test-adaptive-iterations main/compilation-tests/adaptive-iterations.cc)
 target_link_libraries(test-adaptive-iterations PRIVATE TBB::tbb)
+add_executable(test-adaptive-control-variates main/compilation-tests/adaptive-control-variates.cc)
+target_link_libraries(test-adaptive-control-variates PRIVATE TBB::tbb)
 
 
 add_executable(crespo21 main/compilation-tests/crespo21.cc)

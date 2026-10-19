@@ -455,11 +455,30 @@ template<typename Float, std::size_t DIM, std::size_t DIMBINS, typename R>
 auto pixels_in_region(const R& r, const std::array<std::size_t,DIMBINS>& bin_resolution, const Range<Float,DIM>& range) {
 	std::array<std::size_t,DIMBINS> start_bin, end_bin;
     for (std::size_t i = 0; i<DIMBINS;++i) {
+        // Clamp in floating point: the region may lie partly or fully outside 'range' (e.g. when 'range' is a single bin),
+        // and converting a negative or too large float to size_t is undefined.
+        const Float res(bin_resolution[i]);
+        const Float inv = res/(range.max(i) - range.min(i));
+        start_bin[i] = std::size_t(std::clamp(inv*(r.range().min(i) - range.min(i)), Float(0), res - Float(1)));
+        end_bin[i]   = std::max(start_bin[i]+1,
+                    std::size_t(std::clamp(Float(0.99f) + inv*(r.range().max(i) - range.min(i)), Float(0), res)));
+    }
+	return multidimensional_range(start_bin,end_bin);
+}
+
+// Old version of pixels_in_region, kept for reference. The new version above is more robust to out-of-range regions
+//  but I am afrad it has not been tested as thoroughly.
+/*
+template<typename Float, std::size_t DIM, std::size_t DIMBINS, typename R>
+auto pixels_in_region(const R& r, const std::array<std::size_t,DIMBINS>& bin_resolution, const Range<Float,DIM>& range) {
+	std::array<std::size_t,DIMBINS> start_bin, end_bin;
+    for (std::size_t i = 0; i<DIMBINS;++i) {
         start_bin[i] = std::max(std::size_t(0),std::size_t(Float(bin_resolution[i])*(r.range().min(i) - range.min(i))/(range.max(i) - range.min(i))));
         end_bin[i]   = std::max(start_bin[i]+1,std::min(bin_resolution[i],std::size_t(0.99f + 
                     (Float(bin_resolution[i])*(r.range().max(i) - range.min(i))/(range.max(i) - range.min(i))))));
     }
 	return multidimensional_range(start_bin,end_bin);
 }
+*/
 
 }

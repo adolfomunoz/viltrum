@@ -80,7 +80,7 @@ public:
                     if (!std::get<1>(regions_ranges[i]).empty()) {// This should not be empty, but we check it just in case   
                         approximation += double(factor)*std::get<0>(regions_ranges[i])->integral_subrange(std::get<1>(regions_ranges[i]));    
                     } else { // We leave this code here just in case. We have tested and it has never executed.
-                        std::cerr<<"Empty interection : "<<
+                        std::cerr<<"Empty intersection : "<<
                             std::get<0>(regions_ranges[i])->range().min()<<"-"<<std::get<0>(regions_ranges[i])->range().max()<<
                             " with "<<binrange.min()<<"-"<<binrange.max()<<
                             " leads to "<<std::get<1>(regions_ranges[i]).min()<<"-"<<std::get<1>(regions_ranges[i]).max()<<std::endl;

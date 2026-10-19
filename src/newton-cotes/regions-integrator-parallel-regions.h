@@ -1,29 +1,13 @@
 #pragma once
 #include <vector>
-#include <mutex>
+#include <array>
+#include <algorithm>
 #include "../range.h"
+#include "mutexed-bins.h"
 
 namespace viltrum {
 
-template<typename Bins, std::size_t DIMBINS>
-class MutexedBins {
-    Bins& bins;
-    std::array<std::size_t,DIMBINS> bin_resolution;
-    std::vector<std::mutex> mutexes;
-    using value_type = std::decay_t<decltype(bins(std::array<std::size_t,DIMBINS>{}))>;
-    constexpr std::size_t hash_of(const std::array<std::size_t,DIMBINS>& index) {
-        std::size_t sum{0}, prod{1};
-        for (std::size_t i = 0; i<DIMBINS; ++i) { sum+=prod*index[i]; prod*=bin_resolution[i]; }
-        return sum % mutexes.size();
-    }
-public:
-    MutexedBins(Bins& b, const std::array<std::size_t,DIMBINS>& br,std::size_t nmutexes) : 
-        bins(b),bin_resolution(br),mutexes(nmutexes) {}
-    void add(const std::array<std::size_t,DIMBINS>& i,const value_type& v) {
-        std::scoped_lock lock(mutexes[hash_of(i)]);
-        bins(i) += v;
-    }
-};
+
 
 /**
  * @brief This integrator is not intended to be directly used by the user. Is a particular piece
@@ -50,7 +34,7 @@ public:
                 std::this_thread::sleep_for(std::chrono::milliseconds(250));
             } 
         });*/
-        logger.log_progress(0ul,final_progress);
+        logger.log_progress(std::size_t(0),final_progress);
         std::for_each(std::execution::par_unseq, seq_regions.begin(),seq_regions.end(),[&] (const auto& r) {
 //            progress++;
             for (auto pos: pixels_in_region(r,bin_resolution,range)) {
