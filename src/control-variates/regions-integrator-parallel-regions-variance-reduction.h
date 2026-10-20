@@ -1,6 +1,9 @@
 #pragma once
 #include <vector>
 #include <mutex>
+#include <atomic>
+#include <thread>
+#include <chrono>
 #include "../range.h"
 #include "../newton-cotes/mutexed-bins.h"
 #include "../foreach.h"
@@ -53,31 +56,33 @@ public:
         for (std::size_t i=0;i<DIMBINS;++i) factor*=bin_resolution[i];
         unsigned long total_samples = samples*factor; //Total samples is the number of samples per bin times the number of bins
         //We should double check that there is no overflow in the multiplication above, but it should be ok for now.
+        
         auto samples_per_region = stratification.samples_per_region(total_samples, seq_regions, rng);
 
         //We index the regions so we can access all their information in parallel
         std::vector<std::size_t> region_index(seq_regions.size());
         std::iota(region_index.begin(),region_index.end(),0);
 
-        //std::atomic<std::size_t> progress = 0; 
+        std::atomic<std::size_t> progress{0};
         std::size_t final_progress = seq_regions.size();
         MutexedBins<Bins,DIMBINS> mutexedbins(bins,bin_resolution,nmutexes);
-/*        std::thread for_log([&logger,&progress,final_progress] () {
-             while (std::size_t(progress)<final_progress) {
-                logger.log_progress(std::size_t(progress),final_progress);
-                std::this_thread::sleep_for(std::chrono::milliseconds(250));
-            } 
-        });*/
-
 
         logger.log_progress(std::size_t(0),final_progress);
-        std::for_each(std::execution::par_unseq, region_index.begin(),region_index.end(),
+        // Only this thread calls the logger; workers just bump a relaxed counter.
+        std::atomic<bool> done{false};
+        std::thread for_log([&] () {
+            while (!done.load(std::memory_order_relaxed)) {
+                logger.log_progress(progress.load(std::memory_order_relaxed),final_progress);
+                std::this_thread::sleep_for(std::chrono::milliseconds(250));
+            }
+        });
+        //We parallelize the regions using "par" because "par_unseq" does not allow for mutexes inside.
+        std::for_each(std::execution::par, region_index.begin(),region_index.end(),
             [&] (const std::size_t& i) {
                 const auto& r = seq_regions[i];
                 auto& rng = rngs[i];
                 unsigned long samples = samples_per_region[i];
 
-    //            progress++;
                 for (auto pos: pixels_in_region(r,bin_resolution,range_first)) {
                     Range<Float,DIM> binrange = r.range();
                     for (std::size_t i=0;i<DIMBINS;++i)
@@ -97,6 +102,9 @@ public:
                         std::array<std::size_t,DIMBINS> pos;
                         for (std::size_t i=0;i<DIMBINS;++i) {
                             pos[i] = std::size_t(bin_resolution[i]*(sample[i] - range.min(i))/(range.max(i) - range.min(i)));
+                            if (pos[i]>=bin_resolution[i]) { //This happens very few times, when the sample gets to exactly 1
+                                pos[i] = bin_resolution[i]-1; 
+                            }
                         }
 
                         mutexedbins.add(pos,
@@ -107,10 +115,12 @@ public:
                         std::cerr<<"Sample outside range: "<<sample<<" in "<<r.range().min()<<"-"<<r.range().max()<<std::endl;
                     }
                 }
+                progress.fetch_add(1,std::memory_order_relaxed);
             }
         );
         
-//        for_log.join();  
+        done.store(true,std::memory_order_relaxed);
+        for_log.join();
         logger.log_progress(final_progress,final_progress);
     }
 };

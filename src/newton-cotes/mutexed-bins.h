@@ -23,6 +23,14 @@ public:
         std::scoped_lock lock(mutexes[hash_of(i)]);
         bins(i) += v;
     }
+    // This is a template version of the add function that allows adding values of different types to the bins if 
+    // the V can be added to bins' value_type. This is useful for cases where the bins are of a certain type (e.g., double)
+    // but we add another type (e.g., float) that can be implicitly converted to the bins' value_type.
+    template<typename V>
+    void add(const std::array<std::size_t,DIMBINS>& i,const V& v) {
+        std::scoped_lock lock(mutexes[hash_of(i)]);
+        bins(i) += v;
+    }
 };
 
 }
