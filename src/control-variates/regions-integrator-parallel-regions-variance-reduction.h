@@ -5,7 +5,7 @@
 #include <thread>
 #include <chrono>
 #include "../range.h"
-#include "../newton-cotes/mutexed-bins.h"
+#include "../newton-cotes/mutexed-bins-aligned.h"
 #include "../foreach.h"
 #include "region-stratification.h"
 #include "region-sampling.h"
@@ -65,7 +65,7 @@ public:
 
         std::atomic<std::size_t> progress{0};
         std::size_t final_progress = seq_regions.size();
-        MutexedBins<Bins,DIMBINS> mutexedbins(bins,bin_resolution,nmutexes);
+        MutexedBinsAligned<Bins,DIMBINS> mutexedbins(bins,bin_resolution,nmutexes);
 
         logger.log_progress(std::size_t(0),final_progress);
         // Only this thread calls the logger; workers just bump a relaxed counter.
@@ -137,7 +137,7 @@ public:
  */
 template<typename Stratification, typename RS, typename RNG>
 auto regions_integrator_parallel_regions_variance_reduction(
-    Stratification&& stratification, RS&& rs, RNG&& rng, unsigned long samples_per_bin, double alpha = 1.0, std::size_t nmutexes = 16, std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
+    Stratification&& stratification, RS&& rs, RNG&& rng, unsigned long samples_per_bin, double alpha = 1.0, std::size_t nmutexes = 1024, std::enable_if_t<!std::is_integral_v<RNG>,int> dummy = 0) {
     return RegionsIntegratorParallelRegionsVarianceReduction<
         std::decay_t<Stratification>, std::decay_t<RS>, std::decay_t<RNG>>(
             std::forward<Stratification>(stratification),
@@ -150,7 +150,7 @@ auto regions_integrator_parallel_regions_variance_reduction(
 
 template<typename Stratification, typename RS>
 auto regions_integrator_parallel_regions_variance_reduction(
-    Stratification&& stratification, RS&& rs, unsigned long samples_per_bin, std::size_t seed = std::random_device()(), double alpha = 1.0, std::size_t nmutexes = 16) {
+    Stratification&& stratification, RS&& rs, unsigned long samples_per_bin, std::size_t seed = std::random_device()(), double alpha = 1.0, std::size_t nmutexes = 1024) {
     return regions_integrator_parallel_regions_variance_reduction(
         std::forward<Stratification>(stratification),
         std::forward<RS>(rs),

@@ -3,7 +3,7 @@
 #include <array>
 #include <algorithm>
 #include "../range.h"
-#include "mutexed-bins.h"
+#include "mutexed-bins-aligned.h"
 
 namespace viltrum {
 
@@ -27,7 +27,7 @@ public:
         for (std::size_t i=0;i<DIMBINS;++i) factor*=bin_resolution[i];
         //std::atomic<std::size_t> progress = 0; 
         std::size_t final_progress = seq_regions.size();
-        MutexedBins<Bins,DIMBINS> mutexedbins(bins,bin_resolution,nmutexes);
+        MutexedBinsAligned<Bins,DIMBINS> mutexedbins(bins,bin_resolution,nmutexes);
 /*        std::thread for_log([&logger,&progress,final_progress] () {
              while (std::size_t(progress)<final_progress) {
                 logger.log_progress(std::size_t(progress),final_progress);
@@ -35,7 +35,7 @@ public:
             } 
         });*/
         logger.log_progress(std::size_t(0),final_progress);
-        std::for_each(std::execution::par_unseq, seq_regions.begin(),seq_regions.end(),[&] (const auto& r) {
+        std::for_each(std::execution::par, seq_regions.begin(),seq_regions.end(),[&] (const auto& r) {
 //            progress++;
             for (auto pos: pixels_in_region(r,bin_resolution,range)) {
                 Range<Float,DIM> binrange = range;
