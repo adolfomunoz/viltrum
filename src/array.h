@@ -41,16 +41,16 @@ auto insert(const std::array<T,N>& a, const T& t, std::size_t at) noexcept -> st
 	return s;
 }
 
-template<std::size_t NNEW, std::size_t N>
-std::array<float,NNEW> resize(const std::array<float,N>& a) {
-    std::array<float,NNEW> s;
+template<std::size_t NNEW, typename T, std::size_t N>
+std::array<T,NNEW> resize(const std::array<T,N>& a) {
+    std::array<T,NNEW> s;
     for (std::size_t i = 0; i<NNEW; ++i) s[i] = a[std::min(i,N-1)];
     return s;
 } 
 
-template<std::size_t N>
-std::array<float,N-1> pop(const std::array<float,N>& a) {
-    std::array<float,N-1> s;
+template<typename T, std::size_t N>
+std::array<T,N-1> pop(const std::array<T,N>& a) {
+    std::array<T,N-1> s;
 	std::copy(a.begin()+1,a.end(),s.begin());
     return s;
 } 

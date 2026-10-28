@@ -95,7 +95,7 @@ private:
 	auto app_at(const MA& ma, const std::array<Float,DIMSUB>& pos, 
 			std::enable_if_t<MA::dimensions >= ((DIM-DIMSUB)+2)>* p = nullptr) const {
 		return app_at(ma.fold([&] (const auto& v) 
-				{ return quadrature.at(pos[DIMSUB - MA::dimensions],v); }),pos);
+				{ return quadrature.at(pos[DIM - MA::dimensions],v); }),pos);
 	}
 
 public:
@@ -127,7 +127,7 @@ private:
 			const std::array<Float,DIMSUB>& a, const std::array<Float,DIMSUB>& b, 
 			std::enable_if_t<MA::dimensions >= ((DIM-DIMSUB)+2)>* p = nullptr) const {
 		return sub_first(ma.fold([&] (const auto& v) 
-			{ return quadrature.subrange(a[DIMSUB - MA::dimensions], b[DIMSUB- MA::dimensions],v);}),a,b);
+			{ return quadrature.subrange(a[DIM - MA::dimensions], b[DIM - MA::dimensions],v);}),a,b);
 	}
 public:
 	template<std::size_t DIMSUB>
