@@ -1,5 +1,7 @@
 #pragma once
 #include <vector>
+#include <cstdint>
+#include <cassert>
 #include <mutex>
 #include <atomic>
 #include <thread>
@@ -26,6 +28,14 @@ class RegionsIntegratorParallelRegionsVarianceReduction {
     unsigned long samples;
     double alpha; //Weight between CV and residual. 0 means only CV, 1 means only residual.
     std::size_t nmutexes;
+
+    // SplitMix64 finalizer applied to (seed, index): a cheap, well-mixed, deterministic per-region seed.
+    static std::uint64_t hash_seed(std::uint64_t seed, std::uint64_t index) {
+        std::uint64_t z = seed + (index + 1) * 0x9E3779B97F4A7C15ull;
+        z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ull;
+        z = (z ^ (z >> 27)) * 0x94D049BB133111EBull;
+        return z ^ (z >> 31);
+    }
 public:
 
     RegionsIntegratorParallelRegionsVarianceReduction(Stratification&& stratification, RS&& rs, RNG&& r, unsigned long s, double a = 1.0, std::size_t n = 16) 
@@ -45,10 +55,12 @@ public:
         auto range_first = std::get<0>(ranges); auto range_rest = std::get<1>(ranges);
 
         //Random number generators for each region, so the seed makes this predictable.
-        std::vector<RNG> rngs(seq_regions.size());
-        std::for_each(std::execution::seq, rngs.begin(),rngs.end(), 
-            [&] (RNG& r) { r.seed(std::size_t(rng())); }
-        );
+
+
+        //Instead of creating a new random number per region, we hash a seed for each
+        // region lazily, when needed. This avods so many seeds and the associated memory
+        // storage.
+        std::size_t rng_seed = std::size_t(rng());
 
         std::array<Float,DIMBINS> drange;
         for (std::size_t i=0;i<DIMBINS;++i) drange[i] = (range.max(i) - range.min(i))/Float(bin_resolution[i]);
@@ -80,7 +92,6 @@ public:
         std::for_each(std::execution::par, region_index.begin(),region_index.end(),
             [&] (const std::size_t& i) {
                 const auto& r = seq_regions[i];
-                auto& rng = rngs[i];
                 unsigned long samples = samples_per_region[i];
 
                 for (auto pos: pixels_in_region(r,bin_resolution,range_first)) {
@@ -93,12 +104,15 @@ public:
                 }
                 
                 //Now we sample the residual, and distribute the samples according to the stratification strategy
-                auto f_regdim = function_split_and_integrate_at<DIM>(f,monte_carlo_per_bin(rng,1),range_rest);
-                double region_factor = double(factor)/double(samples);
+                if (samples > 0) { 
+                    // The RNG must be declared before f_regdim, which keeps a reference to it
+                    RNG rng(static_cast<typename RNG::result_type>(hash_seed(rng_seed,i)));
+                    auto f_regdim = function_split_and_integrate_at<DIM>(f,monte_carlo_per_bin(rng,1),range_rest);
+                    double region_factor = double(factor)/double(samples);
 
-                for (unsigned long s = 0; s<samples; ++s) {
-                    const auto& [sample, sfactor] = region_sampler.sample(&r,r.range(),rng);
-                    if (r.range().is_inside(sample)) {
+                    for (unsigned long s = 0; s<samples; ++s) {
+                        const auto& [sample, sfactor] = region_sampler.sample(&r,r.range(),rng);
+                        assert(r.range().is_inside(sample));
                         std::array<std::size_t,DIMBINS> pos;
                         for (std::size_t i=0;i<DIMBINS;++i) {
                             pos[i] = std::size_t(bin_resolution[i]*(sample[i] - range.min(i))/(range.max(i) - range.min(i)));
@@ -110,10 +124,8 @@ public:
                         mutexedbins.add(pos,
                             region_factor*sfactor*
                                 (f_regdim(sample) - alpha*r.approximation_at(sample))
-                        );
-                    } else { //This should not happen, but we check it just in case
-                        std::cerr<<"Sample outside range: "<<sample<<" in "<<r.range().min()<<"-"<<r.range().max()<<std::endl;
-                    }
+                            );
+                    } 
                 }
                 progress.fetch_add(1,std::memory_order_relaxed);
             }
