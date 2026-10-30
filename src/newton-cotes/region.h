@@ -78,6 +78,9 @@ public:
 	}
 
     const Q& quadrature_rule() const { return quadrature; }
+
+	//Values of the function at the Q::samples^DIM equispaced points of the region 
+	const multiarray<value_type,Q::samples,DIM>& samples() const { return data; }
 	
 	value_type integral() const { return range().volume()*data.fold_all(quadrature); }
 	

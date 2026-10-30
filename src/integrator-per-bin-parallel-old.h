@@ -2,6 +2,7 @@
 #include "range.h"
 #include "multidimensional-range.h"
 #include "integrate.h"
+#include "progress-logger.h"
 #include <thread>
 #include <atomic>
 #include <vector>
@@ -26,17 +27,11 @@ public:
         for (std::size_t i=0;i<DIMBINS;++i) drange[i] = (range.max(i) - range.min(i))/((typename R::value_type)(bin_resolution[i]));
 
         std::size_t ntasks = bin_resolution[0]; 
-        std::vector<std::size_t> idxs(bin_resolution[0]), done(bin_resolution[0],0);
+        std::vector<std::size_t> idxs(bin_resolution[0]);
+        std::atomic<std::size_t> done{0}; //Completed tasks
         std::iota(idxs.begin(), idxs.end(), 0);
 //        std::atomic<std::size_t> i = 0;
-        std::thread for_log([&done,ntasks,&logger] () {
-            std::size_t i = 0;
-            while (i<ntasks) {
-                logger.log_progress(std::size_t(i),ntasks);
-                std::this_thread::sleep_for(std::chrono::milliseconds(250));
-                i = std::accumulate(done.begin(),done.end(),0);
-            } 
-        });
+        auto for_log = progress_logger(logger,ntasks,[&done] () { return done.load(std::memory_order_relaxed); });
         if constexpr (DIMBINS > 1) {
             std::array<std::size_t,DIMBINS-1> task_dims;
             for (std::size_t s = 1;s<DIMBINS;++s)
@@ -51,7 +46,7 @@ public:
                             subrange = subrange.subrange_dimension(n,range.min(n)+pos[n-1]*drange[n],range.min(n)+(pos[n-1]+1)*drange[n]);
                         bins(d|pos) = double(factor)*viltrum::integrate(bin_integrator,f,subrange);
                     }
-                    ++done[d];         
+                    done.fetch_add(1,std::memory_order_relaxed);
                 });  
         } else {
             std::for_each(std::execution::par_unseq,
@@ -60,11 +55,10 @@ public:
                     R subrange = range;
                     subrange=range.subrange_dimension(0,range.min(0)+d*drange[0],range.min(0)+(d+1)*drange[0]);
                     bins(std::array<std::size_t,1>{d}) = double(factor)*viltrum::integrate(bin_integrator,f,subrange);
-                    ++done[d];         
+                    done.fetch_add(1,std::memory_order_relaxed);
                 });  
         } 
-        for_log.join();  
-        logger.log_progress(factor,factor);
+        for_log.finish();
 	}
 
     IntegratorPerBinParallel(Integrator&& pi) : 

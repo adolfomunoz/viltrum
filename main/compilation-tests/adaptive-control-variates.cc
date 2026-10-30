@@ -31,8 +31,8 @@ void test(const std::string& name, const Integrator& integrator, const Function&
     LoggerProgress logger(name);
     std::vector<float> sol(bins,0.0f);
     integrate(integrator,sol,f,range_primary_infinite<float>(),logger);
-    for (float v : sol) std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
-    std::cout<<std::endl;
+//    for (float v : sol) std::cout<<std::fixed<<std::setprecision(2)<<std::setw(4)<<v<<" ";
+//    std::cout<<std::endl;
 }
 
 
@@ -53,6 +53,7 @@ int main(int argc, char **argv) {
         else if (arg == "--seed") { seed = std::stoul(argv[++i]); }
     }
 
+    std::cout<<"Running adaptive control variates test with parameters: bins="<<bins<<", iterations="<<iterations<<", mc_samples="<<mc_samples<<", spp_residual="<<spp_residual<<", seed="<<seed<<"\n";
     test("Simple Monte Carlo",
         monte_carlo_per_bin(std::mt19937(seed),mc_samples*spp_residual),
         integrand_infinite,bins);
@@ -78,7 +79,18 @@ int main(int argc, char **argv) {
             region_stratification_uniform(),
             region_sampling_uniform(),
             std::mt19937(seed),
-            spp_residual,1.0,16),
+            spp_residual,1.0,1024),
+        integrand_infinite,bins);
+
+    test("Perregion stratification trapezoidal - control variates",
+        integrator_adaptive_fubini_variance_reduction_parallel_regions_trapezoidal<4>(
+            nested(simpson,trapezoidal),
+            error_heuristic_size(error_metric_relative(),1.e-5),
+            iterations,mc_samples,
+            region_stratification_uniform(),
+            region_sampling_uniform(),
+            std::mt19937(seed),
+            spp_residual,1.0,1024),
         integrand_infinite,bins);
 
 	return 0;

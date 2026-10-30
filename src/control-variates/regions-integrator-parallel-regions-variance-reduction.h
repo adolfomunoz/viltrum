@@ -8,7 +8,9 @@
 #include <chrono>
 #include "../range.h"
 #include "../newton-cotes/mutexed-bins-aligned.h"
+#include "../newton-cotes/region-bin-accumulator.h"
 #include "../foreach.h"
+#include "../progress-logger.h"
 #include "region-stratification.h"
 #include "region-sampling.h"
 
@@ -78,29 +80,31 @@ public:
         std::atomic<std::size_t> progress{0};
         std::size_t final_progress = seq_regions.size();
         MutexedBinsAligned<Bins,DIMBINS> mutexedbins(bins,bin_resolution,nmutexes);
+        using BinValue = std::decay_t<decltype(bins(std::array<std::size_t,DIMBINS>{}))>;
 
-        logger.log_progress(std::size_t(0),final_progress);
-        // Only this thread calls the logger; workers just bump a relaxed counter.
-        std::atomic<bool> done{false};
-        std::thread for_log([&] () {
-            while (!done.load(std::memory_order_relaxed)) {
-                logger.log_progress(progress.load(std::memory_order_relaxed),final_progress);
-                std::this_thread::sleep_for(std::chrono::milliseconds(250));
-            }
-        });
+        // Only the helper thread calls the logger; workers just bump a relaxed counter.
+        auto for_log = progress_logger(logger,final_progress,
+            [&progress] { return progress.load(std::memory_order_relaxed); });
         //We parallelize the regions using "par" because "par_unseq" does not allow for mutexes inside.
         std::for_each(std::execution::par, region_index.begin(),region_index.end(),
             [&] (const std::size_t& i) {
                 const auto& r = seq_regions[i];
                 unsigned long samples = samples_per_region[i];
 
-                for (auto pos: pixels_in_region(r,bin_resolution,range_first)) {
+                //The contributions of this region (the control variate integral in each bin and one for each
+                // sample of the residual) are accumulated locally and added to the shared bins once, at the end. 
+                // Adding each sample directly takes a lock per sample on the few bins that the region overlaps, 
+                // and with samples this cheap the threads spend most of the time waiting for those locks.
+                auto bin_box = pixels_in_region(r,bin_resolution,range_first);
+                RegionBinAccumulator<MutexedBinsAligned<Bins,DIMBINS>,DIMBINS,BinValue> accumulator(mutexedbins,bin_box);
+
+                for (auto pos: bin_box) {
                     Range<Float,DIM> binrange = r.range();
                     for (std::size_t i=0;i<DIMBINS;++i)
                         binrange = binrange.subrange_dimension(i,range.min(i)+pos[i]*drange[i],range.min(i)+(pos[i]+1)*drange[i]);
 
                     Range<Float,DIM> region_bin_range = binrange.intersection(r.range());
-                    if (!region_bin_range.empty()) mutexedbins.add(pos,double(factor)*alpha*r.integral_subrange(region_bin_range));
+                    if (!region_bin_range.empty()) accumulator.add(pos,double(factor)*alpha*r.integral_subrange(region_bin_range));
                 }
                 
                 //Now we sample the residual, and distribute the samples according to the stratification strategy
@@ -121,19 +125,18 @@ public:
                             }
                         }
 
-                        mutexedbins.add(pos,
+                        accumulator.add(pos,
                             region_factor*sfactor*
                                 (f_regdim(sample) - alpha*r.approximation_at(sample))
                             );
                     } 
                 }
+                accumulator.flush();
                 progress.fetch_add(1,std::memory_order_relaxed);
             }
         );
         
-        done.store(true,std::memory_order_relaxed);
-        for_log.join();
-        logger.log_progress(final_progress,final_progress);
+        for_log.finish();
     }
 };
 

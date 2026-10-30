@@ -4,13 +4,11 @@
 #include <cmath>
 #include <algorithm>
 #include <type_traits>
-#include "../multiarray/multiarray.h"
-#include "../multiarray/fill.h"
+#include <iterator>
+#include <cstddef>
+#include "region.h"
 #include "../range.h"
 
-#ifndef VILTRUM_MAX_DIMENSIONS_REGION
-#define VILTRUM_MAX_DIMENSIONS_REGION 6
-#endif
 
 namespace viltrum {
 
@@ -29,8 +27,9 @@ public:
 	static constexpr std::size_t samples = 2;
 	const Range<Float, DIM>& range() const { return _range; }
 
-private:
 	static constexpr std::size_t corners = std::size_t(1) << DIM;
+
+private:
 	using Weights = std::array<std::array<Float,2>,DIM>;
 
 	Range<Float, DIM> _range;
@@ -135,6 +134,10 @@ public:
 		evaluate_corners(f);
 	}
 
+	//The value of the corner m is v[m], where bit d of m is the index (0 or 1) in dimension d
+	RegionTrapezoidal(const Range<Float,DIM>& r, const std::array<value_type,corners>& v) : 
+				_range(r), values(v) { }
+
 	value_type integral() const { 
 		Weights w; w.fill(mean_weights());
 		return range().volume()*weighted_sum(w); 
@@ -221,6 +224,12 @@ public:
 		return range().pos_from_range(x);
 	}
 
+	/**
+	 * Samples a point in the given subrange (in the first DIMSUB dimensions) with a pdf proportional 
+	 * to the interpolation of the absolute value of the samples, integrating the remaining dimensions.
+	 * The dimensions are sampled in order, each one from its marginal distribution given the previous ones.
+	 * Only available when value_type is a floating point number.
+	 */
 	template<std::size_t DIMSUB, typename V = value_type, 
 			typename = std::enable_if_t<std::is_floating_point_v<V>>>
 	std::array<Float,DIMSUB> sample_subrange(const std::array<Float,DIMSUB>& s, const Range<Float,DIMSUB>& subrange) const {
@@ -241,5 +250,100 @@ auto region_trapezoidal(const F& f, const Range<Float,DIM>& range) {
 	static_assert(DIM<=VILTRUM_MAX_DIMENSIONS_REGION,"Too many dimensions for region construction");
 	return RegionTrapezoidal<Float,DIM,std::decay_t<decltype(f(range.min()))>>(f,range);
 }
+
+/**
+ * Lazy view of the trapezoidal regions of a region of any (equispaced) rule: one for each cell of 
+ * 2^DIM contiguous points of its samples. A region with Q::samples points per dimension 
+ * has (Q::samples-1)^DIM cells (4 for a 2D Simpson region).
+ * 
+ * Nothing is stored: each RegionTrapezoidal is built by value when it is accessed (by iterating or 
+ * with operator[]), and no heap memory is reserved. No new evaluations of the function are needed.
+ * Cells are ordered with the first dimension varying the fastest.
+ * The view refers to the source region, which must outlive it.
+ */
+template<typename Float, typename Q, std::size_t DIM, typename VT>
+class RegionTrapezoidalCells {
+public:
+	using value_type = RegionTrapezoidal<Float,DIM,VT>;
+	using source_type = Region<Float,Q,DIM,VT>;
+
+private:
+	static constexpr std::size_t cells_per_dimension = Q::samples - 1;
+	const source_type* source;
+
+	static constexpr std::size_t total_cells() {
+		std::size_t n = 1;
+		for (std::size_t d = 0; d<DIM; ++d) n *= cells_per_dimension;
+		return n;
+	}
+
+public:
+	explicit RegionTrapezoidalCells(const source_type& source) : source(&source) { }
+
+	static constexpr std::size_t size() { return total_cells(); }
+
+	//Builds the k-th cell
+	value_type operator[](std::size_t k) const {
+		std::array<std::size_t,DIM> cell;
+		std::array<Float,DIM> cell_min, cell_max;
+		for (std::size_t d = 0; d<DIM; ++d) {
+			cell[d] = k % cells_per_dimension;
+			k /= cells_per_dimension;
+			const Float min = source->range().min(d), max = source->range().max(d);
+			cell_min[d] = min + (max - min)*Float(cell[d])/Float(cells_per_dimension);
+			//The last cell ends exactly at the end of the region, without rounding errors
+			cell_max[d] = (cell[d]+1 < cells_per_dimension)?
+				(min + (max - min)*Float(cell[d]+1)/Float(cells_per_dimension)):max;
+		}
+		std::array<VT,value_type::corners> corners;
+		for (std::size_t m = 0; m<value_type::corners; ++m) {
+			std::array<std::size_t,DIM> index;
+			for (std::size_t d = 0; d<DIM; ++d) index[d] = cell[d] + ((m >> d) & 1);
+			corners[m] = source->samples()[index];
+		}
+		return value_type(Range<Float,DIM>(cell_min,cell_max),corners);
+	}
+
+	//Input iterator: dereferencing builds a new RegionTrapezoidal, so it returns by value
+	class const_iterator {
+	public:
+		using iterator_category = std::input_iterator_tag;
+		using value_type = typename RegionTrapezoidalCells::value_type;
+		using difference_type = std::ptrdiff_t;
+		using pointer = const value_type*;
+		using reference = value_type;
+
+	private:
+		const RegionTrapezoidalCells* cells;
+		std::size_t k;
+
+		struct arrow_proxy {
+			value_type value;
+			const value_type* operator->() const { return &value; }
+		};
+	public:
+		const_iterator(const RegionTrapezoidalCells* cells, std::size_t k) : cells(cells), k(k) { }
+		value_type operator*() const { return (*cells)[k]; }
+		arrow_proxy operator->() const { return arrow_proxy{(*cells)[k]}; }
+		const_iterator& operator++() { ++k; return *this; }
+		const_iterator operator++(int) { const_iterator old = *this; ++k; return old; }
+		bool operator==(const const_iterator& that) const { return k == that.k; }
+		bool operator!=(const const_iterator& that) const { return k != that.k; }
+	};
+
+	const_iterator begin() const { return const_iterator(this,0); }
+	const_iterator end()   const { return const_iterator(this,size()); }
+};
+
+template<typename Float, typename Q, std::size_t DIM, typename VT>
+auto region_trapezoidals_from_region(const Region<Float,Q,DIM,VT>& region) {
+	static_assert(DIM<=VILTRUM_MAX_DIMENSIONS_REGION,"Too many dimensions for region construction");
+	static_assert(Q::samples >= 2,"The rule needs at least two samples per dimension");
+	return RegionTrapezoidalCells<Float,Q,DIM,VT>(region);
+}
+
+//The view refers to the region, so it cannot be created from a temporary
+template<typename Float, typename Q, std::size_t DIM, typename VT>
+void region_trapezoidals_from_region(const Region<Float,Q,DIM,VT>&& region) = delete;
 
 }

@@ -2,7 +2,11 @@
 #include <vector>
 #include <array>
 #include <algorithm>
+#include <atomic>
+#include <execution>
 #include "../range.h"
+#include "../progress-logger.h"
+#include "region.h"
 #include "mutexed-bins-aligned.h"
 
 namespace viltrum {
@@ -25,18 +29,14 @@ public:
         for (std::size_t i=0;i<DIMBINS;++i) drange[i] = (range.max(i) - range.min(i))/Float(bin_resolution[i]);
         std::size_t factor = 1;
         for (std::size_t i=0;i<DIMBINS;++i) factor*=bin_resolution[i];
-        //std::atomic<std::size_t> progress = 0; 
+        std::atomic<std::size_t> progress{0};
         std::size_t final_progress = seq_regions.size();
         MutexedBinsAligned<Bins,DIMBINS> mutexedbins(bins,bin_resolution,nmutexes);
-/*        std::thread for_log([&logger,&progress,final_progress] () {
-             while (std::size_t(progress)<final_progress) {
-                logger.log_progress(std::size_t(progress),final_progress);
-                std::this_thread::sleep_for(std::chrono::milliseconds(250));
-            } 
-        });*/
-        logger.log_progress(std::size_t(0),final_progress);
+
+        // Only the helper thread calls the logger; workers just bump a relaxed counter.
+        auto for_log = progress_logger(logger,final_progress,
+            [&progress] { return progress.load(std::memory_order_relaxed); });
         std::for_each(std::execution::par, seq_regions.begin(),seq_regions.end(),[&] (const auto& r) {
-//            progress++;
             for (auto pos: pixels_in_region(r,bin_resolution,range)) {
                 Range<Float,DIM> binrange = range;
                 for (std::size_t i=0;i<DIMBINS;++i)
@@ -45,10 +45,10 @@ public:
                 Range<Float,DIM> region_bin_range = binrange.intersection(r.range());
                 if (!region_bin_range.empty()) mutexedbins.add(pos,double(factor)*r.integral_subrange(region_bin_range));
             } 
+            progress.fetch_add(1,std::memory_order_relaxed);
         });
         
-//        for_log.join();  
-        logger.log_progress(final_progress,final_progress);
+        for_log.finish();
     }
 };
 

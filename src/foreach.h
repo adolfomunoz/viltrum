@@ -1,7 +1,9 @@
 #pragma once
 #include "multidimensional-range.h"
 #include "log.h"
+#include "progress-logger.h"
 #include <thread>
+#include <atomic>
 #include <vector>
 #include <algorithm>
 #include <numeric>
@@ -43,16 +45,10 @@ void for_each(const MultidimensionalRange<DIM>& range, const F& f, Logger& logge
 template<std::size_t DIM, typename F, typename Logger>
 void for_each(const _Parallel& par, const MultidimensionalRange<DIM>& range, const F& f, Logger& logger) {
     std::size_t ntasks = range.max(0)-range.min(0); 
-    std::vector<std::size_t> idxs(ntasks), done(ntasks,0);
+    std::vector<std::size_t> idxs(ntasks);
+    std::atomic<std::size_t> done{0}; //Completed tasks
     std::iota(idxs.begin(), idxs.end(), 0);
-    std::thread for_log([&done,ntasks,&logger] () {
-        std::size_t i = 0;
-        while (i<ntasks) {
-            logger.log_progress(std::size_t(i),ntasks);
-            std::this_thread::sleep_for(std::chrono::milliseconds(250));
-            i = std::accumulate(done.begin(),done.end(),0);
-        } 
-    });
+    auto for_log = progress_logger(logger,ntasks,[&done] () { return done.load(std::memory_order_relaxed); });
     if constexpr (DIM > 1) {
         std::array<std::size_t,DIM-1> a, b;
         for (std::size_t s = 1;s<DIM;++s) {
@@ -63,18 +59,17 @@ void for_each(const _Parallel& par, const MultidimensionalRange<DIM>& range, con
             idxs.begin(),idxs.end(),
             [&] (std::size_t d) {
                 for (auto pos : multidimensional_range(a,b)) f(d|pos);
-                ++done[d];  
+                done.fetch_add(1,std::memory_order_relaxed);  
             });
     } else {
         std::for_each(std::execution::par_unseq,
             idxs.begin(),idxs.end(),
             [&] (std::size_t d) { 
                 f(std::array<std::size_t,1>{d}); 
-                ++done[d];  
+                done.fetch_add(1,std::memory_order_relaxed);  
             });
     }
-    for_log.join();
-    logger.log_progress(ntasks,ntasks);
+    for_log.finish();
 }
 
 template<std::size_t DIM, typename F>
@@ -123,17 +118,10 @@ void for_each(const _ParallelChunked& par, const MultidimensionalRange<DIM>& ran
     // Create chunk indices
     std::vector<std::size_t> chunk_idxs(total_chunks);
     std::iota(chunk_idxs.begin(), chunk_idxs.end(), 0);
-    std::vector<std::size_t> done(total_chunks, 0);
+    std::atomic<std::size_t> done{0}; //Completed chunks
     
     // Logger thread
-    std::thread for_log([&done, total_chunks, &logger]() {
-        std::size_t i = 0;
-        while (i < total_chunks) {
-            logger.log_progress(std::size_t(i), total_chunks);
-            std::this_thread::sleep_for(std::chrono::milliseconds(250));
-            i = std::accumulate(done.begin(), done.end(), 0);
-        }
-    });
+    auto for_log = progress_logger(logger,total_chunks,[&done]() { return done.load(std::memory_order_relaxed); });
     
     // Process chunks in parallel
     std::for_each(std::execution::par_unseq,
@@ -160,11 +148,10 @@ void for_each(const _ParallelChunked& par, const MultidimensionalRange<DIM>& ran
             for (auto pos : multidimensional_range(chunk_start, chunk_end)) {
                 f(pos);
             }
-            ++done[chunk_idx];
+            done.fetch_add(1,std::memory_order_relaxed);
         });
     
-    for_log.join();
-    logger.log_progress(total_chunks, total_chunks);
+    for_log.finish();
 }
 
 template<std::size_t DIM, typename F>
