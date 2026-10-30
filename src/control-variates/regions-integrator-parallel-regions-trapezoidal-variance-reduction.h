@@ -81,7 +81,6 @@ public:
         std::atomic<std::size_t> progress{0};
         std::size_t final_progress = seq_regions.size();
         MutexedBinsAligned<Bins,DIMBINS> mutexedbins(bins,bin_resolution,nmutexes);
-        using BinValue = std::decay_t<decltype(bins(std::array<std::size_t,DIMBINS>{}))>;
 
         // Only the helper thread calls the logger; workers just bump a relaxed counter.
         auto for_log = progress_logger(logger,final_progress,
@@ -100,6 +99,8 @@ public:
                 // region overlaps, and with a cheap control variate the threads spend most of the time waiting 
                 // for those locks (the cost of the add was several times the cost of the sample).
                 auto bin_box = pixels_in_region(seq_regions[i],bin_resolution,range_first);
+                // The type of the contributions, not the one returned by bins(), which can be a proxy (e.g. a pixel of an image) 
+                using BinValue = std::decay_t<decltype(double(factor)*alpha*trapezoidals[0].integral_subrange(trapezoidals[0].range()))>;
                 RegionBinAccumulator<MutexedBinsAligned<Bins,DIMBINS>,DIMBINS,BinValue> accumulator(mutexedbins,bin_box);
                 for (std::size_t t = 0; t<trapezoidals.size(); ++t) {
                     auto r = trapezoidals[t];
